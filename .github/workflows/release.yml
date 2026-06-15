@@ -1,36 +1,132 @@
-name: Release Obsidian plugin
+name: Release
 
 on:
   push:
     tags:
-      - "*"
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to create release for (e.g., v1.2.3)"
+        required: true
+        type: string
+      deploy_only:
+        description: "Upload assets to an existing release without creating it"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  build:
+  release:
+    name: Release Obsidian plugin
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - name: Resolve release tag
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
 
-      - uses: actions/setup-node@v4
+          if ! git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Error: Tag $TAG does not exist."
+            echo ""
+            echo "Available tags:"
+            git tag -l | tail -10
+            exit 1
+          fi
+
+          if [[ "$TAG" == *"+"* ]]; then
+            echo "Error: Tag '$TAG' contains '+', which is not valid in Docker image tags."
+            exit 1
+          fi
+
+          if [[ ! "$TAG" =~ ^[A-Za-z0-9_.-]{1,128}$ ]]; then
+            echo "Error: Tag '$TAG' contains characters not allowed in Docker image tags."
+            exit 1
+          fi
+
+          SEMVER="${TAG#v}"
+          if [[ "$SEMVER" == *"-"* ]]; then
+            PRERELEASE="true"
+          else
+            PRERELEASE="false"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout tag
+        run: git checkout --detach "${{ steps.version.outputs.tag }}"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: "24.x"
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
-      - run: pnpm build
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Create release
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check GitHub release
+        id: release
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
-          gh release create "$tag" \
-            --title="$tag" \
-            --draft \
-            main.js manifest.json styles.css versions.json
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub release
+        if: steps.release.outputs.exists == 'false' && inputs.deploy_only != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(
+            "${{ steps.version.outputs.tag }}"
+            --title "${{ steps.version.outputs.tag }}"
+            --generate-notes
+          )
+
+          if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
+            args+=(--prerelease)
+          fi
+
+          gh release create "${args[@]}"
+
+      - name: Require existing release for deploy only
+        if: steps.release.outputs.exists == 'false' && inputs.deploy_only == true
+        run: |
+          echo "Release ${{ steps.version.outputs.tag }} does not exist and deploy_only=true prevents creating it." >&2
+          exit 1
+
+      - name: Upload Obsidian plugin assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.version.outputs.tag }}" main.js manifest.json styles.css versions.json --clobber

@@ -1,11 +1,15 @@
 {
   "name": "markdown-kanban",
   "version": "0.1.0",
+  "packageManager": "pnpm@11.3.0",
   "description": "A real Kanban board for Obsidian, with Markdown files as the source of truth.",
   "type": "module",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
+    "release:bump-plugin-version": "node scripts/bump-plugin-version.mjs",
+    "ci:release": "release-it --ci",
+    "dev:helpers:release": "release-it",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -31,6 +35,7 @@
     "esbuild": "^0.23.1",
     "jsdom": "^25.0.1",
     "obsidian": "^1.7.2",
+    "release-it": "19.2.2",
     "typescript": "^5.6.2",
     "vitest": "^2.1.1"
   }

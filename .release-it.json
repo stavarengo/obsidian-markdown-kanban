@@ -1,0 +1,39 @@
+{
+  "$schema": "https://unpkg.com/release-it/schema/release-it.json",
+  "git": {
+    "requireCleanWorkingDir": false,
+    "requireBranch": "main",
+    "requireUpstream": true,
+    "requireCommits": true,
+    "addUntrackedFiles": false,
+    "commit": true,
+    "commitMessage": "chore(release): v${version} :rocket:",
+    "tag": true,
+    "tagName": "v${version}",
+    "tagAnnotation": "Release v${version}",
+    "push": true
+  },
+  "hooks": {
+    "after:bump": "pnpm release:bump-plugin-version ${version}"
+  },
+  "github": {
+    "release": true,
+    "releaseName": "v${version}",
+    "autoGenerate": false,
+    "preRelease": false,
+    "draft": false,
+    "tokenRef": "OBSIDIAN_MARKDOWN_KANBAN_RELEASE_IT_GITHUB_TOKEN",
+    "skipChecks": false,
+    "web": false,
+    "comments": {
+      "submit": true,
+      "issue": ":rocket: _This issue has been resolved in v${version}. See [${releaseName}](${releaseUrl}) for release notes._",
+      "pr": ":rocket: _This pull request is included in v${version}. See [${releaseName}](${releaseUrl}) for release notes._"
+    }
+  },
+  "npm": {
+    "publish": false,
+    "ignoreVersion": true,
+    "allowSameVersion": true
+  }
+}
