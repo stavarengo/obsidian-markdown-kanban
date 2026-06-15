@@ -13,3 +13,4 @@ data.json
 .vscode/
 .idea/
 .DS_Store
+tmp/
