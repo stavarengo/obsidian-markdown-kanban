@@ -36,7 +36,7 @@ describe("board rendering", () => {
     const todoCol = screen.getByText("Todo").closest("section") as HTMLElement;
     expect(within(todoCol).getByText("Alpha")).toBeInTheDocument();
     expect(within(todoCol).queryByText("Beta")).not.toBeInTheDocument(); // Beta is a subcard
-    expect(within(todoCol).getByText("1")).toBeInTheDocument(); // count
+    expect(within(todoCol).getByTitle("1 cards")).toHaveTextContent("1"); // count
 
     const doingCol = screen.getByText("Doing").closest("section") as HTMLElement;
     expect(within(doingCol).getByText("Gamma")).toBeInTheDocument();
@@ -46,12 +46,12 @@ describe("board rendering", () => {
     render_(makeRepo());
     const alpha = (await screen.findByText("Alpha")).closest(".mdkb-card") as HTMLElement;
     expect(within(alpha).getByText("A")).toBeInTheDocument(); // priority chip
-    expect(within(alpha).getByText("☑ 1/2")).toBeInTheDocument(); // 1 of 2 todos done
-    expect(within(alpha).getByText("▦ 1")).toBeInTheDocument(); // 1 subcard
-    expect(within(alpha).getByText("💬 1")).toBeInTheDocument(); // 1 comment
+    expect(within(alpha).getByText("1/2")).toBeInTheDocument(); // 1 of 2 todos done (progress)
+    expect(within(alpha).getByTitle("Subcards")).toHaveTextContent("1"); // 1 subcard
+    expect(within(alpha).getByTitle("Comments")).toHaveTextContent("1"); // 1 comment
 
     const gamma = screen.getByText("Gamma").closest(".mdkb-card") as HTMLElement;
-    expect(within(gamma).getByText("⚠ 2026-06-01")).toBeInTheDocument(); // overdue
+    expect(within(gamma).getByTitle("Due 2026-06-01")).toHaveTextContent("12d ago"); // overdue, relative
   });
 });
 

@@ -8,3 +8,27 @@ export function useRepo(): CardRepository {
   if (!repo) throw new Error("RepoContext is missing a provider");
   return repo;
 }
+
+/** Card-level actions, provided by App so cards/columns don't prop-drill callbacks. */
+export interface BoardActions {
+  /** Open the card's detail panel. */
+  open(path: string): void;
+  /** Move a card to a column (writes status + order + history). */
+  move(path: string, columnId: string): void;
+  /** Move a card to the board's "done" column, if one exists. */
+  complete(path: string): void;
+  /** Trash the card's note (after confirmation in the UI). */
+  remove(path: string): void;
+  /** Open the underlying note in an Obsidian tab. */
+  openNote(path: string): void;
+  /** Id of the column treated as "done", or null if the board has none. */
+  doneColumnId: string | null;
+}
+
+export const BoardActionsContext = createContext<BoardActions | null>(null);
+
+export function useBoardActions(): BoardActions {
+  const a = useContext(BoardActionsContext);
+  if (!a) throw new Error("BoardActionsContext is missing a provider");
+  return a;
+}

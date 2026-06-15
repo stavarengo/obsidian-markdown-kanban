@@ -25,6 +25,8 @@ export interface CardRepository {
   createCard(title: string, status: string): Promise<string>;
   /** Create a child card and link it from the parent's checklist. Returns child path. */
   addSubcard(parentPath: string, title: string): Promise<string>;
+  /** Move a card's note to the trash. */
+  deleteCard(path: string): Promise<void>;
 
   /** Persist column definitions to the board note frontmatter. */
   setColumns(columns: ColumnDef[]): Promise<void>;

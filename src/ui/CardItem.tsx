@@ -1,65 +1,168 @@
+import { useState, type KeyboardEvent } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card } from "../model/types";
-import { cardChips } from "./cardView";
+import { cardChips, priorityTone } from "./cardView";
+import { useBoardActions } from "./context";
+import { Icon } from "./icons";
 
 interface Props {
   card: Card;
   today: string;
   selected: boolean;
-  onOpen: (path: string) => void;
 }
 
-export function CardItem({ card, today, selected, onOpen }: Props) {
+export function CardItem({ card, today, selected }: Props) {
+  const actions = useBoardActions();
+  const [confirming, setConfirming] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.path,
   });
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
   };
   const chips = cardChips(card, today);
   const stats = card.stats;
+  const fm = card.frontmatter;
+  const prio = typeof fm.priority === "string" && fm.priority ? priorityTone(fm.priority) : null;
+
+  const allDone = !!stats && stats.todos > 0 && stats.todosDone === stats.todos;
+  const showActions = !confirming;
+  const canComplete = actions.doneColumnId != null && fm.status !== actions.doneColumnId;
+
+  const open = () => {
+    if (!isDragging) actions.open(card.path);
+  };
+  // Merge dnd-kit keyboard handling (Space = pick up) with Enter = open.
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      actions.open(card.path);
+      return;
+    }
+    (listeners as { onKeyDown?: (e: KeyboardEvent) => void } | undefined)?.onKeyDown?.(e);
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={"mdkb-card" + (selected ? " is-selected" : "")}
+      className={"mdkb-card" + (selected ? " is-selected" : "") + (isDragging ? " is-dragging" : "")}
       data-testid="card"
       data-path={card.path}
-      {...attributes}
-      {...listeners}
-      onClick={() => {
-        if (!isDragging) onOpen(card.path);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen(card.path);
-        }
-      }}
+      data-prio={prio ?? undefined}
     >
-      <div className="mdkb-card-title">{card.basename}</div>
-      {chips.length > 0 && (
-        <div className="mdkb-chips">
-          {chips.map((c) => (
-            <span key={c.key} className={`mdkb-chip mdkb-chip-${c.tone}`}>
-              {c.label}
+      <div
+        className="mdkb-card-main"
+        {...attributes}
+        {...listeners}
+        onClick={open}
+        onKeyDown={onKeyDown}
+        aria-label={card.basename}
+      >
+        <div className="mdkb-card-title">{card.basename}</div>
+        {chips.length > 0 && (
+          <div className="mdkb-chips">
+            {chips.map((c) => (
+              <span key={c.key} className={`mdkb-chip mdkb-chip-${c.tone}`} title={c.title}>
+                {c.icon && <Icon name={c.icon} size={11} />}
+                {c.label}
+              </span>
+            ))}
+          </div>
+        )}
+        {stats && stats.todos > 0 && (
+          <div className={"mdkb-progress" + (allDone ? " is-complete" : "")} title={`${stats.todosDone} of ${stats.todos} subtasks done`}>
+            <div className="mdkb-progress-track">
+              <div className="mdkb-progress-fill" style={{ width: `${(stats.todosDone / stats.todos) * 100}%` }} />
+            </div>
+            <span className="mdkb-progress-label">
+              {allDone ? <Icon name="check" size={12} /> : null}
+              {stats.todosDone}/{stats.todos}
             </span>
-          ))}
+          </div>
+        )}
+        {stats && (stats.subcards > 0 || stats.comments > 0) && (
+          <div className="mdkb-card-meta">
+            {stats.subcards > 0 && (
+              <span title="Subcards">
+                <Icon name="git-branch" size={13} /> {stats.subcards}
+              </span>
+            )}
+            {stats.comments > 0 && (
+              <span title="Comments">
+                <Icon name="message" size={13} /> {stats.comments}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {showActions && (
+        <div className="mdkb-card-actions">
+          {canComplete && (
+            <button
+              className="mdkb-icon-btn mdkb-action-done"
+              aria-label={`Mark "${card.basename}" done`}
+              title="Mark done"
+              onClick={(e) => {
+                e.stopPropagation();
+                actions.complete(card.path);
+              }}
+            >
+              <Icon name="check-circle" size={15} />
+            </button>
+          )}
+          <button
+            className="mdkb-icon-btn"
+            aria-label={`Open note for "${card.basename}"`}
+            title="Open note"
+            onClick={(e) => {
+              e.stopPropagation();
+              actions.openNote(card.path);
+            }}
+          >
+            <Icon name="external-link" size={15} />
+          </button>
+          <button
+            className="mdkb-icon-btn mdkb-action-delete"
+            aria-label={`Delete "${card.basename}"`}
+            title="Delete card"
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirming(true);
+            }}
+          >
+            <Icon name="trash" size={15} />
+          </button>
         </div>
       )}
-      {stats && (stats.todos > 0 || stats.subcards > 0 || stats.comments > 0) && (
-        <div className="mdkb-card-meta">
-          {stats.todos > 0 && (
-            <span title="Subtasks">
-              ☑ {stats.todosDone}/{stats.todos}
-            </span>
-          )}
-          {stats.subcards > 0 && <span title="Subcards">▦ {stats.subcards}</span>}
-          {stats.comments > 0 && <span title="Comments">💬 {stats.comments}</span>}
+
+      {confirming && (
+        <div className="mdkb-card-confirm" role="alertdialog" aria-label={`Delete ${card.basename}?`}>
+          <span>Delete card?</span>
+          <div className="mdkb-row-actions">
+            <button
+              className="mdkb-btn mdkb-btn-danger"
+              onClick={(e) => {
+                e.stopPropagation();
+                actions.remove(card.path);
+              }}
+            >
+              Delete
+            </button>
+            <button
+              className="mdkb-btn"
+              autoFocus
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirming(false);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>

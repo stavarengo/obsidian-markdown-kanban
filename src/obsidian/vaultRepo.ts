@@ -33,11 +33,13 @@ function titleCase(id: string): string {
 
 function normalizeColumns(raw: unknown): ColumnDef[] {
   if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_COLUMNS;
-  return raw.map((c): ColumnDef =>
-    typeof c === "string"
-      ? { id: c, title: titleCase(c) }
-      : { id: String(c.id), title: c.title ?? titleCase(String(c.id)), color: c.color },
-  );
+  return raw.map((c): ColumnDef => {
+    if (typeof c === "string") return { id: c, title: titleCase(c) };
+    const col: ColumnDef = { id: String(c.id), title: c.title ?? titleCase(String(c.id)) };
+    if (typeof c.color === "string") col.color = c.color;
+    if (typeof c.limit === "number" && Number.isFinite(c.limit)) col.limit = c.limit;
+    return col;
+  });
 }
 
 function stamp(d = new Date()): string {
@@ -178,8 +180,18 @@ export class VaultRepository implements CardRepository {
   async setColumns(columns: ColumnDef[]): Promise<void> {
     this.markWrite(this.boardPath);
     await this.app.fileManager.processFrontMatter(this.file(this.boardPath), (fm) => {
-      fm["columns"] = columns.map((c) => (c.color ? { id: c.id, title: c.title, color: c.color } : { id: c.id, title: c.title }));
+      fm["columns"] = columns.map((c) => {
+        const out: Record<string, unknown> = { id: c.id, title: c.title };
+        if (c.color) out.color = c.color;
+        if (typeof c.limit === "number") out.limit = c.limit;
+        return out;
+      });
     });
+  }
+
+  async deleteCard(path: string): Promise<void> {
+    this.markWrite(path);
+    await this.app.fileManager.trashFile(this.file(path));
   }
 
   async openCard(path: string): Promise<void> {

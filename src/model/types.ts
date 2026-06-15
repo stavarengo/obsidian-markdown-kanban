@@ -70,6 +70,8 @@ export interface ColumnDef {
   id: string;
   title: string;
   color?: string;
+  /** Soft work-in-progress limit. The board nudges (does not block) when exceeded. */
+  limit?: number;
 }
 
 export interface BoardConfig {

@@ -113,6 +113,10 @@ export class FakeRepo implements CardRepository {
     this.config = { ...this.config, columns };
   }
 
+  async deleteCard(path: string): Promise<void> {
+    this.files.delete(path);
+  }
+
   async openCard(path: string): Promise<void> {
     this.opened.push(path);
   }

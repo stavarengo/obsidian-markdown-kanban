@@ -3,6 +3,8 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Board, ColumnDef } from "../model/types";
 import { CardItem } from "./CardItem";
+import { Icon } from "./icons";
+import { cardMatches, hasActiveFilter, type BoardFilters } from "./cardView";
 
 interface Props {
   column: ColumnDef;
@@ -10,51 +12,77 @@ interface Props {
   board: Board;
   today: string;
   selectedPath: string | null;
-  onOpen: (path: string) => void;
+  wipLimit?: number;
+  filters: BoardFilters;
   onAddCard: (columnId: string, title: string) => void;
 }
 
-export function Column({ column, cardPaths, board, today, selectedPath, onOpen, onAddCard }: Props) {
+export function Column({ column, cardPaths, board, today, selectedPath, wipLimit, filters, onAddCard }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
 
-  const submit = () => {
+  const submit = (keepOpen: boolean) => {
     const t = title.trim();
     if (t) onAddCard(column.id, t);
     setTitle("");
-    setAdding(false);
+    if (!keepOpen) setAdding(false);
   };
 
-  const paths = cardPaths.filter((p) => board.cards[p]);
+  const allPaths = cardPaths.filter((p) => board.cards[p]);
+  const filtering = hasActiveFilter(filters);
+  const paths = filtering ? allPaths.filter((p) => cardMatches(board.cards[p], today, filters)) : allPaths;
+  const overLimit = wipLimit != null && allPaths.length > wipLimit;
+  const accent = column.color || "var(--interactive-accent)";
 
   return (
-    <section className="mdkb-column" data-testid="column" data-column={column.id}>
-      <header className="mdkb-column-header" style={column.color ? { borderTopColor: column.color } : undefined}>
+    <section
+      className={"mdkb-column" + (overLimit ? " is-over-limit" : "")}
+      data-testid="column"
+      data-column={column.id}
+      style={{ ["--mdkb-col-accent" as string]: accent }}
+    >
+      <header className="mdkb-column-header">
+        <span className="mdkb-column-dot" aria-hidden="true" />
         <span className="mdkb-column-title">{column.title}</span>
-        <span className="mdkb-column-count">{paths.length}</span>
-        <button className="mdkb-icon-btn" aria-label={`Add card to ${column.title}`} onClick={() => setAdding((a) => !a)}>
-          +
-        </button>
+        <span
+          className={"mdkb-column-count" + (overLimit ? " is-over-limit" : "")}
+          title={wipLimit != null ? `${allPaths.length} of ${wipLimit} (WIP limit)` : `${allPaths.length} cards`}
+        >
+          {wipLimit != null ? `${allPaths.length}/${wipLimit}` : allPaths.length}
+        </span>
       </header>
       <div ref={setNodeRef} className={"mdkb-column-body" + (isOver ? " is-over" : "")}>
         <SortableContext items={paths} strategy={verticalListSortingStrategy}>
           {paths.map((p) => (
-            <CardItem key={p} card={board.cards[p]} today={today} selected={p === selectedPath} onOpen={onOpen} />
+            <CardItem key={p} card={board.cards[p]} today={today} selected={p === selectedPath} />
           ))}
         </SortableContext>
+        {paths.length === 0 && !adding && (
+          filtering ? (
+            <div className="mdkb-column-empty is-filtered">
+              <span>No matches</span>
+            </div>
+          ) : (
+            <div className="mdkb-column-empty" aria-hidden="true">
+              <Icon name="inbox" size={20} />
+              <span>Nothing here</span>
+            </div>
+          )
+        )}
         {adding && (
           <div className="mdkb-add-card">
             <textarea
               autoFocus
+              rows={2}
               value={title}
-              placeholder="Card title…"
+              placeholder="What needs doing?"
               aria-label="New card title"
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  submit();
+                  submit(false);
                 } else if (e.key === "Escape") {
                   setAdding(false);
                   setTitle("");
@@ -62,12 +90,22 @@ export function Column({ column, cardPaths, board, today, selectedPath, onOpen, 
               }}
             />
             <div className="mdkb-row-actions">
-              <button onClick={submit}>Add</button>
-              <button onClick={() => { setAdding(false); setTitle(""); }}>Cancel</button>
+              <button className="mdkb-btn mdkb-btn-primary" onMouseDown={(e) => e.preventDefault()} onClick={() => submit(false)}>
+                Add card
+              </button>
+              <button className="mdkb-btn" onClick={() => { setAdding(false); setTitle(""); }}>
+                Cancel
+              </button>
             </div>
           </div>
         )}
       </div>
+      {!adding && (
+        <button className="mdkb-column-add" aria-label={`Add card to ${column.title}`} onClick={() => setAdding(true)}>
+          <Icon name="plus" size={15} />
+          Add a card
+        </button>
+      )}
     </section>
   );
 }
