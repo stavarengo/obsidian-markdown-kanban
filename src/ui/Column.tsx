@@ -3,6 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Board, ColumnDef } from "../model/types";
 import { CardItem } from "./CardItem";
+import { ColumnMenu } from "./ColumnMenu";
 import { Icon } from "./icons";
 import { cardMatches, hasActiveFilter, type BoardFilters } from "./cardView";
 
@@ -14,13 +15,16 @@ interface Props {
   selectedPath: string | null;
   wipLimit?: number;
   filters: BoardFilters;
+  isFirst: boolean;
+  isLast: boolean;
   onAddCard: (columnId: string, title: string) => void;
 }
 
-export function Column({ column, cardPaths, board, today, selectedPath, wipLimit, filters, onAddCard }: Props) {
+export function Column({ column, cardPaths, board, today, selectedPath, wipLimit, filters, isFirst, isLast, onAddCard }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const submit = (keepOpen: boolean) => {
     const t = title.trim();
@@ -51,6 +55,16 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
         >
           {wipLimit != null ? `${allPaths.length}/${wipLimit}` : allPaths.length}
         </span>
+        <button
+          className="mdkb-icon-btn mdkb-column-menu-btn"
+          aria-label={`Column options for ${column.title}`}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          <Icon name="more" size={16} />
+        </button>
+        {menuOpen && <ColumnMenu column={column} isFirst={isFirst} isLast={isLast} onClose={() => setMenuOpen(false)} />}
       </header>
       <div ref={setNodeRef} className={"mdkb-column-body" + (isOver ? " is-over" : "")}>
         <SortableContext items={paths} strategy={verticalListSortingStrategy}>

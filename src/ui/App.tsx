@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import type { Board as BoardModel } from "../model/types";
+import type { Board as BoardModel, ColumnDef } from "../model/types";
 import { moveCard, resolveDrop } from "../model/board";
 import type { CardRepository } from "../obsidian/repo";
 import { BoardActionsContext, RepoContext, type BoardActions } from "./context";
@@ -95,6 +95,17 @@ export function App({ repo, today }: Props) {
     [board, repo, load],
   );
 
+  const setColumnsAndReload = useCallback(
+    async (cols: ColumnDef[]) => {
+      try {
+        await repo.setColumns(cols);
+      } finally {
+        await load();
+      }
+    },
+    [repo, load],
+  );
+
   const actions = useMemo<BoardActions>(
     () => ({
       open: (path) => setSelected(path),
@@ -114,8 +125,64 @@ export function App({ repo, today }: Props) {
       },
       openNote: (path) => void repo.openCard(path),
       doneColumnId,
+      renameColumn: (id, title) => {
+        const t = title.trim();
+        if (!board || !t) return;
+        void setColumnsAndReload(board.config.columns.map((c) => (c.id === id ? { ...c, title: t } : c)));
+      },
+      setColumnColor: (id, color) => {
+        if (!board) return;
+        void setColumnsAndReload(board.config.columns.map((c) => (c.id === id ? { ...c, color: color ?? undefined } : c)));
+      },
+      setColumnLimit: (id, limit) => {
+        if (!board) return;
+        const lim = limit == null || limit <= 0 ? undefined : Math.floor(limit);
+        void setColumnsAndReload(board.config.columns.map((c) => (c.id === id ? { ...c, limit: lim } : c)));
+      },
+      moveColumn: (id, dir) => {
+        if (!board) return;
+        const cols = [...board.config.columns];
+        const i = cols.findIndex((c) => c.id === id);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= cols.length) return;
+        [cols[i], cols[j]] = [cols[j], cols[i]];
+        void setColumnsAndReload(cols);
+      },
+      deleteColumn: (id) => {
+        if (!board) return;
+        const cols = board.config.columns;
+        if (cols.length <= 1) return; // keep at least one column
+        const idx = cols.findIndex((c) => c.id === id);
+        if (idx < 0) return;
+        const neighbor = cols[idx - 1] ?? cols[idx + 1];
+        void (async () => {
+          // Reassign this column's cards to a neighbor so none are orphaned.
+          for (const p of board.columns[id] ?? []) {
+            try {
+              await repo.setFrontmatter(p, { status: neighbor.id });
+            } catch {
+              /* best-effort */
+            }
+          }
+          try {
+            await repo.setColumns(cols.filter((c) => c.id !== id));
+          } finally {
+            await load();
+          }
+        })();
+      },
+      addColumn: (title) => {
+        const t = title.trim();
+        if (!board || !t) return;
+        const existing = new Set(board.config.columns.map((c) => c.id));
+        const base = t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "column";
+        let id = base;
+        let n = 1;
+        while (existing.has(id)) id = `${base}-${n++}`;
+        void setColumnsAndReload([...board.config.columns, { id, title: t }]);
+      },
     }),
-    [moveTo, doneColumnId, repo, load],
+    [moveTo, doneColumnId, repo, load, board, setColumnsAndReload],
   );
 
   const wipLimits = useMemo<Record<string, number>>(() => {

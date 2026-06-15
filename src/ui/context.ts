@@ -23,6 +23,14 @@ export interface BoardActions {
   openNote(path: string): void;
   /** Id of the column treated as "done", or null if the board has none. */
   doneColumnId: string | null;
+
+  /** Column management (persists to the board note frontmatter). */
+  renameColumn(id: string, title: string): void;
+  setColumnColor(id: string, color: string | null): void;
+  setColumnLimit(id: string, limit: number | null): void;
+  moveColumn(id: string, dir: -1 | 1): void;
+  deleteColumn(id: string): void;
+  addColumn(title: string): void;
 }
 
 export const BoardActionsContext = createContext<BoardActions | null>(null);

@@ -13,6 +13,7 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { Board as BoardModel } from "../model/types";
 import { Column } from "./Column";
+import { AddColumn } from "./AddColumn";
 import { cardChips, priorityTone, type BoardFilters } from "./cardView";
 
 interface Props {
@@ -49,7 +50,7 @@ export function Board({ board, today, selectedPath, wipLimits, filters, onMove, 
       onDragCancel={() => setActiveId(null)}
     >
       <div className="mdkb-board">
-        {board.config.columns.map((col) => (
+        {board.config.columns.map((col, i) => (
           <Column
             key={col.id}
             column={col}
@@ -59,9 +60,12 @@ export function Board({ board, today, selectedPath, wipLimits, filters, onMove, 
             selectedPath={selectedPath}
             wipLimit={wipLimits[col.id]}
             filters={filters}
+            isFirst={i === 0}
+            isLast={i === board.config.columns.length - 1}
             onAddCard={onAddCard}
           />
         ))}
+        <AddColumn />
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}>
         {activeCard ? (

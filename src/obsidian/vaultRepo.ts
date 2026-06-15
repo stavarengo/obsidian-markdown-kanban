@@ -81,7 +81,10 @@ export class VaultRepository implements CardRepository {
 
   private async readConfig(): Promise<BoardConfig> {
     const boardFile = this.file(this.boardPath);
-    const fm = this.frontmatterOf(boardFile);
+    // Parse the board config from the (write-fresh) file text rather than metadataCache:
+    // the cache lags a processFrontMatter write by a tick, so reading it right after an
+    // in-app column edit would return stale columns and the edit wouldn't reflect.
+    const fm = parseFrontmatter(await this.app.vault.cachedRead(boardFile));
     const cardFolder = String(fm["card-folder"] ?? fm["card_folder"] ?? "Tasks");
     return { path: this.boardPath, columns: normalizeColumns(fm["columns"]), cardFolder };
   }
