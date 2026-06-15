@@ -1,3 +1,9 @@
+# AGENTS.md - Obsidian Markdown Kanban
+
+## Basic Rule
+
+1. Keep this file small and thin. Only write here what a fresh LLM session **can't** rediscover on its own by reading the other files in this project. Keep each entry to a few words.
+
 ## Inspecting the running Obsidian app (Chrome DevTools MCP)
 
 This repo ships a project MCP server (`chrome-devtools-obsidian` in `.mcp.json`) that drives a real Obsidian instance running on the **host** over the Chrome DevTools Protocol, for inspecting this plugin's UI and behaviour.
@@ -30,3 +36,8 @@ This repo ships a project MCP server (`chrome-devtools-obsidian` in `.mcp.json`)
 
 - Use the `chrome-devtools-obsidian` MCP tools to inspect Obsidian — **not** the global chrome-devtools plugin, which launches its own headless Chrome.
 - If those tools can't connect, the host bridge (Obsidian + socat) is down. Ask the human to start it — you cannot run host-side commands yourself.
+
+### Driving the UI (learned)
+
+- The default `take_snapshot` omits the file-explorer tree — use `verbose: true` to get folder/file nodes.
+- The header breadcrumb and the explorer both expose the folder name; clicking the breadcrumb only selects — click the explorer node to expand/open.
