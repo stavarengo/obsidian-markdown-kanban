@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "chrome-devtools-obsidian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--browser-url=http://172.17.0.1:9222"
+      ]
+    }
+  }
+}
