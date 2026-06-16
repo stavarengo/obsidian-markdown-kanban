@@ -48,6 +48,49 @@ describe("buildBoard", () => {
       card("B", { status: "todo" }, ["A"]), // A<->B cycle: neither has a real top-level root
     ]);
     expect(b.columns.todo.sort()).toEqual(["Tasks/A.md", "Tasks/B.md"]); // nothing vanishes
+    // A cycle has no genuine parentage, so neither card is anyone's nested child — childrenOf is
+    // empty for both. (Otherwise each would render doubly: top-level AND nested under the other.)
+    expect(b.childrenOf["Tasks/A.md"]).toBeUndefined();
+    expect(b.childrenOf["Tasks/B.md"]).toBeUndefined();
+  });
+});
+
+describe("childrenOf (nested subcard rendering)", () => {
+  it("inverts parentOf into ordered children, ordered by order then basename", () => {
+    const b = buildBoard(config, [
+      card("Parent", { status: "todo" }, ["Zeta", "Yankee", "Echo"]),
+      card("Zeta", { status: "todo" }), // unordered -> sorted alphabetically after ordered ones
+      card("Yankee", { status: "todo", order: 2 }),
+      card("Echo", { status: "todo", order: 1 }),
+    ]);
+    // Echo (order 1) then Yankee (order 2) then the unordered Zeta — same ranking columns use.
+    expect(b.childrenOf["Tasks/Parent.md"]).toEqual(["Tasks/Echo.md", "Tasks/Yankee.md", "Tasks/Zeta.md"]);
+  });
+
+  it("nests a grandchild under its parent and keeps it out of every column", () => {
+    const b = buildBoard(config, [
+      card("Root", { status: "todo" }, ["Mid"]),
+      card("Mid", { status: "doing" }, ["Leaf"]),
+      card("Leaf", { status: "done" }),
+    ]);
+    // Only Root is top-level; Mid and Leaf are nested at depth 1 and 2.
+    expect(b.columns.todo).toEqual(["Tasks/Root.md"]);
+    expect(b.columns.doing).toEqual([]);
+    expect(b.columns.done).toEqual([]);
+    // The full chain is reachable via childrenOf so recursive rendering surfaces every card once.
+    expect(b.childrenOf["Tasks/Root.md"]).toEqual(["Tasks/Mid.md"]);
+    expect(b.childrenOf["Tasks/Mid.md"]).toEqual(["Tasks/Leaf.md"]);
+  });
+
+  it("does not infinite-loop on a cycle and leaves its members childless", () => {
+    // A->B->C->A. buildBoard returns without hanging; cycle members have no genuine parent.
+    const b = buildBoard(config, [
+      card("A", { status: "todo" }, ["B"]),
+      card("B", { status: "todo" }, ["C"]),
+      card("C", { status: "todo" }, ["A"]),
+    ]);
+    expect(b.columns.todo.sort()).toEqual(["Tasks/A.md", "Tasks/B.md", "Tasks/C.md"]);
+    expect(Object.keys(b.childrenOf)).toEqual([]);
   });
 });
 

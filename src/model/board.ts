@@ -101,7 +101,21 @@ export function buildBoard(config: BoardConfig, cards: Card[]): Board {
     columns[col.id] = columnEffectiveOrders(groups[col.id]).map((x) => x.card.path);
   }
 
-  return { config, columns, cards: cardsByPath, parentOf };
+  // Inverse of parentOf, but ONLY for genuinely-nested children — so a card in an A<->B cycle
+  // (which parentOf links both ways) is excluded here. That keeps childrenOf a forest: cycle
+  // members surface only as top-level cards, never doubly as a nested child of each other.
+  const childGroups: Record<string, Card[]> = {};
+  for (const c of cards) {
+    const parent = parentOf[c.path];
+    if (!parent || !isGenuinelyNested(c.path, parentOf)) continue;
+    (childGroups[parent] ??= []).push(c);
+  }
+  const childrenOf: Record<string, string[]> = {};
+  for (const parent in childGroups) {
+    childrenOf[parent] = columnEffectiveOrders(childGroups[parent]).map((x) => x.card.path);
+  }
+
+  return { config, columns, cards: cardsByPath, parentOf, childrenOf };
 }
 
 // ---------------------------------------------------------------------------

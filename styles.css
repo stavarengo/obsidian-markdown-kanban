@@ -596,6 +596,49 @@
   padding-right: 92px;
 }
 
+/* ------------------------------------------------------------ subcard groups
+   A top-level card and its nested subtree share one .mdkb-card-tree slot in the column. Children
+   sit in a bordered, indented .mdkb-subcard-group so they read as "these belong to the card above"
+   (Jira-style). The group draws the left accent + inset; nested cards stay denser and own-border-less
+   so the group frame carries the grouping. Deep nesting indents only via the small group padding,
+   so it never runs away across the column width. */
+.mdkb-card-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mdkb-subcard-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 10px;
+  padding: 6px 0 6px 8px;
+  border-left: 2px solid color-mix(in srgb, var(--mdkb-col-accent, var(--mdkb-accent)) 55%, transparent);
+  background: color-mix(in srgb, var(--mdkb-col-accent, var(--mdkb-accent)) 5%, transparent);
+  border-radius: 0 var(--mdkb-r-sm) var(--mdkb-r-sm) 0;
+}
+.mdkb-subcard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* Nested cards are a touch smaller/denser and shed their own grab affordance. */
+.mdkb-card--nested {
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--mdkb-border) 80%, transparent);
+}
+.mdkb-card--nested .mdkb-card-main {
+  cursor: default;
+  gap: 5px;
+  padding: 7px 10px;
+}
+.mdkb-card--nested .mdkb-card-main:active {
+  cursor: default;
+}
+.mdkb-card--nested .mdkb-card-title {
+  font-size: 12.5px;
+}
+
 /* drag overlay (the lifted ghost) */
 .mdkb-card-overlay {
   cursor: grabbing;

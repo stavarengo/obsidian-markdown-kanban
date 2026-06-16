@@ -8,6 +8,40 @@ import { Icon } from "./icons";
 import { useBoardActions, useSettings } from "./context";
 import { cardMatches, hasActiveFilter, type BoardFilters } from "./cardView";
 
+// Render a card's subtree of genuinely-nested children as a bordered group. Recursive: each child
+// renders a nested (non-sortable) CardItem and then, if it has its own children, its own group.
+// buildBoard excludes ALL nested cards (any depth) from columns, so rendering the FULL subtree here
+// is what keeps grandchildren from vanishing. `seen` guards against any cycle slipping through.
+function SubcardGroup({
+  parentPath,
+  board,
+  today,
+  selectedPath,
+  seen,
+}: {
+  parentPath: string;
+  board: Board;
+  today: string;
+  selectedPath: string | null;
+  seen: ReadonlySet<string>;
+}) {
+  const children = (board.childrenOf[parentPath] ?? []).filter((p) => board.cards[p] && !seen.has(p));
+  if (children.length === 0) return null;
+  return (
+    <div className="mdkb-subcard-group">
+      {children.map((p) => {
+        const next = new Set(seen).add(p);
+        return (
+          <div key={p} className="mdkb-subcard">
+            <CardItem card={board.cards[p]} today={today} selected={p === selectedPath} nested />
+            <SubcardGroup parentPath={p} board={board} today={today} selectedPath={selectedPath} seen={next} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Stable per-column accent when the board hasn't assigned a color, so even a plain
 // `columns: [todo, doing, done]` board reads as colour-coded (easier to scan at a glance).
 const COLUMN_PALETTE = ["#4c9aff", "#8fd14f", "#ffab00", "#9c8cff", "#ff5c5c", "#57d9a3", "#f78fb3", "#9aa0a6"];
@@ -106,7 +140,10 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
       <div ref={setNodeRef} className={"mdkb-column-body" + (isOver ? " is-over" : "")}>
         <SortableContext items={paths} strategy={verticalListSortingStrategy}>
           {paths.map((p) => (
-            <CardItem key={p} card={board.cards[p]} today={today} selected={p === selectedPath} />
+            <div key={p} className="mdkb-card-tree">
+              <CardItem card={board.cards[p]} today={today} selected={p === selectedPath} />
+              <SubcardGroup parentPath={p} board={board} today={today} selectedPath={selectedPath} seen={new Set([p])} />
+            </div>
           ))}
         </SortableContext>
         {paths.length === 0 && !adding && (

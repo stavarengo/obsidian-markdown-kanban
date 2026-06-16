@@ -11,15 +11,21 @@ interface Props {
   card: Card;
   today: string;
   selected: boolean;
+  /** A nested subcard rendered inside its parent's `.mdkb-subcard-group`: not drag-reorderable,
+   *  rendered without a drag affordance, but keeps click/keyboard open and the context menu. */
+  nested?: boolean;
 }
 
-function CardItemInner({ card, today, selected }: Props) {
+function CardItemInner({ card, today, selected, nested = false }: Props) {
   const actions = useBoardActions();
   const { cardNextTodos } = useSettings();
   const [confirming, setConfirming] = useState(false);
   const [menu, setMenu] = useState<ContextTarget | null>(null);
+  // Hooks can't be conditional, so always call useSortable — but disable it for nested children so
+  // they aren't draggable and aren't registered as drop targets in the parent's SortableContext.
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.path,
+    disabled: nested,
   });
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
@@ -64,7 +70,12 @@ function CardItemInner({ card, today, selected }: Props) {
     <div
       ref={setNodeRef}
       style={style}
-      className={"mdkb-card" + (selected ? " is-selected" : "") + (isDragging ? " is-dragging" : "")}
+      className={
+        "mdkb-card" +
+        (nested ? " mdkb-card--nested" : "") +
+        (selected ? " is-selected" : "") +
+        (isDragging ? " is-dragging" : "")
+      }
       data-testid="card"
       data-path={card.path}
       data-prio={prio ?? undefined}
@@ -72,8 +83,10 @@ function CardItemInner({ card, today, selected }: Props) {
     >
       <div
         className="mdkb-card-main"
-        {...attributes}
-        {...listeners}
+        // Nested cards aren't draggable: skip the drag listeners/attributes (which also supply
+        // tabIndex/role), and restore keyboard reachability + open semantics explicitly.
+        {...(nested ? { tabIndex: 0, role: "button" } : attributes)}
+        {...(nested ? {} : listeners)}
         onClick={open}
         onKeyDown={onKeyDown}
         aria-label={card.basename}
@@ -239,6 +252,7 @@ export const CardItem = memo(
   CardItemInner,
   (a, b) =>
     a.selected === b.selected &&
+    a.nested === b.nested &&
     a.today === b.today &&
     a.card.path === b.card.path &&
     a.card.basename === b.card.basename &&

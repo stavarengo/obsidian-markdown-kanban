@@ -99,4 +99,6 @@ export interface Board {
   cards: Record<string, Card>;
   /** path -> parent path (only for subcards). */
   parentOf: Record<string, string>;
+  /** parent path -> ordered child paths; subcards are rendered nested, not in columns. */
+  childrenOf: Record<string, string[]>;
 }

@@ -38,11 +38,43 @@ describe("board rendering", () => {
 
     const todoCol = screen.getByText("Todo").closest("section") as HTMLElement;
     expect(within(todoCol).getByText("Alpha")).toBeInTheDocument();
-    expect(within(todoCol).queryByText("Beta")).not.toBeInTheDocument(); // Beta is a subcard
-    expect(within(todoCol).getByTitle("1 cards")).toHaveTextContent("1"); // count
+    // Beta is a subcard: it renders nested under Alpha (not standalone) and doesn't bump the count.
+    expect(within(todoCol).getByText("Beta").closest(".mdkb-card")).toHaveClass("mdkb-card--nested");
+    expect(within(todoCol).getByTitle("1 cards")).toHaveTextContent("1"); // count = top-level only
 
     const doingCol = screen.getByText("Doing").closest("section") as HTMLElement;
     expect(within(doingCol).getByText("Gamma")).toBeInTheDocument();
+  });
+
+  it("nests a subcard in a .mdkb-subcard-group under its parent, not as a standalone card", async () => {
+    render_(makeRepo());
+    const alphaTree = (await screen.findByText("Alpha")).closest(".mdkb-card-tree") as HTMLElement;
+    const group = alphaTree.querySelector(".mdkb-subcard-group") as HTMLElement;
+    expect(group).not.toBeNull();
+    // Beta renders inside the group as a nested card...
+    const beta = within(group).getByText("Beta").closest(".mdkb-card") as HTMLElement;
+    expect(beta).toHaveClass("mdkb-card--nested");
+    // ...and is the only place Beta appears — not as a top-level card in any column.
+    const todoCol = screen.getByText("Todo").closest("section") as HTMLElement;
+    const betaCards = within(todoCol).getAllByText("Beta");
+    expect(betaCards).toHaveLength(1);
+    expect(betaCards[0].closest(".mdkb-card-tree > .mdkb-card")).toBeNull();
+  });
+
+  it("renders a grandchild recursively so a 2-level subtree never vanishes", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/Root.md": { fm: { type: "task", status: "todo" }, body: "\n# Root\n\n## Subtasks\n- [ ] [[Mid]]\n" },
+      "Tasks/Mid.md": { fm: { type: "task", status: "doing" }, body: "\n# Mid\n\n## Subtasks\n- [ ] [[Leaf]]\n" },
+      "Tasks/Leaf.md": { fm: { type: "task", status: "done" }, body: "\n# Leaf\n" },
+    });
+    render_(repo);
+    const tree = (await screen.findByText("Root")).closest(".mdkb-card-tree") as HTMLElement;
+    // Mid nested under Root, Leaf nested under Mid — both present despite their own statuses.
+    expect(within(tree).getByText("Mid")).toBeInTheDocument();
+    expect(within(tree).getByText("Leaf")).toBeInTheDocument();
+    // Neither Mid (doing) nor Leaf (done) leaks into its own status column.
+    expect(within(screen.getByText("Doing").closest("section") as HTMLElement).queryByText("Mid")).toBeNull();
+    expect(within(screen.getByText("Done").closest("section") as HTMLElement).queryByText("Leaf")).toBeNull();
   });
 
   it("shows chips and subtask/subcard/comment stats on a card", async () => {
