@@ -114,21 +114,179 @@ export function hasActiveFilter(f: BoardFilters): boolean {
   return f.text.trim() !== "" || f.due !== "";
 }
 
-/** Pure predicate: does a card pass the current search text + due filter? */
+// ---------------------------------------------------------------------------
+// Filter grammar — a reusable string-query language shared by the search toolbar
+// (#9) and area-scoped / auto-populated columns (#1).
+//
+// A query is a space-separated list of terms. A term is either a `key:value` token
+// (area:, status:, priority:, tag:, due:, context:) or free text. Free text is matched
+// case-insensitively against a card's basename + priority + tags (a Card has no body
+// text at board level, so "free text" means title/priority/tags). Use "double quotes"
+// to allow spaces in a value or a free-text phrase. All terms AND together; an empty
+// query matches every card. The grammar never throws — unknown keys fall back to free text.
+// ---------------------------------------------------------------------------
+
+/** Token keys the grammar understands. Free text is held separately. */
+export type FilterKey = "area" | "status" | "priority" | "tag" | "due" | "context";
+
+const FILTER_KEYS: readonly FilterKey[] = ["area", "status", "priority", "tag", "due", "context"];
+
+/** Recognized `due:` values. A bare YYYY-MM-DD date is also accepted (exact match). */
+export type DueToken = "overdue" | "soon" | "today" | "none";
+
+export interface FilterToken {
+  key: FilterKey;
+  /** Lower-cased value as written after the colon. */
+  value: string;
+}
+
+export interface Filter {
+  /** Free-text terms (lower-cased); each must be found in the haystack. */
+  text: string[];
+  /** `key:value` tokens, ANDed together. */
+  tokens: FilterToken[];
+}
+
+/** Extra context the matcher needs that isn't on the card (for `due:` urgency). */
+export interface MatchContext {
+  /** Today as YYYY-MM-DD. */
+  today: string;
+  /** Resolved id of the board's "done" column, or null. */
+  doneColumnId: string | null;
+}
+
+export const EMPTY_FILTER: Filter = { text: [], tokens: [] };
+
+function isFilterKey(s: string): s is FilterKey {
+  return (FILTER_KEYS as readonly string[]).includes(s);
+}
+
+/**
+ * Split a query into terms, honoring "double quotes" so a value (or a free-text phrase) can
+ * contain spaces. A quoted run may carry a `key:` prefix glued to it (`area:"garden prep"`),
+ * which is kept attached so the whole thing parses as one `key:value` token. Quotes are stripped
+ * from the value; the optional key prefix is preserved.
+ */
+function tokenizeQuery(query: string): string[] {
+  const out: string[] = [];
+  // Either: an optional non-space prefix immediately before a "quoted run"; or an unquoted run.
+  const re = /(\S*?)"([^"]*)"|(\S+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(query)) !== null) {
+    if (m[2] !== undefined) out.push(m[1] + m[2]); // prefix (maybe "key:") + unquoted value
+    else out.push(m[3]);
+  }
+  return out;
+}
+
+/** Parse a query string into a structured Filter. Never throws. */
+export function parseFilter(query: string): Filter {
+  const text: string[] = [];
+  const tokens: FilterToken[] = [];
+  for (const term of tokenizeQuery(query)) {
+    const colon = term.indexOf(":");
+    if (colon > 0) {
+      const rawKey = term.slice(0, colon).toLowerCase();
+      const value = term.slice(colon + 1).trim().toLowerCase();
+      if (isFilterKey(rawKey) && value !== "") {
+        tokens.push({ key: rawKey, value });
+        continue;
+      }
+    }
+    const t = term.trim().toLowerCase();
+    if (t !== "") text.push(t);
+  }
+  return { text, tokens };
+}
+
+/** True when the filter has no terms (matches everything). */
+export function isEmptyFilter(f: Filter): boolean {
+  return f.text.length === 0 && f.tokens.length === 0;
+}
+
+/** Lower-cased free-text haystack: basename + priority + tags (area + tags). */
+function freeTextHaystack(card: Card): string {
+  return [card.basename, String(card.frontmatter.priority ?? ""), ...tagValues(card)].join(" ").toLowerCase();
+}
+
+/** All lower-cased entries of a frontmatter value that may be a string or string[]. */
+function listValues(value: unknown): string[] {
+  if (typeof value === "string") return value ? [value.toLowerCase()] : [];
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string").map((v) => v.toLowerCase());
+  return [];
+}
+
+/**
+ * `due:` matching. Delegates to `dueInfo` so urgency buckets stay identical to the chip and
+ * the legacy filter (done cards are never "overdue"). `soon` is cumulative (soon-or-sooner);
+ * `today`/`overdue` are exact; `none` = no due date; an explicit YYYY-MM-DD matches that date.
+ */
+function matchDue(card: Card, value: string, ctx: MatchContext): boolean {
+  const due = card.frontmatter.due;
+  const has = typeof due === "string" && due !== "";
+  if (value === "none") return !has;
+  if (!has) return false;
+  const u = dueInfo(due, ctx.today, card.frontmatter.status === ctx.doneColumnId).urgency;
+  switch (value) {
+    case "overdue":
+      return u === "overdue";
+    case "today":
+      return u === "today";
+    case "soon":
+      return u === "overdue" || u === "today" || u === "soon";
+    default:
+      return due.toLowerCase() === value;
+  }
+}
+
+function matchToken(card: Card, token: FilterToken, ctx: MatchContext): boolean {
+  const fm = card.frontmatter;
+  switch (token.key) {
+    case "area":
+      return String(fm.area ?? "").toLowerCase() === token.value;
+    case "status":
+      return String(fm.status ?? "").toLowerCase() === token.value;
+    case "priority":
+      return String(fm.priority ?? "").toLowerCase() === token.value;
+    case "tag":
+      return tagValues(card).some((t) => t.toLowerCase() === token.value);
+    case "context":
+      // #14: a card's context comes from its `context` frontmatter (string | string[]);
+      // the context-folder feature later derives + writes that same field.
+      return listValues(fm.context).includes(token.value);
+    case "due":
+      return matchDue(card, token.value, ctx);
+  }
+}
+
+/** Pure predicate: does a card satisfy every term of the parsed filter? */
+export function matchCard(card: Card, filter: Filter, ctx: MatchContext): boolean {
+  if (filter.text.length) {
+    const hay = freeTextHaystack(card);
+    for (const t of filter.text) if (!hay.includes(t)) return false;
+  }
+  for (const token of filter.tokens) if (!matchToken(card, token, ctx)) return false;
+  return true;
+}
+
+/** Convenience: parse + match in one call (e.g. a one-off area-scoped column rule). */
+export function matchQuery(card: Card, query: string, ctx: MatchContext): boolean {
+  return matchCard(card, parseFilter(query), ctx);
+}
+
+/**
+ * Pure predicate: does a card pass the legacy search text + due filter?
+ * Preserved as a thin superset over `matchCard`. The legacy `text` is treated as ONE free-text
+ * term (it is NOT re-parsed through `parseFilter`, so a colon in the search box keeps matching
+ * literally instead of becoming a token). The `due` field maps to a `due:` token.
+ */
 export function cardMatches(card: Card, today: string, f: BoardFilters, doneColumnId: string | null): boolean {
   const q = f.text.trim().toLowerCase();
-  if (q) {
-    const hay = [card.basename, String(card.frontmatter.priority ?? ""), ...tagValues(card)].join(" ").toLowerCase();
-    if (!hay.includes(q)) return false;
-  }
-  if (f.due) {
-    const due = card.frontmatter.due;
-    if (typeof due !== "string" || !due) return false;
-    const u = dueInfo(due, today, card.frontmatter.status === doneColumnId).urgency;
-    if (f.due === "overdue" && u !== "overdue") return false;
-    if (f.due === "soon" && u !== "overdue" && u !== "today" && u !== "soon") return false;
-  }
-  return true;
+  const filter: Filter = {
+    text: q ? [q] : [],
+    tokens: f.due ? [{ key: "due", value: f.due }] : [],
+  };
+  return matchCard(card, filter, { today, doneColumnId });
 }
 
 export function cardChips(card: Card, today: string, doneColumnId: string | null): CardChip[] {

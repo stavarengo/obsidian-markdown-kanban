@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { priorityTone, dueInfo, cardMatches } from "../src/ui/cardView";
+import {
+  priorityTone,
+  dueInfo,
+  cardMatches,
+  parseFilter,
+  matchCard,
+  matchQuery,
+  isEmptyFilter,
+  EMPTY_FILTER,
+} from "../src/ui/cardView";
 import { dateOnly, stamp } from "../src/model/dates";
 import type { Card } from "../src/model/types";
 
@@ -67,6 +76,128 @@ describe("cardMatches", () => {
     const finished = card({ due: "2026-06-10", status: "completed" });
     expect(cardMatches(finished, today, { text: "", due: "overdue" }, "completed")).toBe(false);
     expect(cardMatches(finished, today, { text: "", due: "overdue" }, "done")).toBe(true); // wrong done col → treated as overdue
+  });
+});
+
+describe("parseFilter", () => {
+  it("parses the empty/whitespace query to the empty filter", () => {
+    expect(parseFilter("")).toEqual({ text: [], tokens: [] });
+    expect(parseFilter("   ")).toEqual({ text: [], tokens: [] });
+    expect(isEmptyFilter(parseFilter(""))).toBe(true);
+    expect(isEmptyFilter(EMPTY_FILTER)).toBe(true);
+  });
+
+  it("splits free text into lower-cased terms", () => {
+    expect(parseFilter("Buy Milk")).toEqual({ text: ["buy", "milk"], tokens: [] });
+  });
+
+  it("recognizes every key:value token and lower-cases the value", () => {
+    const f = parseFilter("area:Research status:Todo priority:A tag:Home due:Soon context:Acme");
+    expect(f.text).toEqual([]);
+    expect(f.tokens).toEqual([
+      { key: "area", value: "research" },
+      { key: "status", value: "todo" },
+      { key: "priority", value: "a" },
+      { key: "tag", value: "home" },
+      { key: "due", value: "soon" },
+      { key: "context", value: "acme" },
+    ]);
+  });
+
+  it("treats an unknown key:value as free text (not a token)", () => {
+    expect(parseFilter("foo:bar")).toEqual({ text: ["foo:bar"], tokens: [] });
+  });
+
+  it("mixes free text and tokens", () => {
+    const f = parseFilter("urgent area:garden-prep");
+    expect(f.text).toEqual(["urgent"]);
+    expect(f.tokens).toEqual([{ key: "area", value: "garden-prep" }]);
+  });
+
+  it('honors "double quotes" for values and phrases with spaces', () => {
+    expect(parseFilter('area:"garden prep"')).toEqual({ text: [], tokens: [{ key: "area", value: "garden prep" }] });
+    expect(parseFilter('"buy milk"')).toEqual({ text: ["buy milk"], tokens: [] });
+  });
+
+  it("ignores a token with an empty value (treats as nothing usable)", () => {
+    expect(parseFilter("area:")).toEqual({ text: ["area:"], tokens: [] });
+  });
+});
+
+describe("matchCard", () => {
+  const ctx = { today: "2026-06-16", doneColumnId: "done" as string | null };
+  it("matches everything for the empty filter", () => {
+    expect(matchCard(card({}), EMPTY_FILTER, ctx)).toBe(true);
+  });
+
+  it("free text matches basename, priority and tags; ANDs multiple terms", () => {
+    const c = card({ priority: "high", area: "garden-prep", tags: ["remote"] }, "Apply the mulch");
+    expect(matchCard(c, parseFilter("apply"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("high"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("remote"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("apply remote"), ctx)).toBe(true); // both present → AND ok
+    expect(matchCard(c, parseFilter("apply nope"), ctx)).toBe(false); // one missing → AND fails
+  });
+
+  it("area/status/priority tokens are exact, case-insensitive equals", () => {
+    const c = card({ area: "research", status: "todo", priority: "A" });
+    expect(matchCard(c, parseFilter("area:Research"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("area:pi"), ctx)).toBe(false); // not a prefix match
+    expect(matchCard(c, parseFilter("status:todo"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("priority:a"), ctx)).toBe(true);
+  });
+
+  it("tag token matches area or any of the tags", () => {
+    const c = card({ area: "ops", tags: ["red", "blue"] });
+    expect(matchCard(c, parseFilter("tag:ops"), ctx)).toBe(true); // area surfaces as a tag
+    expect(matchCard(c, parseFilter("tag:blue"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("tag:green"), ctx)).toBe(false);
+  });
+
+  it("context token reads the card's context frontmatter (string or array)", () => {
+    expect(matchCard(card({ context: "acme" }), parseFilter("context:acme"), ctx)).toBe(true);
+    expect(matchCard(card({ context: ["acme", "beta"] }), parseFilter("context:beta"), ctx)).toBe(true);
+    expect(matchCard(card({ context: ["acme"] }), parseFilter("context:none"), ctx)).toBe(false);
+    expect(matchCard(card({}), parseFilter("context:acme"), ctx)).toBe(false);
+  });
+
+  it("due token: overdue/today/soon buckets, none, and exact date", () => {
+    const overdue = card({ due: "2026-06-10" });
+    const today = card({ due: "2026-06-16" });
+    const soon = card({ due: "2026-06-18" });
+    const far = card({ due: "2026-08-01" });
+    const noDue = card({});
+    expect(matchCard(overdue, parseFilter("due:overdue"), ctx)).toBe(true);
+    expect(matchCard(today, parseFilter("due:overdue"), ctx)).toBe(false);
+    expect(matchCard(today, parseFilter("due:today"), ctx)).toBe(true);
+    // soon is cumulative: soon-or-sooner
+    expect(matchCard(overdue, parseFilter("due:soon"), ctx)).toBe(true);
+    expect(matchCard(today, parseFilter("due:soon"), ctx)).toBe(true);
+    expect(matchCard(soon, parseFilter("due:soon"), ctx)).toBe(true);
+    expect(matchCard(far, parseFilter("due:soon"), ctx)).toBe(false);
+    expect(matchCard(noDue, parseFilter("due:soon"), ctx)).toBe(false);
+    // none = no due date
+    expect(matchCard(noDue, parseFilter("due:none"), ctx)).toBe(true);
+    expect(matchCard(overdue, parseFilter("due:none"), ctx)).toBe(false);
+    // exact date
+    expect(matchCard(overdue, parseFilter("due:2026-06-10"), ctx)).toBe(true);
+    expect(matchCard(overdue, parseFilter("due:2026-06-11"), ctx)).toBe(false);
+  });
+
+  it("a done card is never overdue (delegates to dueInfo with the resolved done column)", () => {
+    const finished = card({ due: "2026-06-10", status: "completed" });
+    expect(matchCard(finished, parseFilter("due:overdue"), { today: "2026-06-16", doneColumnId: "completed" })).toBe(false);
+    expect(matchCard(finished, parseFilter("due:overdue"), { today: "2026-06-16", doneColumnId: "done" })).toBe(true);
+  });
+
+  it("ANDs tokens with free text", () => {
+    const c = card({ area: "research", status: "todo" }, "Fix the bug");
+    expect(matchCard(c, parseFilter("fix area:research status:todo"), ctx)).toBe(true);
+    expect(matchCard(c, parseFilter("fix area:research status:doing"), ctx)).toBe(false);
+  });
+
+  it("matchQuery parses + matches in one call", () => {
+    expect(matchQuery(card({ area: "research" }), "area:research", ctx)).toBe(true);
   });
 });
 

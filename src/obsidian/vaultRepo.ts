@@ -2,6 +2,7 @@ import { App, Component, MarkdownRenderer, TFile, normalizePath } from "obsidian
 import type { Board, BoardConfig, Card, CardBody, CardFrontmatter, ColumnDef, HistoryScope } from "../model/types";
 import type { CardMutation } from "../model/board";
 import { buildBoard } from "../model/board";
+import { normalizeColumns, serializeColumns } from "../model/columns";
 import { dateOnly, stamp } from "../model/dates";
 import {
   SECTION,
@@ -33,42 +34,6 @@ import {
   subtaskRemovedLine,
 } from "../model/history";
 import type { CardRepository } from "./repo";
-
-const DEFAULT_COLUMNS: ColumnDef[] = [
-  { id: "todo", title: "Todo" },
-  { id: "next", title: "Next" },
-  { id: "doing", title: "Doing" },
-  { id: "waiting", title: "Waiting" },
-  { id: "parked", title: "Parked" },
-  { id: "later", title: "Later" },
-  { id: "done", title: "Done" },
-];
-
-function titleCase(id: string): string {
-  return id.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function normalizeColumns(raw: unknown): ColumnDef[] {
-  if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_COLUMNS;
-  const cols: ColumnDef[] = [];
-  for (const c of raw) {
-    if (typeof c === "string") {
-      if (c.trim()) cols.push({ id: c, title: titleCase(c) });
-      continue;
-    }
-    if (c === null || typeof c !== "object") continue; // skip null / number / other malformed entries
-    const obj = c as { id?: unknown; title?: unknown; color?: unknown; limit?: unknown };
-    if (obj.id == null || String(obj.id).trim() === "") continue; // a column needs a usable id
-    const col: ColumnDef = {
-      id: String(obj.id),
-      title: typeof obj.title === "string" && obj.title ? obj.title : titleCase(String(obj.id)),
-    };
-    if (typeof obj.color === "string") col.color = obj.color;
-    if (typeof obj.limit === "number" && Number.isFinite(obj.limit)) col.limit = obj.limit;
-    cols.push(col);
-  }
-  return cols.length ? cols : DEFAULT_COLUMNS;
-}
 
 function sanitizeFilename(title: string): string {
   return title.replace(/[\\/:*?"<>|#^[\]]/g, "").replace(/\s+/g, " ").trim() || "Untitled card";
@@ -252,12 +217,7 @@ export class VaultRepository implements CardRepository {
   async setColumns(columns: ColumnDef[]): Promise<void> {
     this.markWrite(this.boardPath);
     await this.app.fileManager.processFrontMatter(this.file(this.boardPath), (fm) => {
-      fm["columns"] = columns.map((c) => {
-        const out: Record<string, unknown> = { id: c.id, title: c.title };
-        if (c.color) out.color = c.color;
-        if (typeof c.limit === "number") out.limit = c.limit;
-        return out;
-      });
+      fm["columns"] = serializeColumns(columns);
     });
   }
 

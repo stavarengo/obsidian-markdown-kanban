@@ -75,12 +75,38 @@ export interface Card {
   stats?: CardStats;
 }
 
+/** How cards inside a column are grouped before rendering (#6). `none` = no grouping. */
+export type ColumnGroup = "none" | "due";
+
+/** How cards inside a (group of a) column are ordered (#6). `manual` = the board's fractional order. */
+export type ColumnSort = "manual" | "priority" | "due";
+
 export interface ColumnDef {
   id: string;
   title: string;
   color?: string;
   /** Soft work-in-progress limit. The board nudges (does not block) when exceeded. */
   limit?: number;
+  /**
+   * Auto-population rule for the column (#1). A filter-grammar query string (see cardView
+   * `parseFilter`/`matchCard`), e.g. `"area:research status:todo"`. When set, the render layer shows
+   * only matching cards. Absent = the column shows whatever has its `status` (current behavior).
+   */
+  filter?: string;
+  /** Grouping of cards within the column (#6). Default `"none"` = current behavior. */
+  group?: ColumnGroup;
+  /** Sort of cards within the column / its groups (#6). Default `"manual"` = board fractional order. */
+  sort?: ColumnSort;
+  /** Resting opacity 0–1 for de-emphasis (#10). Default `1` (fully opaque). Clamped to [0,1]. */
+  opacity?: number;
+  /** Opacity 0–1 to reveal on hover when the column is faded (#10). Clamped to [0,1]. */
+  hoverOpacity?: number;
+  /**
+   * "Park aside" (#10): when true the render layer shoves the column to the far right with a
+   * large left margin and (typically) fades it, so a rabbit-hole column hides off-screen.
+   * Default `false`.
+   */
+  parked?: boolean;
 }
 
 export interface BoardConfig {
