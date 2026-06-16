@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import type { Board as BoardModel, ColumnDef } from "../model/types";
 import { moveCard, resolveDrop } from "../model/board";
 import { dateOnly } from "../model/dates";
@@ -6,7 +7,7 @@ import type { CardRepository } from "../obsidian/repo";
 import type { KanbanSettings } from "../settings";
 import { BoardActionsContext, RepoContext, SettingsContext, type BoardActions } from "./context";
 import { Board } from "./Board";
-import { CardDetail } from "./CardDetail";
+import { CardDetail, type DetailMode } from "./CardDetail";
 import { Toolbar } from "./Toolbar";
 import { Icon } from "./icons";
 import { cardMatches, EMPTY_FILTERS, type BoardFilters } from "./cardView";
@@ -39,6 +40,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   const [filters, setFilters] = useState<BoardFilters>(EMPTY_FILTERS);
   const [toast, setToast] = useState<{ text: string; tone: "success" | "error" } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const toastTimer = useRef<number | null>(null);
   const todayValue = useMemo(() => today ?? dateOnly(), [today]);
   const settingsValue = useMemo(
@@ -75,6 +77,15 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     const off = repo.onChange(() => void load());
     return off;
   }, [load, repo]);
+
+  // Obsidian's status bar is fixed to the window bottom; reserve clearance so the columns and the
+  // side detail panel don't clip their last content behind it. Measure the real height once the
+  // root is mounted (the first render shows a loading div, so the ref isn't ready until board loads).
+  useEffect(() => {
+    if (!board || !rootRef.current) return;
+    const h = document.querySelector(".status-bar")?.getBoundingClientRect().height ?? 0;
+    rootRef.current.style.setProperty("--mdkb-statusbar-clearance", `${h > 0 ? h + 6 : 32}px`);
+  }, [board]);
 
   const onMove = useCallback(
     async (activeId: string, overId: string) => {
@@ -259,12 +270,26 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   if (error) return <div className="mdkb-error">Couldn’t load the board: {error}</div>;
   if (!board) return <div className="mdkb-loading">Loading board…</div>;
 
+  const detailMode: DetailMode =
+    settings.detailPresentation === "modal" ? "modal" : settings.sidePanelMode === "float" ? "float" : "split";
+  const detailOpen = selected != null && board.cards[selected] != null;
+  const detail = detailOpen ? (
+    <CardDetail
+      path={selected!}
+      board={board}
+      mode={detailMode}
+      onClose={() => setSelected(null)}
+      onNavigate={setSelected}
+      onChanged={load}
+    />
+  ) : null;
+
   return (
     <SettingsContext.Provider value={settingsValue}>
         <RepoContext.Provider value={repo}>
           <BoardActionsContext.Provider value={actions}>
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-            <div className="mdkb-root" onKeyDown={onRootKeyDown}>
+            <div className="mdkb-root" ref={rootRef} onKeyDown={onRootKeyDown}>
               <Toolbar ref={searchRef} filters={filters} onChange={setFilters} matchCount={counts.match} totalCount={counts.total} />
               <div className="mdkb-main">
                 <Board
@@ -277,16 +302,21 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
                   onMove={onMove}
                   onAddCard={onAddCard}
                 />
-                {selected && board.cards[selected] && (
-                  <CardDetail
-                    path={selected}
-                    board={board}
-                    onClose={() => setSelected(null)}
-                    onNavigate={setSelected}
-                    onChanged={load}
-                  />
-                )}
+                {/* Side modes (split/float) render the panel as a sibling; split shrinks the board,
+                    float overlays it. Modal renders via a portal into the root, over a backdrop. */}
+                {detailMode !== "modal" && detail}
               </div>
+              {detailMode === "modal" && detailOpen && rootRef.current &&
+                createPortal(
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+                  <div
+                    className="mdkb-detail-modal-backdrop"
+                    onPointerDown={(e) => { if (e.target === e.currentTarget) setSelected(null); }}
+                  >
+                    {detail}
+                  </div>,
+                  rootRef.current,
+                )}
               {toast && (
                 <div className={"mdkb-toast mdkb-toast-" + toast.tone} role="status" aria-live="polite">
                   <Icon name={toast.tone === "error" ? "alert" : "check-circle"} size={16} />

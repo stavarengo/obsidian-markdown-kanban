@@ -7,6 +7,7 @@ export type IconName =
   | "close"
   | "external-link"
   | "trash"
+  | "pencil"
   | "search"
   | "check"
   | "check-circle"
@@ -34,6 +35,12 @@ const PATHS: Record<IconName, JSX.Element> = {
       <path d="M3 6h18" />
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
       <path d="M10 11v6M14 11v6" />
+    </>
+  ),
+  pencil: (
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
     </>
   ),
   search: (

@@ -14,6 +14,8 @@
   --mdkb-gap: 10px;
   --mdkb-pad: 12px;
   --mdkb-col-w: 300px; /* single source for column width + drag-overlay width */
+  --mdkb-detail-w: 380px; /* side panel width; overridden inline from settings.detailWidth */
+  --mdkb-statusbar-clearance: 32px; /* fallback; App measures the real status bar and sets it live */
 
   /* motion */
   --mdkb-dur-fast: 110ms;
@@ -66,6 +68,7 @@
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
+  position: relative; /* anchor for the float panel + the modal backdrop portal */
 }
 
 /* completion celebration */
@@ -273,6 +276,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 8px;
+  padding-bottom: var(--mdkb-statusbar-clearance); /* last card clears the fixed status bar */
   overflow-y: auto;
   min-height: 48px;
   flex: 1 1 auto;
@@ -772,8 +776,9 @@
 
 /* ------------------------------------------------------------------ detail panel */
 .mdkb-detail {
-  flex: 0 0 380px;
-  width: 380px;
+  position: relative; /* anchors the left-edge resize handle */
+  flex: 0 0 var(--mdkb-detail-w);
+  width: var(--mdkb-detail-w);
   border-left: 1px solid var(--mdkb-border-strong);
   background: var(--mdkb-col-bg);
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
@@ -782,6 +787,46 @@
   flex-direction: column;
   scrollbar-width: thin;
   animation: mdkb-slide-in var(--mdkb-dur) var(--mdkb-ease);
+}
+
+/* Float: panel overlays the columns; the board keeps full width underneath. */
+.mdkb-detail--float {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 55;
+}
+
+/* Modal: centered dialog, sized by CSS (resize/inline width ignored). */
+.mdkb-detail-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+.mdkb-detail--modal {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: min(620px, 92%);
+  max-height: 85vh;
+  border: 1px solid var(--mdkb-border-strong);
+  border-radius: var(--mdkb-r-lg);
+  box-shadow: var(--mdkb-shadow-overlay);
+}
+
+/* Left-border drag handle (side modes only). */
+.mdkb-detail-resize {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 1;
 }
 @keyframes mdkb-slide-in {
   from { transform: translateX(14px); opacity: 0; }
@@ -818,9 +863,14 @@
 }
 .mdkb-detail-body {
   padding: 14px;
+  /* last content (History) clears Obsidian's fixed status bar in side modes; modal is centered. */
+  padding-bottom: calc(14px + var(--mdkb-statusbar-clearance));
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.mdkb-detail--modal .mdkb-detail-body {
+  padding-bottom: 14px;
 }
 .mdkb-fields {
   display: grid;
@@ -854,26 +904,46 @@
 
 .mdkb-props {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
 }
-.mdkb-prop {
-  display: inline-flex;
+.mdkb-prop-row,
+.mdkb-prop-add {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--background-modifier-hover);
+  gap: 8px;
 }
 .mdkb-prop-key {
+  flex: 0 0 86px;
   color: var(--text-faint, var(--text-muted));
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.mdkb-prop-val {
+.mdkb-prop-add .mdkb-prop-input:first-child {
+  flex: 0 0 86px;
+}
+.mdkb-prop-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  background: var(--background-primary);
   color: var(--text-normal);
+  border: 1px solid var(--mdkb-border);
+  border-radius: var(--mdkb-r-sm);
+  padding: 4px 7px;
+  transition: border-color var(--mdkb-dur-fast) ease, box-shadow var(--mdkb-dur-fast) ease;
+}
+.mdkb-prop-input:focus {
+  outline: none;
+  border-color: var(--mdkb-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+}
+.mdkb-prop-add .mdkb-btn {
+  flex: 0 0 auto;
 }
 
 .mdkb-section h3 {
@@ -947,6 +1017,42 @@
   font-size: 13px;
   padding-left: 10px;
   border-left: 2px solid var(--mdkb-border);
+}
+.mdkb-comment-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.mdkb-comment-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* edit/delete affordances stay quiet until the comment is hovered/focused */
+.mdkb-comment-row .mdkb-mini {
+  opacity: 0;
+  transition: opacity var(--mdkb-dur-fast) ease;
+}
+.mdkb-comments li:hover .mdkb-mini,
+.mdkb-comments li:focus-within .mdkb-mini {
+  opacity: 1;
+}
+.mdkb-comment-edit {
+  width: 100%;
+  min-height: 48px;
+  resize: vertical;
+  font: inherit;
+  font-size: 13px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--mdkb-border);
+  border-radius: var(--mdkb-r-sm);
+  padding: 6px 8px;
+}
+.mdkb-comment-edit:focus {
+  outline: none;
+  border-color: var(--mdkb-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
 }
 .mdkb-ts {
   font-size: 10.5px;
