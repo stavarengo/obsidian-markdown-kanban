@@ -148,6 +148,30 @@ export function buildBoard(
 // Drag reducer
 // ---------------------------------------------------------------------------
 
+// A card can be placed in more than one column at once: its status column AND any cross-board lane
+// (#1) whose filter it matches. dnd-kit keys draggables/droppables by id, so two placements sharing a
+// bare `card.path` would collide (last-writer-wins, non-deterministic). We therefore give each
+// PLACEMENT a unique sortable id, namespaced by the column it renders in: `${columnId}::${card.path}`.
+// The separator is the first `::` only — a card path may itself contain `::`, a column id cannot
+// (column ids come from frontmatter keys / titleCase and never include it).
+const CARD_DRAG_SEP = "::";
+
+/** Build the per-placement sortable id for a card rendered in `columnId`. */
+export function makeCardDragId(columnId: string, path: string): string {
+  return columnId + CARD_DRAG_SEP + path;
+}
+
+/**
+ * Parse a per-placement card sortable id back into its column + real card path. Splits on the FIRST
+ * `::` so a path containing `::` survives intact. An un-namespaced id (no separator — e.g. a legacy
+ * or column id passed by mistake) yields an empty `columnId` and the whole string as `path`.
+ */
+export function splitCardDragId(id: string): { columnId: string; path: string } {
+  const i = id.indexOf(CARD_DRAG_SEP);
+  if (i < 0) return { columnId: "", path: id };
+  return { columnId: id.slice(0, i), path: id.slice(i + CARD_DRAG_SEP.length) };
+}
+
 function between(prev: number | null, next: number | null): number {
   if (prev !== null && next !== null) return (prev + next) / 2;
   if (prev !== null) return prev + 1;
@@ -189,6 +213,46 @@ export function moveColumn(columns: ColumnDef[], activeId: string, overId: strin
   const [moved] = next.splice(from, 1);
   next.splice(to, 0, moved);
   return next;
+}
+
+/** A column renders its cards in a COMPUTED order when it groups or sorts non-manually (#6). Manual
+ *  in-column drag-reorder is a no-op there (the order is recomputed every render). */
+export function isComputedOrder(board: Board, columnId: string): boolean {
+  const col = board.config.columns.find((c) => c.id === columnId);
+  if (!col) return false;
+  return (col.group ?? "none") !== "none" || (col.sort ?? "manual") !== "manual";
+}
+
+/** What a dnd-kit drop should do, after parsing namespaced card ids and applying the drag rules. */
+export type DropPlan =
+  | { kind: "reorderColumns"; activeId: string; overId: string }
+  | { kind: "moveCard"; path: string; overId: string }
+  | { kind: "noop" };
+
+/**
+ * Decide what a finished drag should do. Pure + UI-free so the rules are unit-testable.
+ *
+ * Card sortables are namespaced `${columnId}::${card.path}` (#2) so a card placed in both its status
+ * column and a cross-board lane (#1) never collides on a single dnd-kit id. This unwraps the active +
+ * over ids back to bare ids and routes:
+ *  - a bare COLUMN active id → column reorder (#2 header drag);
+ *  - a same-column card drop onto a COMPUTED-order column → no-op (#3: manual reorder is meaningless
+ *    when the order is grouped/sorted; cross-column moves still flow through);
+ *  - otherwise → a card move, with the real path + the real (un-namespaced) over id for resolveDrop.
+ */
+export function planDrop(board: Board, rawActiveId: string, rawOverId: string, columnIds: string[]): DropPlan {
+  if (columnIds.includes(rawActiveId)) {
+    return { kind: "reorderColumns", activeId: rawActiveId, overId: rawOverId };
+  }
+  const { columnId: fromColumn, path: activePath } = splitCardDragId(rawActiveId);
+  const overIsColumn = columnIds.includes(rawOverId);
+  const over = overIsColumn ? null : splitCardDragId(rawOverId);
+  const toColumn = overIsColumn ? rawOverId : over!.columnId;
+  const realOver = overIsColumn ? rawOverId : over!.path;
+  if (toColumn === fromColumn && isComputedOrder(board, toColumn)) {
+    return { kind: "noop" };
+  }
+  return { kind: "moveCard", path: activePath, overId: realOver };
 }
 
 /** Column id that currently contains `path`, or null. */

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Board, ColumnDef } from "../model/types";
+import { makeCardDragId } from "../model/board";
 import { CardItem } from "./CardItem";
 import { ColumnMenu } from "./ColumnMenu";
 import { ColumnEditModal } from "./ColumnEditModal";
@@ -183,9 +184,11 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
     doneColumnId,
   );
 
-  // Flat list of rendered top-level paths in display order — the SortableContext item set (so dnd
-  // sortable identity matches what the user sees, even when grouped/sorted).
-  const orderedPaths = groups.flatMap((g) => g.cards.map((c) => c.path));
+  // Flat list of rendered top-level cards' sortable ids in display order — the SortableContext item
+  // set (so dnd sortable identity matches what the user sees, even when grouped/sorted). Each id is
+  // namespaced by THIS column (`col::path`) so a card mirrored into a cross-board lane (#1) and its
+  // status column register two distinct, non-colliding sortables. CardItem builds the matching id.
+  const orderedDragIds = groups.flatMap((g) => g.cards.map((c) => makeCardDragId(column.id, c.path)));
 
   const count = countPaths.length;
   const overLimit = wipLimit != null && count > wipLimit;
@@ -330,13 +333,13 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
           card dropped anywhere on the column still reports over.id === column.id. `isOver` comes
           from useSortable and still drives the body drop highlight. */}
       <div className={"mdkb-column-body" + (isOver ? " is-over" : "")}>
-        <SortableContext items={orderedPaths} strategy={verticalListSortingStrategy}>
+        <SortableContext items={orderedDragIds} strategy={verticalListSortingStrategy}>
           {groups.map((g) => (
             <div key={g.key || "_"} className="mdkb-card-group" data-group={g.key || undefined}>
               {g.label && <div className="mdkb-card-group-heading">{g.label}</div>}
               {g.cards.map((c) => (
                 <div key={c.path} className="mdkb-card-tree">
-                  <CardItem card={c} today={today} selected={c.path === selectedPath} />
+                  <CardItem card={c} columnId={column.id} today={today} selected={c.path === selectedPath} />
                   <SubcardGroup parentPath={c.path} board={board} today={today} selectedPath={selectedPath} seen={new Set([c.path])} />
                 </div>
               ))}

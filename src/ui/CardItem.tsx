@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card, CardStats } from "../model/types";
+import { makeCardDragId } from "../model/board";
 import { cardChips, cardUrgency, priorityTone } from "./cardView";
 import { CardContextMenu, type ContextTarget } from "./CardContextMenu";
 import { useBoardActions, useContexts, useSettings } from "./context";
@@ -9,6 +10,10 @@ import { Icon } from "./icons";
 
 interface Props {
   card: Card;
+  /** The column this card is rendered in. The sortable id is namespaced `${columnId}::${card.path}`
+   *  so a card mirrored into a cross-board lane (#1) and its status column don't collide on one id.
+   *  Omitted for nested subcards (which are non-draggable). */
+  columnId?: string;
   today: string;
   selected: boolean;
   /** A nested subcard rendered inside its parent's `.mdkb-subcard-group`: not drag-reorderable,
@@ -16,7 +21,7 @@ interface Props {
   nested?: boolean;
 }
 
-function CardItemInner({ card, today, selected, nested = false }: Props) {
+function CardItemInner({ card, columnId, today, selected, nested = false }: Props) {
   const actions = useBoardActions();
   const contexts = useContexts();
   const { cardNextTodos } = useSettings();
@@ -27,13 +32,18 @@ function CardItemInner({ card, today, selected, nested = false }: Props) {
   const titleInputRef = useRef<HTMLInputElement>(null);
   // Hooks can't be conditional, so always call useSortable — but disable it for nested children so
   // they aren't draggable and aren't registered as drop targets in the parent's SortableContext.
+  // Top-level cards use a column-namespaced id (`col::path`) matching the column's SortableContext
+  // items, so the same card appearing in a lane + its status column registers two distinct sortables.
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: card.path,
+    id: nested || columnId == null ? card.path : makeCardDragId(columnId, card.path),
     disabled: nested,
   });
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
+    // The lifted card is rendered by the DragOverlay; the original collapses to a quiet placeholder.
+    // Keep it above settling neighbours so the dashed outline isn't clipped during the drop animation.
+    zIndex: isDragging ? 1 : undefined,
   };
   const chips = cardChips(card, today, actions.doneColumnId);
   const stats = card.stats;
@@ -327,6 +337,7 @@ export const CardItem = memo(
   (a, b) =>
     a.selected === b.selected &&
     a.nested === b.nested &&
+    a.columnId === b.columnId &&
     a.today === b.today &&
     a.card.path === b.card.path &&
     a.card.basename === b.card.basename &&

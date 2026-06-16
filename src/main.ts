@@ -188,5 +188,16 @@ class KanbanSettingTab extends PluginSettingTab {
           .setValue(s.historyScope)
           .onChange((v) => void this.plugin.updateSettings({ historyScope: v as KanbanSettings["historyScope"] })),
       );
+
+    new Setting(containerEl)
+      .setName("Board — horizontal drag")
+      .setDesc("How to pan the board sideways. Shift+drag pans from anywhere (incl. over cards); click and drag pans only from empty board space, leaving cards and columns free. Middle-button drag always pans.")
+      .addDropdown((d) =>
+        d
+          .addOption("shift", "Shift + click and drag")
+          .addOption("empty", "Click and drag (empty space only)")
+          .setValue(s.boardPan)
+          .onChange((v) => void this.plugin.updateSettings({ boardPan: v as KanbanSettings["boardPan"] })),
+      );
   }
 }

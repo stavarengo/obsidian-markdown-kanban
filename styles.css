@@ -202,6 +202,15 @@
   cursor: grabbing;
   user-select: none;
 }
+/* In "click and drag" mode the bare board background is itself draggable to pan, so it advertises a
+   grab cursor. Columns/cards/buttons sit above and keep their own cursors, so the hint only shows on
+   the empty space the pan actually responds to. */
+.mdkb-board[data-pan="empty"] {
+  cursor: grab;
+}
+.mdkb-board[data-pan="empty"].is-pan-scrolling {
+  cursor: grabbing;
+}
 
 .mdkb-column {
   display: flex;
@@ -587,15 +596,28 @@
   border-color: var(--mdkb-accent);
   box-shadow: 0 0 0 1px var(--mdkb-accent), var(--mdkb-shadow-card);
 }
+/* The dragged card stays in flow as a quiet "slot" — the lifted copy lives in the DragOverlay. We
+   hollow the source out (drop its content, shadow and own border) and leave only a dashed accent
+   outline, so the gap reads as "this is where it'll land" rather than a half-faded duplicate. */
 .mdkb-card.is-dragging {
-  opacity: 0.4;
+  opacity: 1;
+  background: color-mix(in srgb, var(--mdkb-accent) 7%, transparent);
+  border-color: transparent;
+  box-shadow: none;
+}
+.mdkb-card.is-dragging > * {
+  opacity: 0;
 }
 .mdkb-card.is-dragging::after {
   content: "";
   position: absolute;
   inset: 0;
-  border: 1px dashed var(--mdkb-accent);
+  border: 1.5px dashed color-mix(in srgb, var(--mdkb-accent) 60%, transparent);
   border-radius: var(--mdkb-r-lg);
+}
+/* The priority strip would otherwise still show on the hollowed slot. */
+.mdkb-card.is-dragging::before {
+  background: transparent;
 }
 
 .mdkb-card-main {
@@ -687,14 +709,38 @@
   font-size: 12.5px;
 }
 
-/* drag overlay (the lifted ghost) */
+/* drag overlay (the lifted ghost) — the card the cursor actually carries. A faint lift (scale + tilt)
+   plus a deep shadow reads as "picked up and floating above the board". */
 .mdkb-card-overlay {
   cursor: grabbing;
   box-shadow: var(--mdkb-shadow-overlay);
   border-color: var(--mdkb-accent);
-  transform: rotate(1.5deg);
+  transform: scale(1.03) rotate(1.5deg);
   /* matches a card's rendered width: column width minus its 1px borders + 8px body padding */
   width: calc(var(--mdkb-col-w) - 18px);
+  /* The lift is the resting state; the drop animation tweens back to the slot from here. */
+  animation: mdkb-card-lift var(--mdkb-dur-fast) var(--mdkb-ease);
+}
+@keyframes mdkb-card-lift {
+  from {
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    transform: scale(1.03) rotate(1.5deg);
+  }
+}
+
+/* Column drag overlay (#1 fix) — the lifted ghost the cursor carries while reordering a column. The
+   source column dims in place (`.mdkb-column.is-dragging`) to read as the drop slot; this header-only
+   ghost (rendered by the DragOverlay) is what actually follows the pointer, mirroring the card lift. */
+.mdkb-column-overlay {
+  width: var(--mdkb-col-w);
+  cursor: grabbing;
+  box-shadow: var(--mdkb-shadow-overlay);
+  border-color: var(--mdkb-col-accent, var(--mdkb-accent));
+  transform: rotate(1.5deg);
+  /* A header-only ghost — no body — so it reads as "this column, picked up" without a tall slab. */
+  overflow: hidden;
 }
 
 /* ------------------------------------------------------------------ chips */
@@ -1499,6 +1545,12 @@
   .mdkb-modal-backdrop,
   .mdkb-toast {
     animation: none !important;
+  }
+  /* The drag overlays still lift (their shadow/outline mark the grab), but without the scale/tilt tween. */
+  .mdkb-card-overlay,
+  .mdkb-column-overlay {
+    animation: none !important;
+    transform: none !important;
   }
 }
 

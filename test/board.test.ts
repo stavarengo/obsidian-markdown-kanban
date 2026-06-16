@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildBoard, columnEffectiveOrders, computeDropOrder, deriveContext, moveCard, moveColumn } from "../src/model/board";
+import { buildBoard, columnEffectiveOrders, computeDropOrder, deriveContext, isComputedOrder, makeCardDragId, moveCard, moveColumn, planDrop, splitCardDragId } from "../src/model/board";
 import type { BoardConfig, Card, ColumnDef } from "../src/model/types";
 
 const config: BoardConfig = {
@@ -235,5 +235,101 @@ describe("moveColumn", () => {
       { id: "b", title: "B" },
       { id: "a", title: "A", color: "#fff", limit: 3 },
     ]);
+  });
+});
+
+describe("card drag id namespacing (#2 — cross-board lane duplicate-id fix)", () => {
+  it("round-trips a plain column + path", () => {
+    const id = makeCardDragId("todo", "Tasks/Foo.md");
+    expect(id).toBe("todo::Tasks/Foo.md");
+    expect(splitCardDragId(id)).toEqual({ columnId: "todo", path: "Tasks/Foo.md" });
+  });
+
+  it("gives a card mirrored in two columns two distinct ids that parse to the same path", () => {
+    const inStatus = makeCardDragId("todo", "Tasks/Research.md");
+    const inLane = makeCardDragId("research", "Tasks/Research.md");
+    expect(inStatus).not.toBe(inLane); // distinct sortable ids → no dnd-kit collision
+    expect(splitCardDragId(inStatus).path).toBe("Tasks/Research.md");
+    expect(splitCardDragId(inLane).path).toBe("Tasks/Research.md"); // both resolve to the real card
+    expect(splitCardDragId(inStatus).columnId).toBe("todo");
+    expect(splitCardDragId(inLane).columnId).toBe("research");
+  });
+
+  it("splits on the FIRST separator so a path containing '::' survives", () => {
+    const id = makeCardDragId("todo", "Tasks/Weird::Name.md");
+    expect(splitCardDragId(id)).toEqual({ columnId: "todo", path: "Tasks/Weird::Name.md" });
+  });
+
+  it("treats an un-namespaced id as a bare path (empty column)", () => {
+    expect(splitCardDragId("Tasks/Foo.md")).toEqual({ columnId: "", path: "Tasks/Foo.md" });
+  });
+});
+
+describe("planDrop (drag routing — #2 namespacing + #3 computed-order guard)", () => {
+  const colIds = ["todo", "doing", "done"];
+
+  it("routes a bare column active id to a column reorder", () => {
+    const b = buildBoard(config, [card("A", { status: "todo" })]);
+    expect(planDrop(b, "doing", "todo", colIds)).toEqual({ kind: "reorderColumns", activeId: "doing", overId: "todo" });
+  });
+
+  it("unwraps a namespaced card drop onto a column to a card move with the real ids", () => {
+    const b = buildBoard(config, [card("A", { status: "todo" })]);
+    expect(planDrop(b, "todo::Tasks/A.md", "doing", colIds)).toEqual({
+      kind: "moveCard",
+      path: "Tasks/A.md",
+      overId: "doing",
+    });
+  });
+
+  it("unwraps a namespaced card dropped over another namespaced card to the bare over path", () => {
+    const b = buildBoard(config, [card("A", { status: "todo" }), card("B", { status: "doing" })]);
+    expect(planDrop(b, "todo::Tasks/A.md", "doing::Tasks/B.md", colIds)).toEqual({
+      kind: "moveCard",
+      path: "Tasks/A.md",
+      overId: "Tasks/B.md",
+    });
+  });
+
+  it("#3 no-ops a same-column reorder when the column is grouped (computed order)", () => {
+    const cfg = { ...config, columns: [{ id: "todo", title: "Todo", group: "due" as const }, { id: "done", title: "Done" }] };
+    const b = buildBoard(cfg, [card("A", { status: "todo" }), card("B", { status: "todo" })]);
+    // Same-column drop on a grouped column → no-op (the order is recomputed every render).
+    expect(planDrop(b, "todo::Tasks/A.md", "todo::Tasks/B.md", ["todo", "done"])).toEqual({ kind: "noop" });
+  });
+
+  it("#3 STILL allows a cross-column move out of a computed-order column", () => {
+    const cfg = { ...config, columns: [{ id: "todo", title: "Todo", sort: "priority" as const }, { id: "done", title: "Done" }] };
+    const b = buildBoard(cfg, [card("A", { status: "todo" })]);
+    expect(planDrop(b, "todo::Tasks/A.md", "done", ["todo", "done"])).toEqual({
+      kind: "moveCard",
+      path: "Tasks/A.md",
+      overId: "done",
+    });
+  });
+
+  it("#3 allows a same-column reorder on a plain (manual) column", () => {
+    const b = buildBoard(config, [card("A", { status: "todo" }), card("B", { status: "todo" })]);
+    expect(planDrop(b, "todo::Tasks/A.md", "todo::Tasks/B.md", colIds)).toEqual({
+      kind: "moveCard",
+      path: "Tasks/A.md",
+      overId: "Tasks/B.md",
+    });
+  });
+});
+
+describe("isComputedOrder (#6 — auto-sorted columns)", () => {
+  const mk = (cols: ColumnDef[]) => buildBoard({ ...config, columns: cols }, []);
+  it("is false for a plain column (no group, manual sort)", () => {
+    expect(isComputedOrder(mk([{ id: "todo", title: "Todo" }]), "todo")).toBe(false);
+  });
+  it("is true when the column groups", () => {
+    expect(isComputedOrder(mk([{ id: "todo", title: "Todo", group: "due" }]), "todo")).toBe(true);
+  });
+  it("is true when the column sorts non-manually", () => {
+    expect(isComputedOrder(mk([{ id: "todo", title: "Todo", sort: "due" }]), "todo")).toBe(true);
+  });
+  it("is false for an unknown column", () => {
+    expect(isComputedOrder(mk([{ id: "todo", title: "Todo" }]), "ghost")).toBe(false);
   });
 });

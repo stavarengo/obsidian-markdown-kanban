@@ -549,6 +549,47 @@ describe("board pan-scroll", () => {
     dispatchPointer(board, "pointerup", { clientX: 60 });
     expect(board).not.toHaveClass("is-pan-scrolling");
   });
+
+  it("defaults to shift-pan mode and ignores a plain left-press (cards stay clickable)", async () => {
+    render_(makeRepo()); // DEFAULT_SETTINGS.boardPan === "shift"
+    await screen.findByText("Alpha");
+    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    expect(board).toHaveAttribute("data-pan", "shift");
+    // A plain left-press must NOT pan in shift mode — it's reserved for card drag / clicks.
+    dispatchPointer(board, "pointerdown", { button: 0, clientX: 100 });
+    expect(board).not.toHaveClass("is-pan-scrolling");
+    dispatchPointer(board, "pointerup", { clientX: 100 });
+  });
+
+  it("middle-button pans regardless of mode", async () => {
+    render_(makeRepo());
+    await screen.findByText("Alpha");
+    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    dispatchPointer(board, "pointerdown", { button: 1, clientX: 100 });
+    expect(board).toHaveClass("is-pan-scrolling");
+    dispatchPointer(board, "pointerup", { clientX: 100 });
+    expect(board).not.toHaveClass("is-pan-scrolling");
+  });
+
+  it("empty mode pans a plain left-press on bare background but not over a column/card", async () => {
+    render_(makeRepo(), { ...DEFAULT_SETTINGS, boardPan: "empty" });
+    await screen.findByText("Alpha");
+    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    expect(board).toHaveAttribute("data-pan", "empty");
+
+    // Plain left-press on the bare board background → pans.
+    dispatchPointer(board, "pointerdown", { button: 0, clientX: 100 });
+    expect(board).toHaveClass("is-pan-scrolling");
+    dispatchPointer(board, "pointerup", { clientX: 100 });
+    expect(board).not.toHaveClass("is-pan-scrolling");
+
+    // Plain left-press whose target sits inside a column (a card) must NOT pan — that gesture belongs
+    // to the card (drag/click). The handler reads the real event target, so dispatch from the card.
+    const card = screen.getByText("Alpha").closest(".mdkb-card") as HTMLElement;
+    dispatchPointer(card, "pointerdown", { button: 0, clientX: 100 });
+    expect(board).not.toHaveClass("is-pan-scrolling");
+    dispatchPointer(card, "pointerup", { clientX: 100 });
+  });
 });
 
 describe("card context menu", () => {
@@ -785,6 +826,31 @@ describe("column config (#1 filter, #6 group/sort, #8 edit modal, #10 opacity/pa
     // The pulled cards still ALSO render in their own status columns (no cross-column de-dupe).
     const todoCol = (await screen.findByText("Todo")).closest("section") as HTMLElement;
     expect(within(todoCol).getByText("ResearchA")).toBeInTheDocument();
+  });
+
+  it("#2 a lane-mirrored card and its status placement are two distinct sortable nodes (namespaced ids)", async () => {
+    const repo = new FakeRepo(
+      {
+        ...config,
+        columns: [
+          { id: "todo", title: "Todo" },
+          { id: "research", title: "Research", filter: "area:research" },
+        ],
+      },
+      { "Tasks/ResearchA.md": { fm: { type: "task", status: "todo", area: "research" }, body: "\n# ResearchA\n" } },
+    );
+    render_(repo);
+    await screen.findByText("Research");
+    // The same card (data-path) mounts twice — once in its status column, once in the lane. With the
+    // namespaced sortable ids each placement registers its OWN sortable, so both render as distinct
+    // nodes (a bare-path collision would have dnd-kit drop/duplicate one). Both must be present.
+    const placements = document.querySelectorAll('.mdkb-card[data-path="Tasks/ResearchA.md"]');
+    expect(placements).toHaveLength(2);
+    // Both are real draggable sortables (dnd-kit marks the activator with this roledescription),
+    // proving neither placement was de-registered by an id clash.
+    placements.forEach((p) => {
+      expect(p.querySelector('[aria-roledescription="sortable"]')).not.toBeNull();
+    });
   });
 
   it("#6 group:due renders bucket headings within the column", async () => {

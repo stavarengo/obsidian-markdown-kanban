@@ -5,6 +5,7 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
+  defaultDropAnimationSideEffects,
   useSensor,
   useSensors,
   type CollisionDetection,
@@ -13,19 +14,32 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { Board as BoardModel } from "../model/types";
+import { planDrop, splitCardDragId } from "../model/board";
 import { Column } from "./Column";
 import { AddColumn } from "./AddColumn";
-import { useBoardActions } from "./context";
+import { useBoardActions, useSettings } from "./context";
 import { cardChips, priorityTone, type BoardFilters } from "./cardView";
 
-// Shift+drag (and middle-button drag) are reserved for panning the board horizontally, so the
-// card-drag activator bows out for them — leaving plain left-drag for dnd-kit as before.
-class ShiftAwarePointerSensor extends PointerSensor {
+// The pan gesture and the card-drag sensor share the same pointer, so exactly one must claim a given
+// press. The live pan mode (settings.boardPan) decides which — but dnd-kit instantiates the sensor
+// fresh per activation and only exposes a *static* activator, so it can't read React state directly.
+// A module-scoped ref bridges that gap: Board keeps it in sync with the setting, and the activator
+// reads it. (One board is mounted at a time, so a single shared ref is safe.)
+const panModeRef = { current: "shift" as "shift" | "empty" };
+
+// Whether a plain left-press should start a card drag. In "shift" mode the Shift/middle-button press
+// is reserved for panning, so the card sensor bows out for it (current behavior). In "empty" mode
+// cards drag on a plain left-press as usual; panning only kicks in on empty board background (handled
+// by the pointer listeners below, which never see a press that lands on a draggable card).
+class PanAwarePointerSensor extends PointerSensor {
   static activators = [
     {
       eventName: "onPointerDown" as const,
-      handler: ({ nativeEvent }: { nativeEvent: PointerEvent }) =>
-        nativeEvent.isPrimary && !nativeEvent.shiftKey && nativeEvent.button === 0,
+      handler: ({ nativeEvent }: { nativeEvent: PointerEvent }) => {
+        if (!nativeEvent.isPrimary || nativeEvent.button !== 0) return false;
+        if (panModeRef.current === "shift" && nativeEvent.shiftKey) return false;
+        return true;
+      },
     },
   ];
 }
@@ -43,9 +57,19 @@ interface Props {
 
 export function Board({ board, today, selectedPath, wipLimits, filters, doneColumnId, onMove, onAddCard }: Props) {
   const actions = useBoardActions();
+  const { boardPan } = useSettings();
+  // Keep the module-scoped ref the sensor (and the pan handler below) reads in sync with the live
+  // setting, so toggling it takes effect without re-binding listeners (see PanAwarePointerSensor).
+  panModeRef.current = boardPan;
+
   const columnIds = board.config.columns.map((c) => c.id);
   const sensors = useSensors(
-    useSensor(ShiftAwarePointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PanAwarePointerSensor, {
+      // A short distance threshold lets a click stay a click (never hijacked into a drag) while a
+      // deliberate move past 5px crisply commits to a drag. The 5px also matches the column header's
+      // click-vs-drag threshold (§4) so card and column drags feel consistent.
+      activationConstraint: { distance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
       // Space picks up / drops; Enter is left free for opening a focused card.
@@ -53,7 +77,12 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
     }),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const activeCard = activeId ? board.cards[activeId] : null;
+  // Card sortables are namespaced `${columnId}::${card.path}` so a card mirrored into a cross-board
+  // lane (#1) and its status column don't collide on one id. A column drag's active id is the bare
+  // column id. Resolve the active card by parsing the path back out (column ids have no `::`).
+  const activeColumnDrag = activeId != null && columnIds.includes(activeId);
+  const activeColumn = activeColumnDrag ? board.config.columns.find((c) => c.id === activeId) ?? null : null;
+  const activeCard = activeId && !activeColumnDrag ? board.cards[splitCardDragId(activeId).path] : null;
 
   // Columns and cards share one DndContext, so both are registered droppables. When a COLUMN is
   // being dragged, restrict collision to column droppables only — otherwise closestCorners can
@@ -72,8 +101,15 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
     [activeId, columnIds],
   );
 
-  // Shift+drag (or middle-button drag) pans the board horizontally. The card-drag sensor ignores
-  // these gestures (see ShiftAwarePointerSensor), so the two never fight over the same pointer.
+  // Horizontal panning of the board. Two modes (settings.boardPan):
+  //  - "shift": Shift+drag (or middle-button drag) pans from anywhere, incl. over cards/columns. The
+  //    card-drag sensor bows out for the Shift press (see PanAwarePointerSensor), so the two never
+  //    fight over the same pointer.
+  //  - "empty": a plain left-drag pans, but only when the press lands on the empty board background
+  //    (not a card/column/interactive element); over a card a plain left-drag is a card drag. Shift is
+  //    not required. Middle-button drag still pans from anywhere in both modes.
+  // The effect reads the live mode each press via panModeRef, so toggling the setting takes effect
+  // without re-binding listeners.
   const boardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const board = boardRef.current;
@@ -82,17 +118,32 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
     let startScroll = 0;
     let panning = false;
     // True once a pan has actually moved past the threshold. preventDefault() on pointerdown does NOT
-    // suppress the high-level `click` the browser later synthesizes, so a shift-press that begins and
-    // ends on a card would still fire the card's click-to-open. We track the real pan and swallow that
-    // click in the capture phase below.
+    // suppress the high-level `click` the browser later synthesizes, so a press that begins and ends on
+    // a card would still fire the card's click-to-open. We track the real pan and swallow that click in
+    // the capture phase below.
     let didPan = false;
+
+    // In "empty" mode a plain left-press only pans when it lands on bare board background — never on a
+    // card, column, or any interactive control. (.mdkb-board is the background; the columns/AddColumn
+    // are its children, so a press whose closest interactive ancestor is the board itself is "empty".)
+    const isEmptyBackground = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      return !!t && !t.closest(".mdkb-column, .mdkb-add-column, button, a, input, textarea, [role='button']");
+    };
+
+    const shouldPan = (e: PointerEvent) => {
+      if (e.button === 1) return true; // middle-button always pans
+      if (e.button !== 0) return false;
+      if (panModeRef.current === "shift") return e.shiftKey;
+      return isEmptyBackground(e); // "empty" mode: plain left-drag on bare background
+    };
 
     const onPointerDown = (e: PointerEvent) => {
       // Reset unconditionally (before the gesture guard) so every gesture starts clean — a middle-button
       // pan emits `auxclick` (never `click`), so its didPan would otherwise go stale and eat the next
       // legitimate left-click.
       didPan = false;
-      if (!(e.shiftKey || e.button === 1)) return;
+      if (!shouldPan(e)) return;
       panning = true;
       startX = e.clientX;
       startScroll = board.scrollLeft;
@@ -105,12 +156,19 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
       } catch {
         /* no active pointer to capture — pan still works via the board-level listeners */
       }
-      e.preventDefault();
+      // NOTE: we deliberately do NOT preventDefault here. In "empty" mode a press lands on bare board
+      // background often without moving (a plain click to dismiss a popover / blur an inline editor);
+      // preventDefault on pointerdown would suppress the native focus-shift and break that commit-on-blur.
+      // We only suppress the default (text selection) once an actual pan starts — see onPointerMove.
     };
     const onPointerMove = (e: PointerEvent) => {
       if (!panning) return;
       // Match the card-drag sensor's 5px distance so jitter on a shift-click isn't mistaken for a pan.
-      if (Math.abs(e.clientX - startX) > 5) didPan = true;
+      if (Math.abs(e.clientX - startX) > 5) {
+        didPan = true;
+        // Now it's a real pan: kill the text selection a drag would otherwise paint as it scrolls.
+        e.preventDefault();
+      }
       board.scrollLeft = startScroll - (e.clientX - startX);
     };
     const end = (e: PointerEvent) => {
@@ -142,9 +200,12 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
     };
   }, []);
 
-  // Speak card titles and column names (not file paths / slugs) during a keyboard drag.
-  const labelFor = (id: string) =>
-    board.cards[id]?.basename ?? board.config.columns.find((c) => c.id === id)?.title ?? id;
+  // Speak card titles and column names (not file paths / slugs) during a keyboard drag. Card ids are
+  // namespaced (`col::path`); resolve the bare path before looking the card up.
+  const labelFor = (id: string) => {
+    if (columnIds.includes(id)) return board.config.columns.find((c) => c.id === id)?.title ?? id;
+    return board.cards[splitCardDragId(id).path]?.basename ?? id;
+  };
   const announcements = {
     onDragStart: ({ active }: { active: { id: string | number } }) => `Picked up ${labelFor(String(active.id))}.`,
     onDragOver: ({ active, over }: { active: { id: string | number }; over: { id: string | number } | null }) =>
@@ -167,19 +228,16 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
       onDragEnd={(e: DragEndEvent) => {
         setActiveId(null);
         if (!e.over) return;
-        const activeId = String(e.active.id);
-        const overId = String(e.over.id);
-        // A column drag's active id is a column id; route it to the column-reorder path so
-        // resolveDrop (which only understands card ids) never sees it as a no-op.
-        if (columnIds.includes(activeId)) {
-          actions.reorderColumns(activeId, overId);
-          return;
-        }
-        onMove(activeId, overId);
+        // planDrop unwraps the namespaced card ids (#2), routes column reorders (#2 header drag), and
+        // drops a same-column reorder onto a computed-order column (#3). All the rules live in the
+        // pure model so they're unit-testable; here we just dispatch the plan.
+        const plan = planDrop(board, String(e.active.id), String(e.over.id), columnIds);
+        if (plan.kind === "reorderColumns") actions.reorderColumns(plan.activeId, plan.overId);
+        else if (plan.kind === "moveCard") onMove(plan.path, plan.overId);
       }}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="mdkb-board" ref={boardRef}>
+      <div className="mdkb-board" data-pan={boardPan} ref={boardRef}>
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
           {board.config.columns.map((col, i) => (
             <Column
@@ -200,8 +258,25 @@ export function Board({ board, today, selectedPath, wipLimits, filters, doneColu
         </SortableContext>
         <AddColumn />
       </div>
-      <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}>
-        {activeCard ? (
+      <DragOverlay
+        dropAnimation={{
+          duration: 200,
+          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+          // Briefly dim the overlay as it settles into the placeholder, so the lift visibly "lands"
+          // rather than blinking out.
+          sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.5" } } }),
+        }}
+      >
+        {activeColumn ? (
+          // #1 (fix) — a dragged COLUMN gets a real lifted ghost too (col-header gave columns a
+          // sortable but no overlay). A header-only ghost reads as "this column, picked up".
+          <div className="mdkb-column mdkb-column-overlay" style={{ ["--mdkb-col-accent" as string]: activeColumn.color || undefined }}>
+            <div className="mdkb-column-header">
+              <span className="mdkb-column-dot" aria-hidden="true" />
+              <span className="mdkb-column-title">{activeColumn.title}</span>
+            </div>
+          </div>
+        ) : activeCard ? (
           <div
             className="mdkb-card mdkb-card-overlay"
             data-prio={
