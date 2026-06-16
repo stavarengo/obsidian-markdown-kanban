@@ -3,7 +3,8 @@ import type { Board as BoardModel, ColumnDef } from "../model/types";
 import { moveCard, resolveDrop } from "../model/board";
 import { dateOnly } from "../model/dates";
 import type { CardRepository } from "../obsidian/repo";
-import { BoardActionsContext, RepoContext, type BoardActions } from "./context";
+import type { KanbanSettings } from "../settings";
+import { BoardActionsContext, RepoContext, SettingsContext, type BoardActions } from "./context";
 import { Board } from "./Board";
 import { CardDetail } from "./CardDetail";
 import { Toolbar } from "./Toolbar";
@@ -23,11 +24,15 @@ function findDoneColumn(board: BoardModel): string | null {
 
 interface Props {
   repo: CardRepository;
+  /** Live settings, sourced from the plugin via the view. */
+  settings: KanbanSettings;
+  /** Pushes a settings patch back to the plugin (persist + re-render open views). */
+  onUpdateSettings: (patch: Partial<KanbanSettings>) => void;
   /** Overridable for deterministic tests; defaults to the real date. */
   today?: string;
 }
 
-export function App({ repo, today }: Props) {
+export function App({ repo, settings, onUpdateSettings, today }: Props) {
   const [board, setBoard] = useState<BoardModel | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +41,10 @@ export function App({ repo, today }: Props) {
   const searchRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<number | null>(null);
   const todayValue = useMemo(() => today ?? dateOnly(), [today]);
+  const settingsValue = useMemo(
+    () => ({ settings, update: onUpdateSettings }),
+    [settings, onUpdateSettings],
+  );
 
   const showToast = useCallback((text: string, tone: "success" | "error" = "success") => {
     setToast({ text, tone });
@@ -251,40 +260,42 @@ export function App({ repo, today }: Props) {
   if (!board) return <div className="mdkb-loading">Loading board…</div>;
 
   return (
-    <RepoContext.Provider value={repo}>
-      <BoardActionsContext.Provider value={actions}>
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-        <div className="mdkb-root" onKeyDown={onRootKeyDown}>
-          <Toolbar ref={searchRef} filters={filters} onChange={setFilters} matchCount={counts.match} totalCount={counts.total} />
-          <div className="mdkb-main">
-            <Board
-              board={board}
-              today={todayValue}
-              selectedPath={selected}
-              wipLimits={wipLimits}
-              filters={filters}
-              doneColumnId={doneColumnId}
-              onMove={onMove}
-              onAddCard={onAddCard}
-            />
-            {selected && board.cards[selected] && (
-              <CardDetail
-                path={selected}
-                board={board}
-                onClose={() => setSelected(null)}
-                onNavigate={setSelected}
-                onChanged={load}
-              />
-            )}
-          </div>
-          {toast && (
-            <div className={"mdkb-toast mdkb-toast-" + toast.tone} role="status" aria-live="polite">
-              <Icon name={toast.tone === "error" ? "alert" : "check-circle"} size={16} />
-              {toast.text}
+    <SettingsContext.Provider value={settingsValue}>
+        <RepoContext.Provider value={repo}>
+          <BoardActionsContext.Provider value={actions}>
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+            <div className="mdkb-root" onKeyDown={onRootKeyDown}>
+              <Toolbar ref={searchRef} filters={filters} onChange={setFilters} matchCount={counts.match} totalCount={counts.total} />
+              <div className="mdkb-main">
+                <Board
+                  board={board}
+                  today={todayValue}
+                  selectedPath={selected}
+                  wipLimits={wipLimits}
+                  filters={filters}
+                  doneColumnId={doneColumnId}
+                  onMove={onMove}
+                  onAddCard={onAddCard}
+                />
+                {selected && board.cards[selected] && (
+                  <CardDetail
+                    path={selected}
+                    board={board}
+                    onClose={() => setSelected(null)}
+                    onNavigate={setSelected}
+                    onChanged={load}
+                  />
+                )}
+              </div>
+              {toast && (
+                <div className={"mdkb-toast mdkb-toast-" + toast.tone} role="status" aria-live="polite">
+                  <Icon name={toast.tone === "error" ? "alert" : "check-circle"} size={16} />
+                  {toast.text}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </BoardActionsContext.Provider>
-    </RepoContext.Provider>
+          </BoardActionsContext.Provider>
+        </RepoContext.Provider>
+    </SettingsContext.Provider>
   );
 }

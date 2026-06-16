@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { App } from "../src/ui/App";
 import { FakeRepo } from "./fakeRepo";
 import type { BoardConfig } from "../src/model/types";
+import { DEFAULT_SETTINGS } from "../src/settings";
+import { SettingsContext, useSettings } from "../src/ui/context";
 
 const config: BoardConfig = {
   path: "Board.md",
@@ -26,7 +28,8 @@ function makeRepo() {
   });
 }
 
-const render_ = (repo: FakeRepo) => render(<App repo={repo} today="2026-06-13" />);
+const render_ = (repo: FakeRepo) =>
+  render(<App repo={repo} settings={DEFAULT_SETTINGS} onUpdateSettings={() => {}} today="2026-06-13" />);
 
 describe("board rendering", () => {
   it("renders columns with the right cards and counts; subcards are not top-level", async () => {
@@ -128,5 +131,21 @@ describe("live reload", () => {
       const doneCol = screen.getByText("Done").closest("section") as HTMLElement;
       expect(within(doneCol).getByText("Gamma")).toBeInTheDocument();
     });
+  });
+});
+
+describe("settings context", () => {
+  it("exposes the provided settings via useSettings()", () => {
+    function Probe() {
+      const settings = useSettings();
+      return <span data-testid="probe">{settings.detailPresentation}/{settings.cardNextTodos}</span>;
+    }
+    const value = { settings: { ...DEFAULT_SETTINGS, detailPresentation: "modal" as const, cardNextTodos: 3 }, update: () => {} };
+    render(
+      <SettingsContext.Provider value={value}>
+        <Probe />
+      </SettingsContext.Provider>,
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent("modal/3");
   });
 });

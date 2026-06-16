@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { CardRepository } from "../obsidian/repo";
+import type { KanbanSettings } from "../settings";
 
 export const RepoContext = createContext<CardRepository | null>(null);
 
@@ -7,6 +8,26 @@ export function useRepo(): CardRepository {
   const repo = useContext(RepoContext);
   if (!repo) throw new Error("RepoContext is missing a provider");
   return repo;
+}
+
+/** Live settings plus an updater, provided by App and fed from the view/plugin. */
+export interface SettingsContextValue {
+  settings: KanbanSettings;
+  update: (patch: Partial<KanbanSettings>) => void;
+}
+
+export const SettingsContext = createContext<SettingsContextValue | null>(null);
+
+export function useSettings(): KanbanSettings {
+  const c = useContext(SettingsContext);
+  if (!c) throw new Error("SettingsContext missing");
+  return c.settings;
+}
+
+export function useSettingsUpdater(): (patch: Partial<KanbanSettings>) => void {
+  const c = useContext(SettingsContext);
+  if (!c) throw new Error("SettingsContext missing");
+  return c.update;
 }
 
 /** Card-level actions, provided by App so cards/columns don't prop-drill callbacks. */

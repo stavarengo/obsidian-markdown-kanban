@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { App as BoardApp } from "./ui/App";
 import { VaultRepository } from "./obsidian/vaultRepo";
+import type { KanbanSettings } from "./settings";
 
 export const VIEW_TYPE_KANBAN = "markdown-kanban-view";
 
@@ -11,7 +12,11 @@ export class KanbanView extends ItemView {
   private boardPath: string | null = null;
   private repo: VaultRepository | null = null;
 
-  constructor(leaf: WorkspaceLeaf) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    private getSettings: () => KanbanSettings,
+    private updateSettings: (patch: Partial<KanbanSettings>) => void,
+  ) {
     super(leaf);
   }
 
@@ -46,6 +51,11 @@ export class KanbanView extends ItemView {
     this.renderApp();
   }
 
+  /** Re-render with the latest settings. Called by the plugin after a settings change. */
+  refresh(): void {
+    this.renderApp();
+  }
+
   async onClose(): Promise<void> {
     this.root?.unmount();
     this.root = null;
@@ -62,10 +72,13 @@ export class KanbanView extends ItemView {
       );
       return;
     }
-    if (!this.repo) this.repo = new VaultRepository(this.app, this.boardPath);
+    // The repo reads the history scope live via the getter, so settings changes don't
+    // require rebuilding it — only a boardPath change does (handled in setState).
+    if (!this.repo)
+      this.repo = new VaultRepository(this.app, this.boardPath, () => this.getSettings().historyScope);
     this.root.render(
       <StrictMode>
-        <BoardApp repo={this.repo} />
+        <BoardApp repo={this.repo} settings={this.getSettings()} onUpdateSettings={this.updateSettings} />
       </StrictMode>,
     );
   }
