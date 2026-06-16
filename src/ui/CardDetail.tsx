@@ -12,8 +12,15 @@ interface Props {
   board: Board;
   mode: DetailMode;
   onClose: () => void;
-  onNavigate: (path: string) => void;
+  /** Switch the panel to another card (subcard links). The create form never navigates. */
+  onNavigate?: (path: string) => void;
   onChanged: () => void;
+  /** When set, render the minimal CREATE form (new card in this column) instead of the card body. */
+  createColumn?: string;
+  /** Called with the new card's path after a successful create. */
+  onCreated?: (path: string) => void;
+  /** When set, focus the description textarea on mount (fresh card from an add-card flow). */
+  focusNew?: boolean;
 }
 
 const clampWidth = (n: number) => Math.min(DETAIL_WIDTH_MAX, Math.max(DETAIL_WIDTH_MIN, n));
@@ -87,16 +94,22 @@ function priorityOptions(current: string): string[] {
   return current && !base.includes(current) ? [current, ...base] : base;
 }
 
-export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged }: Props) {
+export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, createColumn, onCreated, focusNew }: Props) {
   const repo = useRepo();
   const actions = useBoardActions();
   const settings = useSettings();
   const updateSettings = useSettingsUpdater();
   const card = board.cards[path];
+  const isCreate = createColumn != null;
   const panelRef = useRef<HTMLElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const descRef = useRef<HTMLTextAreaElement | null>(null);
+  // Synchronous in-flight guard for the create form: blocks a second submit (rapid Enter, or
+  // Enter-then-click) during the async createCard window before onCreated unmounts this branch.
+  const creatingRef = useRef(false);
   const [body, setBody] = useState<CardBody | null>(null);
   const [descDraft, setDescDraft] = useState("");
+  const [createTitle, setCreateTitle] = useState("");
   const [newTodo, setNewTodo] = useState("");
   const [newSubcard, setNewSubcard] = useState("");
   const [newComment, setNewComment] = useState("");
@@ -120,18 +133,30 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged }
   };
 
   useEffect(() => {
+    if (isCreate) return; // no card to read while the create form is up
     setBody(null);
     setConfirmDelete(false);
     void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path]);
+  }, [path, isCreate]);
 
-  // Dialog focus management: focus in on open, return focus to the opener on close.
+  // Dialog focus management: focus in on open, return focus to the opener on close. The create form
+  // autofocuses its title input (a synchronous commit-phase focus), so don't steal it back here.
   useEffect(() => {
     openerRef.current = document.activeElement as HTMLElement | null;
-    panelRef.current?.focus();
+    if (!isCreate) panelRef.current?.focus();
     return () => openerRef.current?.focus?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A freshly-created card (inline-edit / detail flows) lands focus on the description, not the panel.
+  // Keyed on `path`, not `body`, so each field edit's reload doesn't yank focus back. The detail
+  // create flow unmounts the create branch and remounts a fresh card panel (focus lands via the
+  // mount-time effect); inline-edit re-keys the same instance and re-fires this effect on the new path.
+  useEffect(() => {
+    if (focusNew && !isCreate) descRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusNew, path]);
 
   // Side modes: a pointerdown outside the panel closes it — but not when it lands on another
   // card (that card's own open handler switches the detail), nor on a menu/context surface.
@@ -187,6 +212,72 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged }
 
   const modeClass = mode === "float" ? " mdkb-detail--float" : mode === "modal" ? " mdkb-detail--modal" : "";
   const panelStyle = isSide ? { width, flex: `0 0 ${width}px` } : undefined;
+
+  if (isCreate) {
+    const columnTitle = board.config.columns.find((c) => c.id === createColumn)?.title ?? createColumn;
+    const submitCreate = () => {
+      const t = createTitle.trim();
+      if (!t || creatingRef.current) return;
+      creatingRef.current = true;
+      void (async () => {
+        try {
+          const newPath = await repo.createCard(t, createColumn);
+          onCreated?.(newPath);
+          // On success this branch unmounts (createColumn→null), so no need to reset the guard.
+        } catch {
+          creatingRef.current = false; // let the user retry after a failed create
+        }
+      })();
+    };
+    return (
+      <aside
+        className={"mdkb-detail" + modeClass}
+        data-testid="card-detail"
+        role="dialog"
+        aria-modal={mode === "modal"}
+        aria-label={`New card in ${columnTitle}`}
+        ref={panelRef}
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        style={panelStyle}
+      >
+        {isSide && (
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div className="mdkb-detail-resize" role="separator" aria-orientation="vertical" aria-label="Resize panel" onPointerDown={onResizeStart} />
+        )}
+        <header className="mdkb-detail-header">
+          <h2 className="mdkb-detail-title">New card in {columnTitle}</h2>
+          <div className="mdkb-row-actions">
+            <button className="mdkb-icon-btn" aria-label="Close" title="Close (Esc)" onClick={onClose}>
+              <Icon name="close" />
+            </button>
+          </div>
+        </header>
+        <div className="mdkb-detail-body">
+          <section className="mdkb-section">
+            <label>
+              Title
+              <input
+                className="mdkb-create-title"
+                autoFocus
+                value={createTitle}
+                aria-label="New card title"
+                placeholder="What needs doing?"
+                onChange={(e) => setCreateTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && createTitle.trim()) { e.preventDefault(); submitCreate(); }
+                }}
+              />
+            </label>
+            <div className="mdkb-row-actions">
+              <button className="mdkb-btn mdkb-btn-primary" disabled={!createTitle.trim()} onClick={submitCreate}>Create</button>
+              <button className="mdkb-btn" onClick={onClose}>Cancel</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    );
+  }
 
   if (!card) {
     return (
@@ -318,7 +409,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged }
 
         <section className="mdkb-section">
           <h3>Description</h3>
-          <textarea className="mdkb-desc" value={descDraft} onChange={(e) => setDescDraft(e.target.value)} placeholder="Add a description…" />
+          <textarea ref={descRef} className="mdkb-desc" value={descDraft} onChange={(e) => setDescDraft(e.target.value)} placeholder="Add a description…" />
           {body && descDraft !== body.description && (
             <div className="mdkb-row-actions">
               <button className="mdkb-btn mdkb-btn-primary" onClick={() => void mutate(() => repo.setDescription(path, descDraft))}>Save</button>
@@ -337,7 +428,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged }
                   (() => {
                     const child = resolveBasename(board, s.link);
                     return child ? (
-                      <button className="mdkb-link" onClick={() => onNavigate(child)}>
+                      <button className="mdkb-link" onClick={() => onNavigate?.(child)}>
                         {s.link}
                       </button>
                     ) : (

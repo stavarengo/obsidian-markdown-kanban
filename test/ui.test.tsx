@@ -220,17 +220,82 @@ describe("detail presentation", () => {
 });
 
 describe("creating cards", () => {
-  it("adds a card to a column", async () => {
+  it("inline flow adds the card to the column and stays (no detail)", async () => {
     const user = userEvent.setup();
     const repo = makeRepo();
-    render_(repo);
+    render_(repo); // default addCardFlow: 'inline'
     await screen.findByText("Alpha");
     await user.click(screen.getByLabelText("Add card to Done"));
     await user.type(screen.getByLabelText("New card title"), "Fresh card{Enter}");
-    // detail opens for the new card
+    const doneCol = screen.getAllByTestId("column").find((c) => (c as HTMLElement).dataset.column === "done")!;
+    expect(await within(doneCol).findByText("Fresh card")).toBeInTheDocument();
+    // 'inline' is add-only: the detail must NOT open.
+    expect(screen.queryByTestId("card-detail")).toBeNull();
+  });
+
+  it("inline-edit flow adds the card and opens its detail", async () => {
+    const user = userEvent.setup();
+    const repo = makeRepo();
+    render_(repo, { ...DEFAULT_SETTINGS, addCardFlow: "inline-edit" });
+    await screen.findByText("Alpha");
+    await user.click(screen.getByLabelText("Add card to Done"));
+    await user.type(screen.getByLabelText("New card title"), "Fresh card{Enter}");
     expect(await screen.findByRole("heading", { name: "Fresh card" })).toBeInTheDocument();
     const doneCol = screen.getAllByTestId("column").find((c) => (c as HTMLElement).dataset.column === "done")!;
     expect(within(doneCol).getByText("Fresh card")).toBeInTheDocument();
+  });
+
+  it("detail flow opens a create form and creates the card on Create", async () => {
+    const user = userEvent.setup();
+    const repo = makeRepo();
+    const created: Array<[string, string]> = [];
+    const origCreate = repo.createCard.bind(repo);
+    repo.createCard = async (title: string, status: string) => {
+      created.push([title, status]);
+      return origCreate(title, status);
+    };
+    render_(repo, { ...DEFAULT_SETTINGS, addCardFlow: "detail" });
+    await screen.findByText("Alpha");
+    // 'detail' flow: clicking "Add a card" shows the create form, NOT the inline composer.
+    await user.click(screen.getByLabelText("Add card to Done"));
+    const detail = await screen.findByTestId("card-detail");
+    expect(within(detail).getByRole("heading", { name: /New card in Done/ })).toBeInTheDocument();
+    const titleInput = within(detail).getByLabelText("New card title");
+    const createBtn = within(detail).getByRole("button", { name: "Create" });
+    expect(createBtn).toBeDisabled(); // disabled until non-empty
+    await user.type(titleInput, "Made via detail");
+    expect(createBtn).toBeEnabled();
+    await user.click(createBtn);
+    // createCard called with the column preset as status, then the created card's detail opens.
+    expect(created).toContainEqual(["Made via detail", "done"]);
+    expect(await screen.findByRole("heading", { name: "Made via detail" })).toBeInTheDocument();
+    const doneCol = screen.getAllByTestId("column").find((c) => (c as HTMLElement).dataset.column === "done")!;
+    expect(within(doneCol).getByText("Made via detail")).toBeInTheDocument();
+  });
+
+  it("detail flow does not double-create on rapid submits", async () => {
+    const user = userEvent.setup();
+    const repo = makeRepo();
+    const created: Array<[string, string]> = [];
+    const origCreate = repo.createCard.bind(repo);
+    // Defer resolution so both clicks land inside the in-flight window.
+    let release: () => void = () => {};
+    repo.createCard = async (title: string, status: string) => {
+      created.push([title, status]);
+      await new Promise<void>((r) => { release = r; });
+      return origCreate(title, status);
+    };
+    render_(repo, { ...DEFAULT_SETTINGS, addCardFlow: "detail" });
+    await screen.findByText("Alpha");
+    await user.click(screen.getByLabelText("Add card to Done"));
+    const detail = await screen.findByTestId("card-detail");
+    await user.type(within(detail).getByLabelText("New card title"), "Once");
+    const createBtn = within(detail).getByRole("button", { name: "Create" });
+    await user.click(createBtn);
+    await user.click(createBtn); // second submit while the first is still in flight
+    release();
+    await screen.findByRole("heading", { name: "Once" });
+    expect(created).toHaveLength(1);
   });
 });
 

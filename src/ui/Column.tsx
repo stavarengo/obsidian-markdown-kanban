@@ -5,6 +5,7 @@ import type { Board, ColumnDef } from "../model/types";
 import { CardItem } from "./CardItem";
 import { ColumnMenu } from "./ColumnMenu";
 import { Icon } from "./icons";
+import { useBoardActions, useSettings } from "./context";
 import { cardMatches, hasActiveFilter, type BoardFilters } from "./cardView";
 
 // Stable per-column accent when the board hasn't assigned a color, so even a plain
@@ -32,10 +33,18 @@ interface Props {
 
 export function Column({ column, cardPaths, board, today, selectedPath, wipLimit, filters, doneColumnId, isFirst, isLast, onAddCard }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
+  const settings = useSettings();
+  const actions = useBoardActions();
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  // 'detail' flow opens the create form in the detail panel; 'inline'/'inline-edit' use the composer.
+  const onAddClick = () => {
+    if (settings.addCardFlow === "detail") actions.startCreate(column.id);
+    else setAdding(true);
+  };
 
   const submit = (keepOpen: boolean) => {
     const t = title.trim();
@@ -143,7 +152,7 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
         )}
       </div>
       {!adding && (
-        <button className="mdkb-column-add" aria-label={`Add card to ${column.title}`} onClick={() => setAdding(true)}>
+        <button className="mdkb-column-add" aria-label={`Add card to ${column.title}`} onClick={onAddClick}>
           <Icon name="plus" size={15} />
           Add a card
         </button>

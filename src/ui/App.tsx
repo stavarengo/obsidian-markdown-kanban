@@ -14,6 +14,20 @@ import { cardMatches, EMPTY_FILTERS, type BoardFilters } from "./cardView";
 
 const DONE_RE = /\b(done|complete|completed|finished|shipped|closed)\b/i;
 
+/** Translate `addCardOpenMode` into a presentation override; 'default' means "use the global". */
+function mapOpenMode(openMode: KanbanSettings["addCardOpenMode"]): DetailMode | null {
+  switch (openMode) {
+    case "modal":
+      return "modal";
+    case "side-float":
+      return "float";
+    case "side-split":
+      return "split";
+    default:
+      return null;
+  }
+}
+
 /** Pick the column that means "finished": exact id "done", else a title/id that reads as done. */
 function findDoneColumn(board: BoardModel): string | null {
   const cols = board.config.columns;
@@ -36,6 +50,11 @@ interface Props {
 export function App({ repo, settings, onUpdateSettings, today }: Props) {
   const [board, setBoard] = useState<BoardModel | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  // Add-card flows: which column is in CREATE mode, plus a one-shot presentation override and a
+  // flag to focus the description of a freshly-created card. All cleared when the panel closes.
+  const [createColumn, setCreateColumn] = useState<string | null>(null);
+  const [openOverride, setOpenOverride] = useState<DetailMode | null>(null);
+  const [focusNew, setFocusNew] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<BoardFilters>(EMPTY_FILTERS);
   const [toast, setToast] = useState<{ text: string; tone: "success" | "error" } | null>(null);
@@ -108,9 +127,15 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     async (columnId: string, title: string) => {
       const path = await repo.createCard(title, columnId);
       await load();
-      setSelected(path);
+      // 'inline' (default): add-only — stay in the column, don't open the detail.
+      // 'inline-edit': open the new card's detail and focus its description for editing.
+      if (settings.addCardFlow === "inline-edit") {
+        setOpenOverride(mapOpenMode(settings.addCardOpenMode));
+        setFocusNew(true);
+        setSelected(path);
+      }
     },
-    [repo, load],
+    [repo, load, settings.addCardFlow, settings.addCardOpenMode],
   );
 
   const doneColumnId = useMemo(() => (board ? findDoneColumn(board) : null), [board]);
@@ -142,9 +167,24 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     [repo, load],
   );
 
+  // Opening a real card resets every add-card flow field so a stale create form can't resurface
+  // when the panel later flips to create mode (e.g. the opened card is deleted out from under it).
+  // Invariant: createColumn is null whenever a real card is selected.
+  const openCard = useCallback((path: string) => {
+    setOpenOverride(null);
+    setFocusNew(false);
+    setCreateColumn(null);
+    setSelected(path);
+  }, []);
+
   const actions = useMemo<BoardActions>(
     () => ({
-      open: (path) => setSelected(path),
+      open: openCard,
+      startCreate: (col) => {
+        setSelected(null);
+        setCreateColumn(col);
+        setOpenOverride(mapOpenMode(settings.addCardOpenMode));
+      },
       complete: (path) => {
         if (!doneColumnId) return;
         const title = boardRef.current?.cards[path]?.basename ?? "Card";
@@ -230,7 +270,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         void setColumnsAndReload([...b.config.columns, { id, title: t }]);
       },
     }),
-    [moveTo, doneColumnId, repo, load, setColumnsAndReload, showToast, reportError],
+    [openCard, moveTo, doneColumnId, repo, load, setColumnsAndReload, showToast, reportError, settings.addCardOpenMode],
   );
 
   const wipLimits = useMemo<Record<string, number>>(() => {
@@ -270,17 +310,47 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   if (error) return <div className="mdkb-error">Couldn’t load the board: {error}</div>;
   if (!board) return <div className="mdkb-loading">Loading board…</div>;
 
-  const detailMode: DetailMode =
+  // The add-card flows can override the presentation for one open; otherwise use the global setting.
+  const globalDetailMode: DetailMode =
     settings.detailPresentation === "modal" ? "modal" : settings.sidePanelMode === "float" ? "float" : "split";
+  const detailMode: DetailMode = openOverride ?? globalDetailMode;
   const detailOpen = selected != null && board.cards[selected] != null;
+  const createMode = createColumn != null && !detailOpen;
+  const panelShown = detailOpen || createMode;
+
+  const closeDetail = () => {
+    setSelected(null);
+    setCreateColumn(null);
+    setOpenOverride(null);
+    setFocusNew(false);
+  };
+
   const detail = detailOpen ? (
     <CardDetail
       path={selected!}
       board={board}
       mode={detailMode}
-      onClose={() => setSelected(null)}
-      onNavigate={setSelected}
+      focusNew={focusNew}
+      onClose={closeDetail}
+      onNavigate={openCard}
       onChanged={load}
+    />
+  ) : createMode ? (
+    <CardDetail
+      path=""
+      board={board}
+      mode={detailMode}
+      createColumn={createColumn!}
+      onClose={closeDetail}
+      onChanged={load}
+      onCreated={(newPath) => {
+        void (async () => {
+          setCreateColumn(null);
+          setFocusNew(true);
+          await load();
+          setSelected(newPath);
+        })();
+      }}
     />
   ) : null;
 
@@ -306,12 +376,12 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
                     float overlays it. Modal renders via a portal into the root, over a backdrop. */}
                 {detailMode !== "modal" && detail}
               </div>
-              {detailMode === "modal" && detailOpen && rootRef.current &&
+              {detailMode === "modal" && panelShown && rootRef.current &&
                 createPortal(
                   // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
                   <div
                     className="mdkb-detail-modal-backdrop"
-                    onPointerDown={(e) => { if (e.target === e.currentTarget) setSelected(null); }}
+                    onPointerDown={(e) => { if (e.target === e.currentTarget) closeDetail(); }}
                   >
                     {detail}
                   </div>,

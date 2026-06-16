@@ -34,6 +34,8 @@ export function useSettingsUpdater(): (patch: Partial<KanbanSettings>) => void {
 export interface BoardActions {
   /** Open the card's detail panel. */
   open(path: string): void;
+  /** Start the "create card" detail flow for a column (used by addCardFlow: 'detail'). */
+  startCreate(columnId: string): void;
   /** Move a card to the board's "done" column, if one exists. */
   complete(path: string): void;
   /** Trash the card's note (after confirmation in the UI). */
