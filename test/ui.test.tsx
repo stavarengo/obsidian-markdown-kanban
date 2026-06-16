@@ -102,6 +102,50 @@ describe("card detail", () => {
     expect(within(detail).getByText("Beta")).toBeInTheDocument(); // subcard link
   });
 
+  it("shows the description rendered, and clicking it reveals the editable textarea", async () => {
+    const user = userEvent.setup();
+    render_(makeRepo());
+    await user.click(await screen.findByText("Alpha"));
+    const detail = await screen.findByTestId("card-detail");
+    // View mode: fakeRepo renders the markdown as textContent (no raw editor yet).
+    const rendered = await within(detail).findByText("Desc A");
+    expect(rendered).toHaveClass("mdkb-desc-rendered");
+    expect(within(detail).queryByLabelText("Edit description")).not.toBeNull();
+    expect(within(detail).queryByRole("textbox", { name: "Edit description" })).toBeNull();
+    // Clicking the rendered area flips to the raw textarea.
+    await user.click(rendered);
+    expect(await within(detail).findByRole("textbox", { name: "Edit description" })).toHaveValue("Desc A");
+  });
+
+  it("saves an edited description via setDescription and returns to view", async () => {
+    const user = userEvent.setup();
+    const repo = makeRepo();
+    render_(repo);
+    await user.click(await screen.findByText("Alpha"));
+    const detail = await screen.findByTestId("card-detail");
+    await user.click(await within(detail).findByText("Desc A"));
+    const box = within(detail).getByRole("textbox", { name: "Edit description" });
+    await user.clear(box);
+    await user.type(box, "Brand new body");
+    await user.click(within(detail).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(repo.files.get("Tasks/Alpha.md")!.body).toContain("Brand new body"));
+    // Back in view mode: the textarea is gone and the new text renders.
+    await waitFor(() => expect(within(detail).queryByRole("textbox", { name: "Edit description" })).toBeNull());
+    expect(await within(detail).findByText("Brand new body")).toBeInTheDocument();
+  });
+
+  it("renders each comment's text through the markdown component", async () => {
+    const user = userEvent.setup();
+    render_(makeRepo());
+    await user.click(await screen.findByText("Alpha"));
+    const detail = await screen.findByTestId("card-detail");
+    const comment = await within(detail).findByText("hi there");
+    expect(comment).toHaveClass("mdkb-comment-text");
+    // The Markdown component renders a <div>; the pre-Batch-E code rendered a raw <span>,
+    // so the tag discriminates that the text now flows through repo.renderMarkdown.
+    expect(comment.tagName).toBe("DIV");
+  });
+
   it("adds a comment and persists it", async () => {
     const user = userEvent.setup();
     const repo = makeRepo();
@@ -231,6 +275,16 @@ describe("detail presentation", () => {
     expect(document.querySelector(".mdkb-detail-modal-backdrop")).not.toBeNull();
     expect(detail).toHaveClass("mdkb-detail--modal");
     expect(detail).toHaveAttribute("aria-modal", "true");
+  });
+
+  it("mounts the modal panel inside the backdrop and not as a flex sibling of the board", async () => {
+    // The modal lives in the backdrop overlay (a centered dialog), decoupled from the side panel —
+    // px width is brittle in jsdom, so assert the structure: panel is the backdrop's child, and
+    // it carries no inline width style (only side/float read settings.detailWidth into one).
+    await open({ ...DEFAULT_SETTINGS, detailPresentation: "modal" });
+    const detail = await screen.findByTestId("card-detail");
+    expect(detail.parentElement).toHaveClass("mdkb-detail-modal-backdrop");
+    expect(detail.style.width).toBe("");
   });
 
   it("uses the float class with no backdrop in side+float mode", async () => {

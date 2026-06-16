@@ -1,4 +1,4 @@
-import { App, TFile, normalizePath } from "obsidian";
+import { App, Component, MarkdownRenderer, TFile, normalizePath } from "obsidian";
 import type { Board, BoardConfig, Card, CardBody, CardFrontmatter, ColumnDef, HistoryScope } from "../model/types";
 import type { CardMutation } from "../model/board";
 import { buildBoard } from "../model/board";
@@ -268,6 +268,30 @@ export class VaultRepository implements CardRepository {
 
   async openCard(path: string): Promise<void> {
     await this.app.workspace.getLeaf(false).openFile(this.file(path));
+  }
+
+  renderMarkdown(el: HTMLElement, markdown: string, sourcePath: string): () => void {
+    if (el.empty) el.empty();
+    else el.innerHTML = "";
+    // A managed Component owns the render's child lifecycle (embeds, post-processors). render is
+    // async and APPENDS into its target while running, so render into a detached clone and only
+    // commit the result if this run wasn't cancelled. Without the detached target, a stale in-flight
+    // render would keep appending into `el` after cleanup and stack onto the next render's output.
+    let cancelled = false;
+    const c = new Component();
+    c.load();
+    const tmp = el.cloneNode(false) as HTMLElement;
+    void MarkdownRenderer.render(this.app, markdown, tmp, sourcePath, c)
+      .then(() => {
+        if (cancelled) return;
+        el.replaceChildren(...tmp.childNodes);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      c.unload();
+      el.innerHTML = "";
+    };
   }
 
   onChange(cb: () => void): () => void {

@@ -4,6 +4,7 @@ import { DETAIL_WIDTH_MAX, DETAIL_WIDTH_MIN } from "../settings";
 import { priorityOptions } from "./cardView";
 import { useBoardActions, useRepo, useSettings, useSettingsUpdater } from "./context";
 import { Icon } from "./icons";
+import { Markdown } from "./Markdown";
 
 /** How the detail panel is presented; App decides where to mount it. */
 export type DetailMode = "split" | "float" | "modal";
@@ -50,8 +51,9 @@ function PropRow({ name, value, onCommit, onRemove }: { name: string; value: str
   );
 }
 
-/** One comment with inline edit + delete. Keeps the timestamp; edit commits on Enter/blur. */
-function CommentItem({ timestamp, text, onSave, onDelete }: { timestamp: string; text: string; onSave: (v: string) => void; onDelete: () => void }) {
+/** One comment with inline edit + delete. View mode renders the text as markdown; edit shows the
+ *  raw textarea (commits on Enter/blur). Keeps the timestamp untouched. */
+function CommentItem({ timestamp, text, sourcePath, onSave, onDelete }: { timestamp: string; text: string; sourcePath: string; onSave: (v: string) => void; onDelete: () => void }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
   const commit = () => {
@@ -72,11 +74,11 @@ function CommentItem({ timestamp, text, onSave, onDelete }: { timestamp: string;
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); } }}
         />
       ) : (
-        <span className="mdkb-comment-row">
-          <span className="mdkb-comment-text">{text}</span>
+        <div className="mdkb-comment-row">
+          <Markdown markdown={text} sourcePath={sourcePath} className="mdkb-comment-text" />
           <button className="mdkb-icon-btn mdkb-mini" aria-label="Edit comment" title="Edit" onClick={() => { setDraft(text); setEditing(true); }}><Icon name="pencil" size={13} /></button>
           <button className="mdkb-icon-btn mdkb-mini" aria-label="Delete comment" title="Delete" onClick={onDelete}><Icon name="trash" size={13} /></button>
-        </span>
+        </div>
       )}
     </li>
   );
@@ -105,6 +107,8 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
   const creatingRef = useRef(false);
   const [body, setBody] = useState<CardBody | null>(null);
   const [descDraft, setDescDraft] = useState("");
+  // Description defaults to a rendered view; clicking it (or the pencil) flips to the raw editor.
+  const [editingDesc, setEditingDesc] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [newTodo, setNewTodo] = useState("");
   const [newSubcard, setNewSubcard] = useState("");
@@ -132,6 +136,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     if (isCreate) return; // no card to read while the create form is up
     setBody(null);
     setConfirmDelete(false);
+    setEditingDesc(false); // navigating cards starts the new card in view mode
     void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, isCreate]);
@@ -145,14 +150,20 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // A freshly-created card (inline-edit / detail flows) lands focus on the description, not the panel.
-  // Keyed on `path`, not `body`, so each field edit's reload doesn't yank focus back. The detail
-  // create flow unmounts the create branch and remounts a fresh card panel (focus lands via the
-  // mount-time effect); inline-edit re-keys the same instance and re-fires this effect on the new path.
+  // A freshly-created card (inline-edit / detail flows) lands the user in the description editor.
+  // Description defaults to view mode, so a fresh card has no textarea to focus — flip to edit mode
+  // here; the editing-flag effect below focuses the textarea once it mounts. Keyed on `path`, not
+  // `body`, so each field edit's reload doesn't re-trigger. The detail create flow unmounts the
+  // create branch and remounts a fresh card panel; inline-edit re-keys the same instance on the new path.
   useEffect(() => {
-    if (focusNew && !isCreate) descRef.current?.focus();
+    if (focusNew && !isCreate) setEditingDesc(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusNew, path]);
+
+  // Focus the raw description textarea whenever the editor opens (fresh card, pencil, click-to-edit).
+  useEffect(() => {
+    if (editingDesc) descRef.current?.focus();
+  }, [editingDesc]);
 
   // The "Add subcard" context-menu action opens this card and lands focus on its subcard input,
   // letting the user type the title there (the input's Enter handler calls repo.addSubcard).
@@ -412,12 +423,37 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
 
         <section className="mdkb-section">
           <h3>Description</h3>
-          <textarea ref={descRef} className="mdkb-desc" value={descDraft} onChange={(e) => setDescDraft(e.target.value)} placeholder="Add a description…" />
-          {body && descDraft !== body.description && (
-            <div className="mdkb-row-actions">
-              <button className="mdkb-btn mdkb-btn-primary" onClick={() => void mutate(() => repo.setDescription(path, descDraft))}>Save</button>
-              <button className="mdkb-btn" onClick={() => setDescDraft(body.description)}>Revert</button>
+          {editingDesc ? (
+            <>
+              <textarea
+                ref={descRef}
+                className="mdkb-desc"
+                value={descDraft}
+                aria-label="Edit description"
+                onChange={(e) => setDescDraft(e.target.value)}
+                placeholder="Add a description…"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    // Stay inside the editor: don't let Escape bubble to the panel and close it.
+                    e.stopPropagation();
+                    if (body) setDescDraft(body.description);
+                    setEditingDesc(false);
+                  }
+                }}
+              />
+              <div className="mdkb-row-actions">
+                <button className="mdkb-btn mdkb-btn-primary" onClick={() => void mutate(() => repo.setDescription(path, descDraft)).then(() => setEditingDesc(false))}>Save</button>
+                <button className="mdkb-btn" onClick={() => { if (body) setDescDraft(body.description); setEditingDesc(false); }}>Revert</button>
+              </div>
+            </>
+          ) : body && body.description.trim() ? (
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+            <div className="mdkb-desc-view" onClick={(e) => { if ((e.target as HTMLElement).closest("a")) return; setEditingDesc(true); }}>
+              <Markdown markdown={body.description} sourcePath={path} className="mdkb-desc-rendered" />
+              <button className="mdkb-icon-btn mdkb-mini mdkb-desc-edit" aria-label="Edit description" title="Edit" onClick={(e) => { e.stopPropagation(); setEditingDesc(true); }}><Icon name="pencil" size={13} /></button>
             </div>
+          ) : (
+            <button className="mdkb-desc-empty mdkb-muted" aria-label="Edit description" onClick={() => setEditingDesc(true)}>Add a description…</button>
           )}
         </section>
 
@@ -487,6 +523,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
                 key={i}
                 timestamp={c.timestamp}
                 text={c.text}
+                sourcePath={path}
                 onSave={(val) => void mutate(() => repo.updateComment(path, i, val))}
                 onDelete={() => void mutate(() => repo.removeComment(path, i))}
               />

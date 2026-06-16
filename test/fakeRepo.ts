@@ -167,6 +167,11 @@ export class FakeRepo implements CardRepository {
     this.opened.push(path);
   }
 
+  renderMarkdown(el: HTMLElement, markdown: string): () => void {
+    el.textContent = markdown;
+    return () => { el.textContent = ""; };
+  }
+
   onChange(cb: () => void): () => void {
     this.listeners.add(cb);
     return () => this.listeners.delete(cb);

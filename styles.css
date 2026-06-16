@@ -927,9 +927,10 @@
   background: rgba(0, 0, 0, 0.45);
 }
 .mdkb-detail--modal {
+  /* A balanced dialog width DECOUPLED from the side-panel detailWidth (App never passes an inline
+     width in modal mode). width:auto would collapse to the body's narrow intrinsic size — the sliver. */
   flex: 0 0 auto;
-  width: auto;
-  max-width: min(620px, 92%);
+  width: min(640px, 92vw);
   max-height: 85vh;
   border: 1px solid var(--mdkb-border-strong);
   border-radius: var(--mdkb-r-lg);
@@ -1083,6 +1084,91 @@
   border-radius: var(--mdkb-r-sm);
   padding: 8px 10px;
   margin-bottom: 8px;
+}
+
+/* Rendered-description view: click anywhere to edit; pencil surfaces on hover. */
+.mdkb-desc-view {
+  position: relative;
+  cursor: text;
+  border: 1px solid transparent;
+  border-radius: var(--mdkb-r-sm);
+  padding: 4px 6px;
+  margin: 0 -6px;
+  transition: background var(--mdkb-dur-fast) ease, border-color var(--mdkb-dur-fast) ease;
+}
+.mdkb-desc-view:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--mdkb-border);
+}
+.mdkb-desc-edit {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity var(--mdkb-dur-fast) ease;
+}
+.mdkb-desc-view:hover .mdkb-desc-edit,
+.mdkb-desc-view:focus-within .mdkb-desc-edit {
+  opacity: 1;
+}
+.mdkb-desc-empty {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px dashed var(--mdkb-border);
+  border-radius: var(--mdkb-r-sm);
+  padding: 8px 10px;
+  cursor: text;
+}
+
+/* Rendered markdown block: tidy prose spacing, constrained within the panel width. */
+.mdkb-desc-rendered {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-normal);
+  overflow-wrap: anywhere;
+}
+.mdkb-desc-rendered > :first-child,
+.mdkb-comment-text > :first-child {
+  margin-top: 0;
+}
+.mdkb-desc-rendered > :last-child,
+.mdkb-comment-text > :last-child {
+  margin-bottom: 0;
+}
+.mdkb-desc-rendered p {
+  margin: 0 0 8px;
+}
+.mdkb-desc-rendered ul,
+.mdkb-desc-rendered ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+.mdkb-desc-rendered h1,
+.mdkb-desc-rendered h2,
+.mdkb-desc-rendered h3,
+.mdkb-desc-rendered h4 {
+  margin: 12px 0 6px;
+  line-height: 1.3;
+}
+.mdkb-desc-rendered pre,
+.mdkb-desc-rendered code,
+.mdkb-comment-text pre,
+.mdkb-comment-text code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.mdkb-desc-rendered img,
+.mdkb-comment-text img {
+  max-width: 100%;
+  height: auto;
+}
+/* Comments render inline-ish: keep paragraph margins flat so the edit/delete
+   buttons stay aligned with the first text line under .mdkb-comment-row. */
+.mdkb-comment-text p {
+  margin: 0;
 }
 
 .mdkb-subtasks,

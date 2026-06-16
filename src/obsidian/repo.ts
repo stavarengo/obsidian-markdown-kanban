@@ -40,6 +40,13 @@ export interface CardRepository {
   /** Open a card note in the workspace. */
   openCard(path: string): Promise<void>;
 
+  /**
+   * Render markdown into `el` using the host's engine (Obsidian's MarkdownRenderer in the vault
+   * adapter; plain text in tests). `sourcePath` resolves links/embeds relative to that note.
+   * Returns a cleanup function the caller runs on unmount / before re-rendering.
+   */
+  renderMarkdown(el: HTMLElement, markdown: string, sourcePath: string): () => void;
+
   /** Subscribe to external changes; returns an unsubscribe function. */
   onChange(cb: () => void): () => void;
 }
