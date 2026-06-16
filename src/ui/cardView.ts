@@ -49,6 +49,15 @@ export function priorityTone(value: string): ChipTone {
   return PRIORITY_TONE[value.trim().toLowerCase()] ?? "muted";
 }
 
+const PRIORITY_WORD_SCALE = ["urgent", "high", "medium", "low"];
+const PRIORITY_LETTER_SCALE = ["A", "B", "C", "D"];
+
+/** Priority options that always include the card's current value (keeps arbitrary scales working). */
+export function priorityOptions(current: string): string[] {
+  const base = PRIORITY_LETTER_SCALE.includes(current) ? PRIORITY_LETTER_SCALE : PRIORITY_WORD_SCALE;
+  return current && !base.includes(current) ? [current, ...base] : base;
+}
+
 /** Whole-day difference (target − today), both as YYYY-MM-DD. */
 function dayDelta(target: string, today: string): number | null {
   const t = Date.parse(target + "T00:00:00");

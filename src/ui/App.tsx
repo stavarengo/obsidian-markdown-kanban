@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import type { Board as BoardModel, ColumnDef } from "../model/types";
-import { moveCard, resolveDrop } from "../model/board";
+import { columnOf, moveCard, resolveDrop } from "../model/board";
 import { dateOnly } from "../model/dates";
 import type { CardRepository } from "../obsidian/repo";
 import type { KanbanSettings } from "../settings";
@@ -55,6 +55,8 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   const [createColumn, setCreateColumn] = useState<string | null>(null);
   const [openOverride, setOpenOverride] = useState<DetailMode | null>(null);
   const [focusNew, setFocusNew] = useState(false);
+  // One-shot: focus the open card's "Add a subcard" input (the context-menu "Add subcard" action).
+  const [focusAddSubcard, setFocusAddSubcard] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<BoardFilters>(EMPTY_FILTERS);
   const [toast, setToast] = useState<{ text: string; tone: "success" | "error" } | null>(null);
@@ -173,6 +175,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   const openCard = useCallback((path: string) => {
     setOpenOverride(null);
     setFocusNew(false);
+    setFocusAddSubcard(false);
     setCreateColumn(null);
     setSelected(path);
   }, []);
@@ -184,6 +187,12 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         setSelected(null);
         setCreateColumn(col);
         setOpenOverride(mapOpenMode(settings.addCardOpenMode));
+      },
+      addSubcard: (path) => {
+        // The subcard needs a title; route through the detail's existing add-subcard input
+        // (which calls repo.addSubcard on Enter) rather than inventing a separate prompt.
+        openCard(path);
+        setFocusAddSubcard(true);
       },
       complete: (path) => {
         if (!doneColumnId) return;
@@ -205,6 +214,74 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         })();
       },
       openNote: (path) => void repo.openCard(path),
+      setPriority: (path, value) => {
+        void (async () => {
+          try {
+            // Empty value clears the key cleanly (removes the `priority:` line) per the contract,
+            // instead of writing a stray empty `priority:` and a misleading `Priority → ` history line.
+            if (value === "") await repo.unsetFrontmatterKey(path, "priority");
+            else await repo.setFrontmatter(path, { priority: value });
+          } catch (e) {
+            reportError(e);
+          } finally {
+            await load();
+          }
+        })();
+      },
+      moveWithinColumn: (path, dir) => {
+        const b = boardRef.current;
+        if (!b) return;
+        const col = columnOf(b, path);
+        if (!col) return;
+        const list = b.columns[col] ?? [];
+        const i = list.indexOf(path);
+        if (i < 0) return;
+        if (dir < 0 ? i <= 0 : i >= list.length - 1) return; // already at the edge
+        // dropIndex is computed against the list with `path` removed: up (-1) lands before the
+        // former predecessor, down (+1) lands after the former successor.
+        const dropIndex = i + dir;
+        const mut = moveCard(b, path, col, dropIndex);
+        if (!mut) return;
+        void (async () => {
+          try {
+            await repo.applyMove(mut);
+          } catch (e) {
+            reportError(e);
+          } finally {
+            await load();
+          }
+        })();
+      },
+      columnEdges: (path) => {
+        const b = boardRef.current;
+        if (!b) return { canMoveUp: false, canMoveDown: false };
+        const col = columnOf(b, path);
+        const list = col ? b.columns[col] ?? [] : [];
+        const i = list.indexOf(path);
+        return { canMoveUp: i > 0, canMoveDown: i >= 0 && i < list.length - 1 };
+      },
+      toggleTodo: (path, index, done) => {
+        void (async () => {
+          try {
+            await repo.toggleSubtask(path, index, done);
+          } catch (e) {
+            reportError(e);
+          } finally {
+            await load();
+          }
+        })();
+      },
+      removeTodo: (path, index) => {
+        void (async () => {
+          try {
+            await repo.removeSubtask(path, index);
+          } catch (e) {
+            reportError(e);
+          } finally {
+            await load();
+          }
+        })();
+      },
       doneColumnId,
       renameColumn: (id, title) => {
         const b = boardRef.current;
@@ -323,6 +400,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     setCreateColumn(null);
     setOpenOverride(null);
     setFocusNew(false);
+    setFocusAddSubcard(false);
   };
 
   const detail = detailOpen ? (
@@ -331,6 +409,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
       board={board}
       mode={detailMode}
       focusNew={focusNew}
+      focusAddSubcard={focusAddSubcard}
       onClose={closeDetail}
       onNavigate={openCard}
       onChanged={load}

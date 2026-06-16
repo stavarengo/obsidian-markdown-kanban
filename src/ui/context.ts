@@ -36,12 +36,24 @@ export interface BoardActions {
   open(path: string): void;
   /** Start the "create card" detail flow for a column (used by addCardFlow: 'detail'). */
   startCreate(columnId: string): void;
+  /** Open the card's detail panel with its "Add a subcard" input focused, so the user types the title there. */
+  addSubcard(path: string): void;
   /** Move a card to the board's "done" column, if one exists. */
   complete(path: string): void;
   /** Trash the card's note (after confirmation in the UI). */
   remove(path: string): void;
   /** Open the underlying note in an Obsidian tab. */
   openNote(path: string): void;
+  /** Set a card's priority frontmatter (empty string clears it). */
+  setPriority(path: string, value: string): void;
+  /** Reorder a card one step within its current column (-1 up, +1 down); a no-op at the edges. */
+  moveWithinColumn(path: string, dir: -1 | 1): void;
+  /** Whether the card can move up/down within its column (false at the respective edge). */
+  columnEdges(path: string): { canMoveUp: boolean; canMoveDown: boolean };
+  /** Check or uncheck the index-th checklist item of a card. */
+  toggleTodo(path: string, index: number, done: boolean): void;
+  /** Delete the index-th checklist item of a card. */
+  removeTodo(path: string, index: number): void;
   /** Id of the column treated as "done", or null if the board has none. */
   doneColumnId: string | null;
 

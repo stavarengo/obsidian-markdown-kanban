@@ -1,8 +1,9 @@
-import { memo, useState, type KeyboardEvent } from "react";
+import { memo, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card, CardStats } from "../model/types";
 import { cardChips, priorityTone } from "./cardView";
+import { CardContextMenu, type ContextTarget } from "./CardContextMenu";
 import { useBoardActions, useSettings } from "./context";
 import { Icon } from "./icons";
 
@@ -16,6 +17,7 @@ function CardItemInner({ card, today, selected }: Props) {
   const actions = useBoardActions();
   const { cardNextTodos } = useSettings();
   const [confirming, setConfirming] = useState(false);
+  const [menu, setMenu] = useState<ContextTarget | null>(null);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.path,
   });
@@ -35,6 +37,19 @@ function CardItemInner({ card, today, selected }: Props) {
   const open = () => {
     if (!isDragging) actions.open(card.path);
   };
+  // Right-click opens a context-aware menu. preventDefault stops Obsidian's own context menu;
+  // dnd-kit's PointerSensor only activates on the left button, so this never starts a drag.
+  const onContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const todoEl = (e.target as HTMLElement).closest(".mdkb-card-next-todo");
+    const todoIndex = todoEl ? Number(todoEl.getAttribute("data-todo-index")) : NaN;
+    setMenu(
+      todoEl && Number.isFinite(todoIndex)
+        ? { x: e.clientX, y: e.clientY, kind: "todo", todoIndex }
+        : { x: e.clientX, y: e.clientY, kind: "card" },
+    );
+  };
   // Merge dnd-kit keyboard handling (Space = pick up) with Enter = open.
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -53,6 +68,7 @@ function CardItemInner({ card, today, selected }: Props) {
       data-testid="card"
       data-path={card.path}
       data-prio={prio ?? undefined}
+      onContextMenu={onContextMenu}
     >
       <div
         className="mdkb-card-main"
@@ -184,6 +200,22 @@ function CardItemInner({ card, today, selected }: Props) {
           </div>
         </div>
       )}
+
+      {menu &&
+        (() => {
+          const edges = actions.columnEdges(card.path);
+          return (
+            <CardContextMenu
+              target={menu}
+              path={card.path}
+              priority={typeof fm.priority === "string" ? fm.priority : ""}
+              isDone={!canComplete}
+              canMoveUp={edges.canMoveUp}
+              canMoveDown={edges.canMoveDown}
+              onClose={() => setMenu(null)}
+            />
+          );
+        })()}
     </div>
   );
 }

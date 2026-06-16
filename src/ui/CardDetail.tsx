@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import type { Board, CardBody } from "../model/types";
 import { DETAIL_WIDTH_MAX, DETAIL_WIDTH_MIN } from "../settings";
+import { priorityOptions } from "./cardView";
 import { useBoardActions, useRepo, useSettings, useSettingsUpdater } from "./context";
 import { Icon } from "./icons";
 
@@ -21,6 +22,8 @@ interface Props {
   onCreated?: (path: string) => void;
   /** When set, focus the description textarea on mount (fresh card from an add-card flow). */
   focusNew?: boolean;
+  /** When set, focus the "Add a subcard" input (the context-menu "Add subcard" action). */
+  focusAddSubcard?: boolean;
 }
 
 const clampWidth = (n: number) => Math.min(DETAIL_WIDTH_MAX, Math.max(DETAIL_WIDTH_MIN, n));
@@ -84,17 +87,9 @@ function resolveBasename(board: Board, link: string): string | null {
   return null;
 }
 
-const WORD_SCALE = ["urgent", "high", "medium", "low"];
-const LETTER_SCALE = ["A", "B", "C", "D"];
 const EDITED_KEYS = new Set(["status", "priority", "due", "order", "type", "created"]);
 
-/** Priority options that always include the card's current value (keeps arbitrary scales working). */
-function priorityOptions(current: string): string[] {
-  const base = LETTER_SCALE.includes(current) ? LETTER_SCALE : WORD_SCALE;
-  return current && !base.includes(current) ? [current, ...base] : base;
-}
-
-export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, createColumn, onCreated, focusNew }: Props) {
+export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, createColumn, onCreated, focusNew, focusAddSubcard }: Props) {
   const repo = useRepo();
   const actions = useBoardActions();
   const settings = useSettings();
@@ -104,6 +99,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
   const panelRef = useRef<HTMLElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const descRef = useRef<HTMLTextAreaElement | null>(null);
+  const subcardRef = useRef<HTMLInputElement | null>(null);
   // Synchronous in-flight guard for the create form: blocks a second submit (rapid Enter, or
   // Enter-then-click) during the async createCard window before onCreated unmounts this branch.
   const creatingRef = useRef(false);
@@ -157,6 +153,13 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     if (focusNew && !isCreate) descRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusNew, path]);
+
+  // The "Add subcard" context-menu action opens this card and lands focus on its subcard input,
+  // letting the user type the title there (the input's Enter handler calls repo.addSubcard).
+  useEffect(() => {
+    if (focusAddSubcard && !isCreate) subcardRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusAddSubcard, path]);
 
   // Side modes: a pointerdown outside the panel closes it — but not when it lands on another
   // card (that card's own open handler switches the detail), nor on a menu/context surface.
@@ -354,7 +357,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
           </label>
           <label>
             Priority
-            <select value={curPriority} onChange={(e) => void mutate(() => repo.setFrontmatter(path, { priority: e.target.value }))}>
+            <select value={curPriority} onChange={(e) => void mutate(() => e.target.value === "" ? repo.unsetFrontmatterKey(path, "priority") : repo.setFrontmatter(path, { priority: e.target.value }))}>
               <option value="">—</option>
               {priorityOptions(curPriority).map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -461,6 +464,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
           </div>
           <div className="mdkb-add-inline">
             <input
+              ref={subcardRef}
               value={newSubcard}
               placeholder="Add a subcard…"
               aria-label="Add a subcard"

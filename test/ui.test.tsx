@@ -382,6 +382,126 @@ describe("board pan-scroll", () => {
   });
 });
 
+describe("card context menu", () => {
+  // Two ordered top-level cards in Todo so Move up/down has room; Alpha keeps its next-todos.
+  const ctxRepo = () =>
+    new FakeRepo(config, {
+      "Tasks/First.md": {
+        fm: { type: "task", status: "todo", order: 1, priority: "low" },
+        body: "\n# First\n\n## Subtasks\n- [x] done one\n- [ ] real one\n- [ ] real two\n",
+      },
+      "Tasks/Second.md": { fm: { type: "task", status: "todo", order: 2 }, body: "\n# Second\n" },
+    });
+
+  const openCardMenu = async (cardName: string, repo = ctxRepo()) => {
+    render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
+    const card = (await screen.findByText(cardName)).closest(".mdkb-card") as HTMLElement;
+    fireEvent.contextMenu(card.querySelector(".mdkb-card-title")!);
+    return { repo, menu: await screen.findByRole("menu") };
+  };
+
+  it("opens a card menu with the expected items on right-click", async () => {
+    const { menu } = await openCardMenu("First");
+    expect(within(menu).getByRole("menuitem", { name: /Open details/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Mark done/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Open note/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Move up/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Move down/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Add subcard/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: /Delete card/ })).toBeInTheDocument();
+    // Change priority group with selectable options (current value highlighted).
+    expect(within(menu).getByRole("group", { name: "Change priority" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitemradio", { name: "low" })).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("disables Move up at the top of the column and Move down at the bottom", async () => {
+    const { menu } = await openCardMenu("First"); // First is at the top
+    expect(within(menu).getByRole("menuitem", { name: /Move up/ })).toBeDisabled();
+    expect(within(menu).getByRole("menuitem", { name: /Move down/ })).toBeEnabled();
+  });
+
+  it("Move down reorders the card within its column", async () => {
+    const { repo, menu } = await openCardMenu("First");
+    const user = userEvent.setup();
+    await user.click(within(menu).getByRole("menuitem", { name: /Move down/ }));
+    // First now sorts after Second: its order is bumped past Second's (order 2).
+    await waitFor(() => expect(Number(repo.files.get("Tasks/First.md")!.fm.order)).toBeGreaterThan(2));
+  });
+
+  it("Change priority sets the chosen priority via the repo", async () => {
+    const { repo, menu } = await openCardMenu("First");
+    const user = userEvent.setup();
+    await user.click(within(menu).getByRole("menuitemradio", { name: "high" }));
+    await waitFor(() => expect(repo.files.get("Tasks/First.md")!.fm.priority).toBe("high"));
+  });
+
+  it("Add subcard opens the card detail with its subcard input focused and adds the subcard", async () => {
+    const { repo, menu } = await openCardMenu("First");
+    const user = userEvent.setup();
+    await user.click(within(menu).getByRole("menuitem", { name: /Add subcard/ }));
+    const detail = await screen.findByTestId("card-detail");
+    const subcardInput = within(detail).getByLabelText("Add a subcard") as HTMLInputElement;
+    await waitFor(() => expect(subcardInput).toHaveFocus());
+    await user.type(subcardInput, "Child task{Enter}");
+    await waitFor(() => expect(repo.files.get("Tasks/First.md")!.body).toContain("[[Child task]]"));
+  });
+
+  it("clearing priority from the menu removes the key instead of writing an empty value", async () => {
+    const { repo, menu } = await openCardMenu("First");
+    const user = userEvent.setup();
+    await user.click(within(menu).getByRole("menuitemradio", { name: "No priority" }));
+    await waitFor(() => expect("priority" in repo.files.get("Tasks/First.md")!.fm).toBe(false));
+  });
+
+  it("hides Mark done for a card already in the done column", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/Finished.md": { fm: { type: "task", status: "done" }, body: "\n# Finished\n" },
+    });
+    render_(repo);
+    const card = (await screen.findByText("Finished")).closest(".mdkb-card") as HTMLElement;
+    fireEvent.contextMenu(card.querySelector(".mdkb-card-title")!);
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).queryByRole("menuitem", { name: /Mark done/ })).toBeNull();
+  });
+
+  it("opens a todo-scoped menu on a next-todo row and toggles by its data-todo-index", async () => {
+    const repo = ctxRepo();
+    render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
+    const card = (await screen.findByText("First")).closest(".mdkb-card") as HTMLElement;
+    const todoRow = card.querySelector('.mdkb-card-next-todo[data-todo-index="1"]') as HTMLElement;
+    fireEvent.contextMenu(todoRow);
+    const menu = await screen.findByRole("menu", { name: "Todo actions" });
+    const user = userEvent.setup();
+    await user.click(within(menu).getByRole("menuitem", { name: /Mark done/ }));
+    // Index 1 is the first undone todo ("real one"); toggling it checks that line.
+    await waitFor(() => expect(repo.files.get("Tasks/First.md")!.body).toMatch(/- \[x\] real one/));
+  });
+
+  it("removes a todo from the todo menu", async () => {
+    const repo = ctxRepo();
+    render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
+    const card = (await screen.findByText("First")).closest(".mdkb-card") as HTMLElement;
+    const todoRow = card.querySelector('.mdkb-card-next-todo[data-todo-index="2"]') as HTMLElement;
+    fireEvent.contextMenu(todoRow);
+    const menu = await screen.findByRole("menu", { name: "Todo actions" });
+    const user = userEvent.setup();
+    await user.click(within(menu).getByRole("menuitem", { name: /Remove todo/ }));
+    await waitFor(() => expect(repo.files.get("Tasks/First.md")!.body).not.toContain("real two"));
+  });
+
+  it("closes on Escape", async () => {
+    const { menu } = await openCardMenu("First");
+    fireEvent.keyDown(menu, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+  });
+
+  it("closes on an outside pointerdown", async () => {
+    await openCardMenu("First");
+    fireEvent.pointerDown(document.body);
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+  });
+});
+
 describe("settings context", () => {
   it("exposes the provided settings via useSettings()", () => {
     function Probe() {

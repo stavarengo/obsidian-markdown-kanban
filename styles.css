@@ -446,6 +446,43 @@
   color: var(--text-normal);
 }
 
+/* ------------------------------------------------------------------ card context menu (right-click) */
+.mdkb-card-context {
+  /* Above cards (z 2), the float detail panel (z 55) and the modal backdrop (z 70). Stacking holds
+     because the menu is portalled to <body> and the board containers create no stacking context. */
+  z-index: 80;
+  width: 200px;
+  gap: 2px;
+  padding: 6px;
+}
+.mdkb-card-context .mdkb-menu-label {
+  padding: 4px 8px 0;
+}
+.mdkb-menu-priorities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 2px 4px;
+}
+.mdkb-menu-prio {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+.mdkb-menu-prio.is-active {
+  box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--mdkb-accent);
+}
+.mdkb-menu-prio-none {
+  display: grid;
+  place-items: center;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+
 /* ------------------------------------------------------------------ add column */
 .mdkb-add-column {
   flex: 0 0 220px;
