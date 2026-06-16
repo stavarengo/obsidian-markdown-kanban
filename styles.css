@@ -614,7 +614,7 @@
    Edge allocation (BATCH2-CONTRACT §6): priority owns the left strip (::before), the future #14
    context marker owns the left edge too — so urgency takes the TOP edge + a faint background tint,
    keeping the three signals on three non-colliding treatments. No `future`/`done`/no-date cue
-   (those carry no data-urgency), so default cards stay neutral. */
+   (those carry no data-urgency), so default cards stay neutral.
    Drawn entirely via `background` (a 3px top accent band + a flat tint) layered over the card bg, so
    it adds NO layout shift and never fights the card's border/box-shadow (which toggle on hover/drag). */
 .mdkb-card[data-urgency] {
