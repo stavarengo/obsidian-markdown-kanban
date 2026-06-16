@@ -4,7 +4,22 @@
 // checklist links to it (`- [ ] [[Child]]`). We invert those links to derive parent-of and
 // the top-level set. No `parent` frontmatter, so re-parenting is one write and can't desync.
 
-import type { Board, BoardConfig, Card, CardFrontmatter } from "./types";
+import type { Board, BoardConfig, Card, CardFrontmatter, ContextConfig } from "./types";
+
+/**
+ * The context (#14) a card belongs to, derived purely from its path: the immediate subfolder of
+ * `cardFolder` it lives under. A card directly in `cardFolder` (no further `/` after the folder)
+ * has no context → undefined. The single source of truth shared by every repo + the board build,
+ * so derived context can never diverge between adapters.
+ */
+export function deriveContext(cardFolder: string, path: string): string | undefined {
+  const prefix = cardFolder.replace(/\/+$/, "") + "/";
+  if (!path.startsWith(prefix)) return undefined;
+  const rest = path.slice(prefix.length);
+  const slash = rest.indexOf("/");
+  if (slash <= 0) return undefined; // file sits directly in the card folder
+  return rest.slice(0, slash);
+}
 
 /**
  * Resolve a wikilink target to a card path. Prefers an exact path when the link carries a
@@ -64,7 +79,18 @@ function isGenuinelyNested(path: string, parentOf: Record<string, string>): bool
   return true;
 }
 
-export function buildBoard(config: BoardConfig, cards: Card[]): Board {
+export function buildBoard(
+  config: BoardConfig,
+  cards: Card[],
+  contexts: Record<string, ContextConfig> = {},
+): Board {
+  // Derive each card's context from its path (#14): one place, so every card on the board carries
+  // the same notion of context the `context:` filter token reads. Path-derived, never written.
+  for (const c of cards) {
+    const ctx = deriveContext(config.cardFolder, c.path);
+    if (ctx !== undefined) c.context = ctx;
+  }
+
   const byBasename = new Map<string, string[]>();
   for (const c of cards) {
     const arr = byBasename.get(c.basename);
@@ -115,7 +141,7 @@ export function buildBoard(config: BoardConfig, cards: Card[]): Board {
     childrenOf[parent] = columnEffectiveOrders(childGroups[parent]).map((x) => x.card.path);
   }
 
-  return { config, columns, cards: cardsByPath, parentOf, childrenOf };
+  return { config, columns, cards: cardsByPath, parentOf, childrenOf, contexts };
 }
 
 // ---------------------------------------------------------------------------

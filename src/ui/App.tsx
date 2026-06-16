@@ -5,7 +5,7 @@ import { columnOf, moveCard, resolveDrop } from "../model/board";
 import { dateOnly } from "../model/dates";
 import type { CardRepository } from "../obsidian/repo";
 import type { KanbanSettings } from "../settings";
-import { BoardActionsContext, RepoContext, SettingsContext, type BoardActions } from "./context";
+import { BoardActionsContext, ContextsContext, RepoContext, SettingsContext, type BoardActions } from "./context";
 import { Board } from "./Board";
 import { CardDetail, type DetailMode } from "./CardDetail";
 import { Toolbar } from "./Toolbar";
@@ -13,6 +13,9 @@ import { Icon } from "./icons";
 import { cardMatches, EMPTY_FILTERS, type BoardFilters } from "./cardView";
 
 const DONE_RE = /\b(done|complete|completed|finished|shipped|closed)\b/i;
+
+/** Stable empty contexts map (#14) so the provider value identity doesn't churn pre-load. */
+const EMPTY_CONTEXTS = {} as const;
 
 /** Translate `addCardOpenMode` into a presentation override; 'default' means "use the global". */
 function mapOpenMode(openMode: KanbanSettings["addCardOpenMode"]): DetailMode | null {
@@ -356,6 +359,14 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     return map;
   }, [board]);
 
+  // Context configs (#14) for the marker provider. Every load() builds a fresh `board.contexts`
+  // object; key the memo on its serialized content so its identity only flips when a context's
+  // name/color/label actually changes — otherwise every CardItem (a consumer) would re-render on
+  // each reload, defeating App's deliberate frontmatter-reference memo optimization.
+  const contextsValue = board?.contexts ?? EMPTY_CONTEXTS;
+  const contextsKey = JSON.stringify(contextsValue);
+  const stableContexts = useMemo(() => contextsValue, [contextsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const counts = useMemo(() => {
     let total = 0;
     let match = 0;
@@ -437,6 +448,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     <SettingsContext.Provider value={settingsValue}>
         <RepoContext.Provider value={repo}>
           <BoardActionsContext.Provider value={actions}>
+            <ContextsContext.Provider value={stableContexts}>
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
             <div className="mdkb-root" ref={rootRef} onKeyDown={onRootKeyDown}>
               <Toolbar ref={searchRef} filters={filters} onChange={setFilters} matchCount={counts.match} totalCount={counts.total} />
@@ -473,6 +485,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
                 </div>
               )}
             </div>
+            </ContextsContext.Provider>
           </BoardActionsContext.Provider>
         </RepoContext.Provider>
     </SettingsContext.Provider>

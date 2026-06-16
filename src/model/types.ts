@@ -73,6 +73,30 @@ export interface Card {
   childLinks: string[];
   /** Optional precomputed display stats (ignored by board logic). */
   stats?: CardStats;
+  /**
+   * Context (#14): the immediate subfolder of the board's card folder this card lives under
+   * (`<cardFolder>/<context>/Foo.md` → `<context>`). Path-derived, NOT written to frontmatter —
+   * a card directly in the card folder has no context. Fed by `deriveContext` during load.
+   */
+  context?: string;
+}
+
+/**
+ * A context (#14): a user-defined grouping that maps to an immediate subfolder of the board's
+ * card folder. Optionally configured by a `_context.md` note inside that subfolder. Plain data,
+ * read-only for the plugin — the note is rendered, never rewritten.
+ */
+export interface ContextConfig {
+  /** Display name (`context-name` in `_context.md`, defaults to the folder name). */
+  name: string;
+  /** Accent color used for the card grouping marker (`color`). */
+  color?: string;
+  /** Short badge text shown on member cards (`label`). */
+  label?: string;
+  /** The `_context.md` body markdown (the context's "home page"); empty when no note exists. */
+  body: string;
+  /** The subfolder name (= the key cards derive their `context` from). */
+  folder: string;
 }
 
 /** How cards inside a column are grouped before rendering (#6). `none` = no grouping. */
@@ -127,4 +151,6 @@ export interface Board {
   parentOf: Record<string, string>;
   /** parent path -> ordered child paths; subcards are rendered nested, not in columns. */
   childrenOf: Record<string, string[]>;
+  /** Context configs keyed by subfolder name (#14). Empty when the board has no subfolders. */
+  contexts: Record<string, ContextConfig>;
 }

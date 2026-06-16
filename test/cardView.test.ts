@@ -161,6 +161,16 @@ describe("matchCard", () => {
     expect(matchCard(card({}), parseFilter("context:acme"), ctx)).toBe(false);
   });
 
+  it("context token also matches the folder-derived card.context (#14 bridge)", () => {
+    const folderCard = { ...card({}), context: "Acme" };
+    expect(matchCard(folderCard, parseFilter("context:acme"), ctx)).toBe(true); // case-insensitive
+    expect(matchCard(folderCard, parseFilter("context:other"), ctx)).toBe(false);
+    // Frontmatter context and folder context are both honored (one notion of context).
+    const both = { ...card({ context: "fm-ctx" }), context: "Acme" };
+    expect(matchCard(both, parseFilter("context:fm-ctx"), ctx)).toBe(true);
+    expect(matchCard(both, parseFilter("context:acme"), ctx)).toBe(true);
+  });
+
   it("due token: overdue/today/soon buckets, none, and exact date", () => {
     const overdue = card({ due: "2026-06-10" });
     const today = card({ due: "2026-06-16" });

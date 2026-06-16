@@ -251,9 +251,13 @@ function matchToken(card: Card, token: FilterToken, ctx: MatchContext): boolean 
     case "tag":
       return tagValues(card).some((t) => t.toLowerCase() === token.value);
     case "context":
-      // #14: a card's context comes from its `context` frontmatter (string | string[]);
-      // the context-folder feature later derives + writes that same field.
-      return listValues(fm.context).includes(token.value);
+      // #14: a card's context is the folder-derived `card.context` (path-based, the primary
+      // source) OR any entry of its `context` frontmatter (string | string[]). Matching both keeps
+      // §1/§9/§14 on one notion of context so the filter token stays truthful for folder contexts.
+      return (
+        (typeof card.context === "string" && card.context.toLowerCase() === token.value) ||
+        listValues(fm.context).includes(token.value)
+      );
     case "due":
       return matchDue(card, token.value, ctx);
   }

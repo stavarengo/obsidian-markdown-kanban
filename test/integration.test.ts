@@ -139,3 +139,60 @@ describe("history seam — gated by scope (default 'moves' = no extra history)",
     expect(body).not.toContain("Status →");
   });
 });
+
+describe("contexts (#14)", () => {
+  it("derives card.context from the subfolder and excludes _context.md as a card", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/Acme/A.md": { fm: { type: "task", status: "todo" }, body: "\n# A\n" },
+      "Tasks/Acme/_context.md": {
+        fm: { "context-name": "Acme Corp", color: "#5b8def", label: "client" },
+        body: "\n# Acme\nThe client home page.\n",
+      },
+      "Tasks/Loose.md": { fm: { type: "task", status: "todo" }, body: "\n# Loose\n" },
+    });
+    const board = await repo.loadBoard();
+    // _context.md is config, never a phantom card.
+    expect(board.cards["Tasks/Acme/_context.md"]).toBeUndefined();
+    expect(board.columns.todo).not.toContain("Tasks/Acme/_context.md");
+    // The real card derives its context from the folder; the loose card has none.
+    expect(board.cards["Tasks/Acme/A.md"].context).toBe("Acme");
+    expect(board.cards["Tasks/Loose.md"].context).toBeUndefined();
+    expect(board.columns.todo).toEqual(expect.arrayContaining(["Tasks/Acme/A.md", "Tasks/Loose.md"]));
+  });
+
+  it("loadContexts reads the _context.md frontmatter + body", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/Acme/_context.md": {
+        fm: { "context-name": "Acme Corp", color: "#5b8def", label: "client" },
+        body: "\n# Acme\nThe client home page.\n",
+      },
+      "Tasks/Acme/A.md": { fm: { type: "task", status: "todo" }, body: "\n# A\n" },
+    });
+    const contexts = await repo.loadContexts();
+    expect(contexts.Acme).toEqual({
+      name: "Acme Corp",
+      color: "#5b8def",
+      label: "client",
+      body: "\n# Acme\nThe client home page.\n",
+      folder: "Acme",
+    });
+  });
+
+  it("a subfolder without a _context.md is still a context (name = folder, no color/label)", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/Beta/B.md": { fm: { type: "task", status: "todo" }, body: "\n# B\n" },
+    });
+    const contexts = await repo.loadContexts();
+    expect(contexts.Beta).toEqual({ name: "Beta", body: "", folder: "Beta" });
+    expect(contexts.Beta.color).toBeUndefined();
+    expect(contexts.Beta.label).toBeUndefined();
+  });
+
+  it("a board with no subfolders has an empty contexts map (unchanged behavior)", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/A.md": { fm: { type: "task", status: "todo" }, body: "\n# A\n" },
+    });
+    const board = await repo.loadBoard();
+    expect(board.contexts).toEqual({});
+  });
+});

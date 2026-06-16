@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Card, CardStats } from "../model/types";
 import { cardChips, priorityTone } from "./cardView";
 import { CardContextMenu, type ContextTarget } from "./CardContextMenu";
-import { useBoardActions, useSettings } from "./context";
+import { useBoardActions, useContexts, useSettings } from "./context";
 import { Icon } from "./icons";
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
 
 function CardItemInner({ card, today, selected, nested = false }: Props) {
   const actions = useBoardActions();
+  const contexts = useContexts();
   const { cardNextTodos } = useSettings();
   const [confirming, setConfirming] = useState(false);
   const [menu, setMenu] = useState<ContextTarget | null>(null);
@@ -35,6 +36,12 @@ function CardItemInner({ card, today, selected, nested = false }: Props) {
   const stats = card.stats;
   const fm = card.frontmatter;
   const prio = typeof fm.priority === "string" && fm.priority ? priorityTone(fm.priority) : null;
+  // Context grouping (#14): the card's folder-derived context + its (optional) config. The marker
+  // is a left accent strip (inset clear of the priority bar) + a label badge, so cards sharing a
+  // context read as a group within a column. Subfolders without a `_context.md` just have a name.
+  const ctx = typeof card.context === "string" ? contexts[card.context] : undefined;
+  const ctxColor = ctx?.color;
+  const ctxLabel = ctx?.label;
 
   const allDone = !!stats && stats.checklist > 0 && stats.checklistDone === stats.checklist;
   const showActions = !confirming;
@@ -69,18 +76,23 @@ function CardItemInner({ card, today, selected, nested = false }: Props) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={ctxColor ? { ...style, ["--mdkb-ctx-color" as string]: ctxColor } : style}
       className={
         "mdkb-card" +
         (nested ? " mdkb-card--nested" : "") +
         (selected ? " is-selected" : "") +
-        (isDragging ? " is-dragging" : "")
+        (isDragging ? " is-dragging" : "") +
+        (card.context ? " mdkb-card--has-context" : "")
       }
       data-testid="card"
       data-path={card.path}
       data-prio={prio ?? undefined}
+      data-context={card.context ?? undefined}
       onContextMenu={onContextMenu}
     >
+      {/* #14 context grouping: a left accent strip, shown only when the context defines a color
+          (inset past the priority bar so the two left-edge cues don't overlap). */}
+      {ctxColor && <span className="mdkb-card-context" aria-hidden="true" />}
       <div
         className="mdkb-card-main"
         // Nested cards aren't draggable: skip the drag listeners/attributes (which also supply
@@ -93,8 +105,16 @@ function CardItemInner({ card, today, selected, nested = false }: Props) {
         aria-current={selected ? "true" : undefined}
       >
         <div className="mdkb-card-title">{card.basename}</div>
-        {chips.length > 0 && (
+        {(ctxLabel || chips.length > 0) && (
           <div className="mdkb-chips">
+            {ctxLabel && (
+              <span
+                className="mdkb-chip mdkb-chip-context"
+                title={`Context: ${ctx?.name ?? card.context}`}
+              >
+                {ctxLabel}
+              </span>
+            )}
             {chips.map((c) => (
               <span key={c.key} className={`mdkb-chip mdkb-chip-${c.tone}`} title={c.title}>
                 {c.icon && <Icon name={c.icon} size={11} />}

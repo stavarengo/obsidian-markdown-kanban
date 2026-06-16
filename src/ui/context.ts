@@ -1,8 +1,20 @@
 import { createContext, useContext } from "react";
 import type { CardRepository } from "../obsidian/repo";
+import type { ContextConfig } from "../model/types";
 import type { KanbanSettings } from "../settings";
 
 export const RepoContext = createContext<CardRepository | null>(null);
+
+/**
+ * Context configs (#14) keyed by subfolder name, provided by App. Lives in its own React context
+ * (not a CardItem prop) so a `_context.md` edit re-renders the markers even though the memoized
+ * cards' path/frontmatter are unchanged. Defaults to an empty map (boards with no subfolders).
+ */
+export const ContextsContext = createContext<Record<string, ContextConfig>>({});
+
+export function useContexts(): Record<string, ContextConfig> {
+  return useContext(ContextsContext);
+}
 
 export function useRepo(): CardRepository {
   const repo = useContext(RepoContext);

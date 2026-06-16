@@ -1293,3 +1293,28 @@
     animation: none !important;
   }
 }
+
+/* ------------------------------------------------------- context grouping (#14)
+   A card in a `<cardFolder>/<context>/` subfolder gets a left accent strip colored from its
+   context (`--mdkb-ctx-color`) plus a label chip. The strip is INSET to left:5px so it sits
+   beside — never on top of — the priority bar (left:0, 3px), keeping the two left-edge cues
+   distinct. The chip tints toward the context color when set, else falls back to a muted badge.
+   Cross-track note: the #3 urgency cue (card track) owns the top edge + bg tint per contract §6/§8. */
+.mdkb-card-context {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--mdkb-ctx-color, var(--mdkb-border-strong));
+  pointer-events: none;
+}
+/* The strip occupies left 5–7px; `.mdkb-card-main`'s existing 12px left padding already clears it,
+   so no extra body inset is needed (and a folder-only card with no color must stay visually inert). */
+.mdkb-chip-context {
+  color: var(--mdkb-ctx-color, var(--text-muted));
+  background: color-mix(in srgb, var(--mdkb-ctx-color, var(--text-muted)) 16%, transparent);
+  border-color: color-mix(in srgb, var(--mdkb-ctx-color, var(--text-muted)) 30%, transparent);
+}

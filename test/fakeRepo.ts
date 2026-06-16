@@ -3,8 +3,8 @@
 // exercise genuine parse/mutate logic without Obsidian.
 
 import type { CardRepository } from "../src/obsidian/repo";
-import type { Board, BoardConfig, Card, CardBody, CardFrontmatter, ColumnDef, HistoryScope } from "../src/model/types";
-import { buildBoard } from "../src/model/board";
+import type { Board, BoardConfig, Card, CardBody, CardFrontmatter, ColumnDef, ContextConfig, HistoryScope } from "../src/model/types";
+import { buildBoard, deriveContext } from "../src/model/board";
 import {
   SECTION,
   addSubcard,
@@ -20,6 +20,9 @@ import {
   setSubtaskDone,
   updateTimestampedLine,
 } from "../src/model/card";
+
+/** Same per-context config note name the vault adapter uses (#14). */
+const CONTEXT_NOTE = "_context.md";
 import {
   commentAddedLine,
   commentEditedLine,
@@ -72,8 +75,30 @@ export class FakeRepo implements CardRepository {
   }
 
   async loadBoard(): Promise<Board> {
-    const cards = [...this.files.entries()].map(([p, e]) => this.toCard(p, e));
-    return buildBoard(this.config, cards);
+    const cards = [...this.files.entries()]
+      .filter(([, e]) => e.basename + ".md" !== CONTEXT_NOTE) // `_context.md` is config, not a card
+      .map(([p, e]) => this.toCard(p, e));
+    return buildBoard(this.config, cards, await this.loadContexts());
+  }
+
+  async loadContexts(): Promise<Record<string, ContextConfig>> {
+    const out: Record<string, ContextConfig> = {};
+    // Derive contexts from the file map: any subfolder under the card folder is a context, and a
+    // `_context.md` inside it supplies the display config (mirrors the vault adapter's folder scan).
+    for (const [path, e] of this.files.entries()) {
+      const folder = deriveContext(this.config.cardFolder, path);
+      if (folder === undefined) continue;
+      if (!out[folder]) out[folder] = { name: folder, body: "", folder };
+      if (e.basename + ".md" === CONTEXT_NOTE) {
+        // The fake stores frontmatter (`fm`) apart from `body`, so `body` is already frontmatter-free.
+        const fm = e.fm as Record<string, unknown>;
+        const name = typeof fm["context-name"] === "string" && fm["context-name"].trim() ? String(fm["context-name"]) : folder;
+        const color = typeof fm["color"] === "string" && fm["color"].trim() ? String(fm["color"]) : undefined;
+        const label = typeof fm["label"] === "string" && fm["label"].trim() ? String(fm["label"]) : undefined;
+        out[folder] = { name, color, label, body: e.body, folder };
+      }
+    }
+    return out;
   }
 
   async readBody(path: string): Promise<CardBody> {

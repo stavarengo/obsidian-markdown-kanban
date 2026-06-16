@@ -603,3 +603,52 @@ describe("settings context", () => {
     expect(screen.getByTestId("probe")).toHaveTextContent("modal/3");
   });
 });
+
+describe("context grouping marker (#14)", () => {
+  function ctxRepo() {
+    return new FakeRepo(config, {
+      "Tasks/Acme/A.md": { fm: { type: "task", status: "todo" }, body: "\n# A\n" },
+      "Tasks/Acme/_context.md": {
+        fm: { "context-name": "Acme Corp", color: "rgb(91, 141, 239)", label: "client" },
+        body: "\n# Acme\n",
+      },
+      "Tasks/Loose.md": { fm: { type: "task", status: "todo" }, body: "\n# Loose\n" },
+    });
+  }
+
+  it("marks a context member with the strip, color var, data-context, and label chip", async () => {
+    render_(ctxRepo());
+    const a = (await screen.findByText("A")).closest(".mdkb-card") as HTMLElement;
+    expect(a).toHaveClass("mdkb-card--has-context");
+    expect(a).toHaveAttribute("data-context", "Acme");
+    expect(a.style.getPropertyValue("--mdkb-ctx-color")).toBe("rgb(91, 141, 239)");
+    expect(a.querySelector(".mdkb-card-context")).not.toBeNull();
+    // The label chip shows the short label and names the context in its tooltip.
+    const chip = within(a).getByText("client");
+    expect(chip).toHaveClass("mdkb-chip-context");
+    expect(chip).toHaveAttribute("title", "Context: Acme Corp");
+  });
+
+  it("leaves a card without a context unmarked", async () => {
+    render_(ctxRepo());
+    const loose = (await screen.findByText("Loose")).closest(".mdkb-card") as HTMLElement;
+    expect(loose).not.toHaveClass("mdkb-card--has-context");
+    expect(loose).not.toHaveAttribute("data-context");
+    expect(loose.querySelector(".mdkb-card-context")).toBeNull();
+    expect(within(loose).queryByText("client")).toBeNull();
+  });
+
+  it("renders the strip-less but filterable case when a subfolder has no _context.md", async () => {
+    const repo = new FakeRepo(config, {
+      "Tasks/Beta/B.md": { fm: { type: "task", status: "todo" }, body: "\n# B\n" },
+    });
+    render_(repo);
+    const b = (await screen.findByText("B")).closest(".mdkb-card") as HTMLElement;
+    // It still carries the derived context (so context:beta filters it)...
+    expect(b).toHaveClass("mdkb-card--has-context");
+    expect(b).toHaveAttribute("data-context", "Beta");
+    // ...but with no color/label configured, neither the colored strip nor a chip renders.
+    expect(b.querySelector(".mdkb-card-context")).toBeNull();
+    expect(b.style.getPropertyValue("--mdkb-ctx-color")).toBe("");
+  });
+});

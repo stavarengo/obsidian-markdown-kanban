@@ -1,5 +1,5 @@
-import { App, Component, MarkdownRenderer, TFile, normalizePath } from "obsidian";
-import type { Board, BoardConfig, Card, CardBody, CardFrontmatter, ColumnDef, HistoryScope } from "../model/types";
+import { App, Component, MarkdownRenderer, TFile, TFolder, normalizePath } from "obsidian";
+import type { Board, BoardConfig, Card, CardBody, CardFrontmatter, ColumnDef, ContextConfig, HistoryScope } from "../model/types";
 import type { CardMutation } from "../model/board";
 import { buildBoard } from "../model/board";
 import { normalizeColumns, serializeColumns } from "../model/columns";
@@ -18,6 +18,7 @@ import {
   removeTimestampedLine,
   setDescription as setDescriptionText,
   setSubtaskDone,
+  splitFrontmatter,
   updateTimestampedLine,
 } from "../model/card";
 import {
@@ -38,6 +39,9 @@ import type { CardRepository } from "./repo";
 function sanitizeFilename(title: string): string {
   return title.replace(/[\\/:*?"<>|#^[\]]/g, "").replace(/\s+/g, " ").trim() || "Untitled card";
 }
+
+/** The per-context config note (#14). Lives inside a context subfolder; read-only for the plugin. */
+const CONTEXT_NOTE = "_context.md";
 
 export class VaultRepository implements CardRepository {
   private recentWrites = new Map<string, number>();
@@ -85,7 +89,9 @@ export class VaultRepository implements CardRepository {
     const prefix = config.cardFolder.replace(/\/$/, "") + "/";
     const files = this.app.vault
       .getMarkdownFiles()
-      .filter((f) => f.path.startsWith(prefix) && f.path !== this.boardPath);
+      // Skip the board note and the per-context config notes (#14) — `_context.md` is a folder
+      // config, not a card, so it must never surface as a phantom card on the board.
+      .filter((f) => f.path.startsWith(prefix) && f.path !== this.boardPath && f.name !== CONTEXT_NOTE);
 
     const cards: Card[] = [];
     for (const f of files) {
@@ -97,7 +103,34 @@ export class VaultRepository implements CardRepository {
         .map((s) => s.link!);
       cards.push({ path: f.path, basename: f.basename, frontmatter: fm, childLinks, stats: cardStats(text) });
     }
-    return buildBoard(config, cards);
+    // buildBoard derives each card's `context` from its path; carry the configs alongside.
+    return buildBoard(config, cards, await this.loadContexts(config.cardFolder));
+  }
+
+  async loadContexts(cardFolder?: string): Promise<Record<string, ContextConfig>> {
+    const folderPath = (cardFolder ?? (await this.readConfig()).cardFolder).replace(/\/+$/, "");
+    const root = this.app.vault.getAbstractFileByPath(folderPath);
+    const out: Record<string, ContextConfig> = {};
+    if (!(root instanceof TFolder)) return out;
+    // Each immediate subfolder is a context. An optional `_context.md` inside it supplies the
+    // display name / color / label / body; a subfolder without the note still counts as a context
+    // (name = folder), so its cards can be filtered by `context:` even before it's configured.
+    for (const child of root.children) {
+      if (!(child instanceof TFolder)) continue;
+      const folder = child.name;
+      const note = child.children.find((f) => f instanceof TFile && f.name === CONTEXT_NOTE);
+      let config: ContextConfig = { name: folder, body: "", folder };
+      if (note instanceof TFile) {
+        const text = await this.app.vault.cachedRead(note);
+        const fm = parseFrontmatter(text);
+        const name = typeof fm["context-name"] === "string" && fm["context-name"].trim() ? String(fm["context-name"]) : folder;
+        const color = typeof fm["color"] === "string" && fm["color"].trim() ? String(fm["color"]) : undefined;
+        const label = typeof fm["label"] === "string" && fm["label"].trim() ? String(fm["label"]) : undefined;
+        config = { name, color, label, body: splitFrontmatter(text).body, folder };
+      }
+      out[folder] = config;
+    }
+    return out;
   }
 
   async readBody(path: string): Promise<CardBody> {

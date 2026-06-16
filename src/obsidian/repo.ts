@@ -2,12 +2,18 @@
 // tests use an in-memory fake. Keeping the UI behind this interface is what lets us
 // verify board behaviour headlessly.
 
-import type { Board, CardBody, CardFrontmatter, ColumnDef } from "../model/types";
+import type { Board, CardBody, CardFrontmatter, ColumnDef, ContextConfig } from "../model/types";
 import type { CardMutation } from "../model/board";
 
 export interface CardRepository {
   /** Read the board config note + all cards, return the assembled board. */
   loadBoard(): Promise<Board>;
+  /**
+   * Scan the card folder's immediate subfolders for contexts (#14), keyed by subfolder name.
+   * Each subfolder is a context; an optional `_context.md` note supplies its name/color/label/body
+   * (missing note → name = folder, no color/label, empty body). Read-only.
+   */
+  loadContexts(): Promise<Record<string, ContextConfig>>;
   /** Parse a card's body for the detail panel. */
   readBody(path: string): Promise<CardBody>;
 

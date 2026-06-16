@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildBoard, columnEffectiveOrders, computeDropOrder, moveCard } from "../src/model/board";
+import { buildBoard, columnEffectiveOrders, computeDropOrder, deriveContext, moveCard } from "../src/model/board";
 import type { BoardConfig, Card } from "../src/model/types";
 
 const config: BoardConfig = {
@@ -148,3 +148,46 @@ describe("moveCard mutation", () => {
   });
 });
 
+
+describe("deriveContext (#14)", () => {
+  it("returns the immediate subfolder for a card nested under the card folder", () => {
+    expect(deriveContext("Tasks", "Tasks/Acme/Foo.md")).toBe("Acme");
+  });
+  it("returns undefined for a card sitting directly in the card folder", () => {
+    expect(deriveContext("Tasks", "Tasks/Foo.md")).toBeUndefined();
+  });
+  it("returns only the FIRST subfolder for a deeply nested card", () => {
+    expect(deriveContext("Tasks", "Tasks/Acme/Sub/Foo.md")).toBe("Acme");
+  });
+  it("tolerates a trailing slash on the card folder", () => {
+    expect(deriveContext("Tasks/", "Tasks/Acme/Foo.md")).toBe("Acme");
+  });
+  it("returns undefined for a path outside the card folder", () => {
+    expect(deriveContext("Tasks", "Other/Acme/Foo.md")).toBeUndefined();
+  });
+});
+
+describe("buildBoard context derivation (#14)", () => {
+  it("sets card.context from the path and carries the contexts map", () => {
+    const b = buildBoard(
+      config,
+      [
+        { path: "Tasks/Acme/A.md", basename: "A", frontmatter: { status: "todo" }, childLinks: [] },
+        { path: "Tasks/B.md", basename: "B", frontmatter: { status: "todo" }, childLinks: [] },
+      ],
+      { Acme: { name: "Acme Corp", color: "#5b8def", label: "client", body: "Home page", folder: "Acme" } },
+    );
+    expect(b.cards["Tasks/Acme/A.md"].context).toBe("Acme");
+    expect(b.cards["Tasks/B.md"].context).toBeUndefined();
+    expect(b.contexts.Acme.name).toBe("Acme Corp");
+    // A folder-context card is still bucketed by status, exactly like any other card.
+    expect(b.columns.todo).toEqual(expect.arrayContaining(["Tasks/Acme/A.md", "Tasks/B.md"]));
+  });
+  it("defaults to an empty contexts map (boards with no subfolders behave as today)", () => {
+    const b = buildBoard(config, [
+      { path: "Tasks/B.md", basename: "B", frontmatter: { status: "todo" }, childLinks: [] },
+    ]);
+    expect(b.contexts).toEqual({});
+    expect(b.cards["Tasks/B.md"].context).toBeUndefined();
+  });
+});
