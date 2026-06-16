@@ -4,13 +4,15 @@ A real, interactive Kanban board for [Obsidian](https://obsidian.md) — columns
 
 ## Features
 
-- **Drag-and-drop that persists** — by pointer or keyboard. Dropping a card writes its `status` and a fractional `order` (one card rewritten per move, never a mass reindex) and appends a `## History` line.
-- **Quick actions on every card** — mark done, open the note, or delete (with confirm), straight from the board.
-- **Card detail panel** — a dialog (takes focus on open, Escape closes and restores focus) to edit description, status, priority and due date, manage subtasks/subcards, and add comments. Priority accepts any scale (`A`/`B`/`C`/`D` or `urgent`/`high`/`medium`/`low`).
+- **Drag-and-drop that persists** — by pointer or keyboard. Dropping a card writes its `status` and a fractional `order` (one card rewritten per move, never a mass reindex) and appends a `## History` line. Hold **Shift** and drag the board background to scroll across columns.
+- **Quick actions on every card** — mark done, open the note, or delete (with confirm), straight from the board. **Right-click** a card for a context menu (open, mark done, change priority, move up/down, add subcard, delete); right-click a surfaced todo to toggle or remove it.
+- **Next actions on the card** — optionally surface the next *N* unchecked todos inline, so the board shows the next step without opening anything.
+- **Card detail panel** — present it as a docked side panel (split or floating) or a centred modal, your choice. It renders the description and comments with **Obsidian's own Markdown engine**, and lets you edit description, status, priority, due date and your **custom properties** (area, energy, …), manage subtasks/subcards, and add/edit/delete comments. Resizable, closes on click-outside, and never clips behind the status bar. Priority accepts any scale (`A`/`B`/`C`/`D` or `urgent`/`high`/`medium`/`low`).
+- **Subcards grouped Jira-style** — `- [ ] [[Child]]` is a full child card; children render nested in a bordered group under their parent, in the parent's column.
+- **Configurable** — a real settings tab: detail presentation, add-card flow, how many next-todos to show, and what History records (see [Settings](#settings)).
 - **Search & quick filters** — press `/` to search by title, tag or priority; one-click **Overdue** / **Due soon** filters.
 - **Soft WIP limits** — set a per-column limit; the board nudges (never blocks) when you go over.
 - **In-app column management** — add, rename, recolour, set limits, reorder and delete columns; changes are written back to the board note's `columns` frontmatter.
-- **Subtasks & subcards in one checklist** — a plain `- [ ] todo`, or `- [ ] [[Child]]` which is a full child card with its own board data, navigable from the detail panel.
 - **Relative due dates** — *Today*, *Tomorrow*, *in 3d*, *Yesterday*, with overdue cards flagged.
 - **Comments** and auto-generated **history**, appended to the card file with timestamps.
 - **Live reload** when files change outside the board, with a self-write echo guard.
@@ -62,6 +64,18 @@ Columns can be edited by hand in the board note's `columns` property, or managed
 column's `⋯` menu (rename, recolour, WIP limit, reorder, delete) and the **Add column** button — the
 plugin reads and writes that frontmatter list either way. A column entry may be a plain string
 (`- todo`) or an object (`{ id, title, color, limit }`).
+
+## Settings
+
+Under **Settings → Markdown Kanban** (changes apply live, no reload):
+
+- **Card details — presentation** — `side` (docked beside the board) or `modal` (centred dialog).
+- **Side panel — layout** — `split` (shrinks the columns to the left) or `float` (overlays the columns); used when presentation is `side`.
+- **Side panel — width** — the docked panel's width; you can also drag its left border.
+- **Add-card button — flow** — `inline` (add in the column), `inline-edit` (add, then open the new card's details), or `detail` (open a details form to create).
+- **Add-card — open new card's details as** — which presentation to use for the two detail-opening add flows.
+- **Card — next todos shown** — how many upcoming unchecked todos to surface on each card (0 = none).
+- **History — what to record** — `moves` (card moves/reorders only), `structural` (also priority/status/due/order changes), or `all` (also comments and subtasks).
 
 ## Install
 
