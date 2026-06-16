@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Board as BoardModel, ColumnDef } from "../model/types";
 import { columnOf, moveCard, moveColumn, resolveDrop } from "../model/board";
@@ -420,17 +420,28 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     return { total, match };
   }, [board, filter, todayValue, doneColumnId]);
 
-  // "/" focuses search (when not already typing in a field).
-  const onRootKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
-      const t = e.target as HTMLElement;
-      const tag = t.tagName;
-      if (tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT" && !t.isContentEditable) {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    }
-  };
+  // "/" focuses the search box (the placeholder advertises it), but only when this board view is
+  // the active, visible one and the user isn't already typing in a field. A document-level listener
+  // is required because `.mdkb-root` isn't focusable, so a `/` pressed with focus on <body> never
+  // bubbles to a React handler on it. Scoped to the root's owning document so pop-out windows work.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const doc = root.ownerDocument;
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      // Skip when this kanban tab is hidden/backgrounded (display:none → no client rects), so a
+      // foregrounded note doesn't have its "/" stolen by an off-screen board.
+      if (root.getClientRects().length === 0) return;
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t?.isContentEditable) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    };
+    doc.addEventListener("keydown", onKeyDown);
+    return () => doc.removeEventListener("keydown", onKeyDown);
+  }, [board]);
 
   if (error) return <div className="mdkb-error">Couldn’t load the board: {error}</div>;
   if (!board) return <div className="mdkb-loading">Loading board…</div>;
@@ -486,8 +497,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         <RepoContext.Provider value={repo}>
           <BoardActionsContext.Provider value={actions}>
             <ContextsContext.Provider value={stableContexts}>
-            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-            <div className="mdkb-root" ref={rootRef} onKeyDown={onRootKeyDown}>
+            <div className="mdkb-root" ref={rootRef}>
               <Toolbar ref={searchRef} query={query} onChange={setQuery} matchCount={counts.match} totalCount={counts.total} />
               <div className="mdkb-main">
                 <Board

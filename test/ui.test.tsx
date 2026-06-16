@@ -939,6 +939,21 @@ describe("search filter (single source of truth)", () => {
     expect(screen.getByText(/of/, { selector: ".mdkb-toolbar-status span" })).toHaveTextContent("1 of");
   });
 
+  it("pressing '/' (focus not in a field) focuses the search input, as the placeholder promises", async () => {
+    render_(makeRepo());
+    await screen.findByText("Alpha");
+    const search = screen.getByLabelText("Search cards");
+    // jsdom has no layout, so .mdkb-root's getClientRects() is empty and the "is this board the
+    // visible tab?" guard would bail. Fake a non-empty rect list (mirrors the offsetHeight stub
+    // used elsewhere) so the guard sees a visible board, like in a real foregrounded leaf.
+    const root = document.querySelector(".mdkb-root") as HTMLElement;
+    Object.defineProperty(root, "getClientRects", { configurable: true, value: () => [{}] });
+    expect(document.activeElement).not.toBe(search);
+    // The hint advertises "(press /)"; dispatch it at the document level (focus on <body>).
+    fireEvent.keyDown(document.body, { key: "/" });
+    expect(document.activeElement).toBe(search);
+  });
+
   it("the Overdue chip populates the input with due:overdue and filters to overdue cards", async () => {
     const user = userEvent.setup();
     render_(makeRepo());
