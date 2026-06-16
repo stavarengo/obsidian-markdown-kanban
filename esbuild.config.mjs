@@ -1,8 +1,22 @@
 import esbuild from "esbuild";
 import process from "process";
+import { copyFile, mkdir } from "node:fs/promises";
 import builtins from "builtin-modules";
 
 const prod = process.argv[2] === "production";
+
+const outDir = "dist";
+const assets = ["manifest.json", "styles.css"];
+
+const copyPluginAssets = {
+  name: "copy-plugin-assets",
+  setup(build) {
+    build.onEnd(async () => {
+      await mkdir(outDir, { recursive: true });
+      await Promise.all(assets.map((file) => copyFile(file, `${outDir}/${file}`)));
+    });
+  },
+};
 
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
@@ -32,8 +46,9 @@ const context = await esbuild.context({
   logLevel: "info",
   sourcemap: prod ? false : "inline",
   treeShaking: true,
-  outfile: "main.js",
+  outfile: `${outDir}/main.js`,
   minify: prod,
+  plugins: [copyPluginAssets],
 });
 
 if (prod) {

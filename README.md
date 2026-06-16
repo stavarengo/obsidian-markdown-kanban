@@ -79,19 +79,19 @@ Under **Settings → Markdown Kanban** (changes apply live, no reload):
 
 ## Install
 
-**Manual:** build (below) or download a release, then copy `main.js`, `manifest.json` and `styles.css` into `<your-vault>/.obsidian/plugins/markdown-kanban/`, and enable it under Settings → Community plugins.
+**Manual:** download a release (or build below — the bundle lands in `dist/`), then copy `main.js`, `manifest.json` and `styles.css` into `<your-vault>/.obsidian/plugins/markdown-kanban/`, and enable it under Settings → Community plugins.
 
 ## Develop
 
 ```bash
 pnpm install
-pnpm build       # production bundle -> main.js
+pnpm build       # production bundle -> dist/ (main.js, manifest.json, styles.css)
 pnpm dev         # watch build
 pnpm test        # vitest: model, board graph, drag, and UI flows
 pnpm typecheck   # tsc --noEmit
 ```
 
-The pure model (`src/model`), board graph + drag reducer, and UI logic are unit-tested, including a byte-stability round-trip over the fixtures in `test/fixtures/` that proves edits never corrupt untouched bytes of a card file. `main.js`, `node_modules` and the pnpm store are git-ignored; releases ship the built `main.js`.
+The pure model (`src/model`), board graph + drag reducer, and UI logic are unit-tested, including a byte-stability round-trip over the fixtures in `test/fixtures/` that proves edits never corrupt untouched bytes of a card file. The `dist/` build output, `node_modules` and the pnpm store are git-ignored; releases ship the built `dist/main.js`.
 
 ## License
 

@@ -129,4 +129,4 @@ jobs:
       - name: Upload Obsidian plugin assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ steps.version.outputs.tag }}" main.js manifest.json styles.css versions.json --clobber
+        run: gh release upload "${{ steps.version.outputs.tag }}" dist/main.js dist/manifest.json dist/styles.css versions.json --clobber

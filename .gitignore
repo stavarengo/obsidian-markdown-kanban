@@ -3,8 +3,7 @@ node_modules/
 .pnpm-store/
 
 # build output (shipped via GitHub releases, not committed)
-main.js
-*.js.map
+dist/
 
 # obsidian plugin local data
 data.json
