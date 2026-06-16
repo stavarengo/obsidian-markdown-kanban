@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS: KanbanSettings = {
   addCardFlow: "inline",
   addCardOpenMode: "default",
   cardNextTodos: 0,
-  historyScope: "moves",
+  historyScope: "all",
 };
 
 export const DETAIL_WIDTH_MIN = 280;
