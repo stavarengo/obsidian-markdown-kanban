@@ -1,43 +1,21 @@
-# AGENTS.md - Folia Kanban
+# AGENTS.md - Obsidian Markdown Kanban
+
+> !`[ -f /.dockerenv ] || [ -f /run/.containerenv ] && echo "You are running inside a container" || echo "You are running directly on the host OS (not in a container)"]`
 
 ## Basic Rule
 
 1. Keep this file small and thin. Only write here what a fresh LLM session **can't** rediscover on its own by reading the other files in this project. Keep each entry to a few words.
+2. Always update the [`examples/`](./examples/) after introducing or changing anything that affect the user experience.
 
-## Inspecting the running Obsidian app (Chrome DevTools MCP)
+### Driving the Obsidian UI via the Chrome DevTools MCP server
 
-This repo ships a project MCP server (`chrome-devtools-obsidian` in `.mcp.json`) that drives a real Obsidian instance running on the **host** over the Chrome DevTools Protocol, for inspecting this plugin's UI and behaviour.
-
-### Host prerequisites (a human sets these up — the agent cannot; they run outside the container)
-
-1. Launch Obsidian on the host with remote debugging:
-   ```bash
-   obsidian --remote-debugging-port=9222
+2. Use the [`chrome-devtools-obsidian`](./.mcp.json) MCP server to debug, inspect UI, test behaviour, and whatnot directly in a real Obsidian instance running on the **host** OS.
+   Do not use the global chrome-devtools plugin, which launches its own headless Chrome.
+3. When running inside a container, ask your human to run the command below to set up the host bridge (Obsidian + socat) - replace the CONTAINER_IP with the actual container IP:
+   ```bash title="This needs to be run on the host, not in the container"
+   obsidian --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 
+   socat TCP-LISTEN:9222,bind=CONTAINER_IP,fork,reuseaddr TCP:127.0.0.1:9222
    ```
-   (`--remote-debugging-address=0.0.0.0` is pointless — Chromium binds the port to
-   the host's `127.0.0.1` regardless.)
-
-2. Bridge that loopback-only port to the Docker interface so the container can reach it:
-   ```bash
-   socat TCP-LISTEN:9222,bind=172.17.0.1,fork,reuseaddr TCP:127.0.0.1:9222
-   ```
-   Runs foreground — keep the terminal open. To free the terminal instead:
-   ```bash
-   nohup socat TCP-LISTEN:9222,bind=172.17.0.1,fork,reuseaddr TCP:127.0.0.1:9222 >/tmp/socat-obsidian.log 2>&1 &
-   ```
-
-### How the connection works
-
-`.mcp.json` points the MCP at `http://172.17.0.1:9222`:
-- `172.17.0.1` is the host gateway *from inside the container* (= `host.docker.internal`); the firewall already allows it.
-- It must be the **IP, not the hostname** — DevTools' DNS-rebind protection rejects domain-name `Host` headers (`host.docker.internal:9222` → refused) but accepts IP literals.
-
-### For the agent
-
-- Use the `chrome-devtools-obsidian` MCP tools to inspect Obsidian — **not** the global chrome-devtools plugin, which launches its own headless Chrome.
-- If those tools can't connect, the host bridge (Obsidian + socat) is down. Ask the human to start it — you cannot run host-side commands yourself.
-
-### Driving the UI (learned)
-
-- The default `take_snapshot` omits the file-explorer tree — use `verbose: true` to get folder/file nodes.
-- The header breadcrumb and the explorer both expose the folder name; clicking the breadcrumb only selects — click the explorer node to expand/open.
+4. When running inside a container, always inform your human when you could not test due to a missing host bridge (Obsidian + socat) and ask them to start/restart it. 
+5. The default `take_snapshot` omits the file-explorer tree — use `verbose: true` to get folder/file nodes.
+6. The header breadcrumb and the explorer both expose the folder name; clicking the breadcrumb only selects — click the explorer node to expand/open.
