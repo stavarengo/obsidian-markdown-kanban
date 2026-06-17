@@ -16,6 +16,7 @@
    obsidian --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 
    socat TCP-LISTEN:9222,bind=CONTAINER_IP,fork,reuseaddr TCP:127.0.0.1:9222
    ```
+   Once you are connected to the Obsidian instance, check if the current open vault is pointing to `examples/`. If not, ask your human to open it (you can't open it yourself because you don't know the real path of the vault on the host filesystem).
 4. When running inside a container, always inform your human when you could not test due to a missing host bridge (Obsidian + socat) and ask them to start/restart it. 
 5. The default `take_snapshot` omits the file-explorer tree — use `verbose: true` to get folder/file nodes.
 6. The header breadcrumb and the explorer both expose the folder name; clicking the breadcrumb only selects — click the explorer node to expand/open.
