@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
+    "build:updateExamplesVault": "OUT_DIR=examples/.obsidian/plugins/folia-kanban node esbuild.config.mjs production",
     "release:bump-plugin-version": "node scripts/bump-plugin-version.mjs",
     "ci:release": "release-it --ci",
     "dev:helpers:release": "release-it",

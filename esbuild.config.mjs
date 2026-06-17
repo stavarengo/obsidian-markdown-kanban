@@ -5,15 +5,19 @@ import builtins from "builtin-modules";
 
 const prod = process.argv[2] === "production";
 
-const outDir = "dist";
-const assets = ["manifest.json", "styles.css"];
+const outDir = process.env.OUT_DIR || "dist";
+// src is where the file lives in the repo; dest is the name Obsidian expects in the plugin folder.
+const assets = [
+  { src: "manifest.json", dest: "manifest.json" },
+  { src: "src/styles.css", dest: "styles.css" },
+];
 
 const copyPluginAssets = {
   name: "copy-plugin-assets",
   setup(build) {
     build.onEnd(async () => {
       await mkdir(outDir, { recursive: true });
-      await Promise.all(assets.map((file) => copyFile(file, `${outDir}/${file}`)));
+      await Promise.all(assets.map(({ src, dest }) => copyFile(src, `${outDir}/${dest}`)));
     });
   },
 };
