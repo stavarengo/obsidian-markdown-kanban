@@ -13,7 +13,7 @@ Welcome! This folder is a ready-to-open **Obsidian vault** with two example boar
 
 ## The boards
 
-- **Basic** — folder [`basic/`](./basic/), board note [`Example Board.md`](<basic/Example Board.md>). A minimal 3-column board (Todo / In Progress / Done) with a couple of sample cards. **Start here**: it shows the bare essentials — a board note, a `card-folder`, and cards as Markdown files.
+- **Basic** — folder [`basic/`](./basic/), board note [`Example Board.md`](<basic/Example Board.md>). A minimal 3-column board (Todo / Doing / Done) with a couple of sample cards. **Start here**: it shows the bare essentials — a board note, a `card-folder`, and cards as Markdown files.
 - **Feature Showcase** — folder [`feature-showcase/`](./feature-showcase/), board note [`Showcase Board.md`](<feature-showcase/Showcase Board.md>). A "kitchen-sink" board that exercises **every feature** in one place — columns, lanes, contexts, priorities, due-date buckets, subcards, comments, history, and custom properties. **Explore here** once the basics click.
 
 ## Feature tour — what the Feature Showcase board demonstrates
