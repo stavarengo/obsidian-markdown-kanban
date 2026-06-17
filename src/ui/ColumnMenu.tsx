@@ -68,15 +68,15 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
 
   return createPortal(
     <div
-      className="mdkb-menu"
+      className="folia-menu"
       ref={ref}
       role="dialog"
       aria-label={`Column options: ${column.title}`}
       onKeyDown={onKeyDown}
       style={pos ? { top: pos.top, left: pos.left } : { visibility: "hidden" }}
     >
-      <div className="mdkb-menu-field">
-        <span className="mdkb-menu-label">Title</span>
+      <div className="folia-menu-field">
+        <span className="folia-menu-label">Title</span>
         <input
           autoFocus
           value={name}
@@ -92,26 +92,26 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
         />
       </div>
 
-      <div className="mdkb-menu-field">
-        <span className="mdkb-menu-label">Color</span>
-        <div className="mdkb-swatches">
+      <div className="folia-menu-field">
+        <span className="folia-menu-label">Color</span>
+        <div className="folia-swatches">
           {COLORS.map((c) => (
             <button
               key={c}
-              className={"mdkb-swatch" + (column.color?.toLowerCase() === c.toLowerCase() ? " is-active" : "")}
+              className={"folia-swatch" + (column.color?.toLowerCase() === c.toLowerCase() ? " is-active" : "")}
               style={{ background: c }}
               aria-label={`Set color ${c}`}
               onClick={() => a.setColumnColor(column.id, c)}
             />
           ))}
-          <button className="mdkb-swatch mdkb-swatch-none" aria-label="Clear color" title="No color" onClick={() => a.setColumnColor(column.id, null)}>
+          <button className="folia-swatch folia-swatch-none" aria-label="Clear color" title="No color" onClick={() => a.setColumnColor(column.id, null)}>
             <Icon name="close" size={11} />
           </button>
         </div>
       </div>
 
-      <label className="mdkb-menu-field">
-        <span className="mdkb-menu-label">WIP limit</span>
+      <label className="folia-menu-field">
+        <span className="folia-menu-label">WIP limit</span>
         <input
           type="number"
           min="0"
@@ -129,30 +129,30 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
         />
       </label>
 
-      <div className="mdkb-menu-divider" />
-      <button className="mdkb-menu-item" onClick={() => { onClose(); onEdit(); }}>
+      <div className="folia-menu-divider" />
+      <button className="folia-menu-item" onClick={() => { onClose(); onEdit(); }}>
         <Icon name="pencil" size={14} /> Edit column…
       </button>
 
-      <div className="mdkb-menu-divider" />
-      <button className="mdkb-menu-item" disabled={isFirst} onClick={() => { a.moveColumn(column.id, -1); onClose(); }}>
+      <div className="folia-menu-divider" />
+      <button className="folia-menu-item" disabled={isFirst} onClick={() => { a.moveColumn(column.id, -1); onClose(); }}>
         <Icon name="arrow-left" size={14} /> Move left
       </button>
-      <button className="mdkb-menu-item" disabled={isLast} onClick={() => { a.moveColumn(column.id, 1); onClose(); }}>
+      <button className="folia-menu-item" disabled={isLast} onClick={() => { a.moveColumn(column.id, 1); onClose(); }}>
         <Icon name="arrow-right" size={14} /> Move right
       </button>
 
-      <div className="mdkb-menu-divider" />
+      <div className="folia-menu-divider" />
       {!confirmDel ? (
-        <button className="mdkb-menu-item mdkb-menu-danger" onClick={() => setConfirmDel(true)}>
+        <button className="folia-menu-item folia-menu-danger" onClick={() => setConfirmDel(true)}>
           <Icon name="trash" size={14} /> Delete column
         </button>
       ) : (
-        <div className="mdkb-menu-confirm">
+        <div className="folia-menu-confirm">
           <span>Delete “{column.title}”? Its cards move to a neighbouring column.</span>
-          <div className="mdkb-row-actions">
-            <button className="mdkb-btn mdkb-btn-danger" onClick={() => { a.deleteColumn(column.id); onClose(); }}>Delete</button>
-            <button className="mdkb-btn" autoFocus onClick={() => setConfirmDel(false)}>Cancel</button>
+          <div className="folia-row-actions">
+            <button className="folia-btn folia-btn-danger" onClick={() => { a.deleteColumn(column.id); onClose(); }}>Delete</button>
+            <button className="folia-btn" autoFocus onClick={() => setConfirmDel(false)}>Cancel</button>
           </div>
         </div>
       )}

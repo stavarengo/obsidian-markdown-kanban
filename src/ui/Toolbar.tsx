@@ -150,8 +150,8 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
   };
 
   return (
-    <div className="mdkb-toolbar">
-      <div className="mdkb-search">
+    <div className="folia-toolbar">
+      <div className="folia-search">
         <Icon name="search" size={15} />
         <input
           ref={inputRef}
@@ -175,19 +175,19 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
           onKeyDown={onKeyDown}
         />
         {query && (
-          <button className="mdkb-icon-btn mdkb-mini" aria-label="Clear search" title="Clear" onClick={() => onChange("")}>
+          <button className="folia-icon-btn folia-mini" aria-label="Clear search" title="Clear" onClick={() => onChange("")}>
             <Icon name="close" size={13} />
           </button>
         )}
         {showList && (
-          <ul className="mdkb-filter-suggest" id={listId} role="listbox" aria-label="Filter suggestions">
+          <ul className="folia-filter-suggest" id={listId} role="listbox" aria-label="Filter suggestions">
             {suggestions.map((s, i) => (
               <li key={s.insert}>
                 <button
                   type="button"
                   role="option"
                   aria-selected={i === highlight}
-                  className={"mdkb-filter-suggest-item" + (i === highlight ? " is-active" : "")}
+                  className={"folia-filter-suggest-item" + (i === highlight ? " is-active" : "")}
                   // Commit before the input's onBlur fires (pointerdown/mousedown precede blur).
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -195,8 +195,8 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
                   }}
                   onMouseEnter={() => setHighlight(i)}
                 >
-                  <span className="mdkb-filter-suggest-key">{s.label}</span>
-                  {s.hint && <span className="mdkb-filter-suggest-hint">{s.hint}</span>}
+                  <span className="folia-filter-suggest-key">{s.label}</span>
+                  {s.hint && <span className="folia-filter-suggest-hint">{s.hint}</span>}
                 </button>
               </li>
             ))}
@@ -204,9 +204,9 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
         )}
       </div>
 
-      <div className="mdkb-toolbar-filters" role="group" aria-label="Quick filters">
+      <div className="folia-toolbar-filters" role="group" aria-label="Quick filters">
         <button
-          className={"mdkb-filter-chip" + (hasToken(query, "due", "overdue") ? " is-on" : "")}
+          className={"folia-filter-chip" + (hasToken(query, "due", "overdue") ? " is-on" : "")}
           aria-pressed={hasToken(query, "due", "overdue")}
           onClick={() => toggleDue("overdue")}
         >
@@ -214,7 +214,7 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
           Overdue
         </button>
         <button
-          className={"mdkb-filter-chip" + (hasToken(query, "due", "soon") ? " is-on" : "")}
+          className={"folia-filter-chip" + (hasToken(query, "due", "soon") ? " is-on" : "")}
           aria-pressed={hasToken(query, "due", "soon")}
           onClick={() => toggleDue("soon")}
         >
@@ -224,11 +224,11 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
       </div>
 
       {active && (
-        <div className="mdkb-toolbar-status" aria-live="polite">
+        <div className="folia-toolbar-status" aria-live="polite">
           <span>
             {matchCount} of {totalCount}
           </span>
-          <button className="mdkb-btn" onClick={() => onChange("")}>
+          <button className="folia-btn" onClick={() => onChange("")}>
             Clear
           </button>
         </div>

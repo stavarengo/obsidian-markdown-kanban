@@ -96,25 +96,25 @@ export function ColumnEditModal({ column, onClose }: Props) {
 
   return createPortal(
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
-    <div className="mdkb-modal-backdrop" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="folia-modal-backdrop" onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div
-        className="mdkb-modal mdkb-col-edit"
+        className="folia-modal folia-col-edit"
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={`Edit column: ${column.title}`}
         onKeyDown={onKeyDown}
       >
-        <header className="mdkb-modal-header">
-          <h2 className="mdkb-modal-title">Edit column</h2>
-          <button className="mdkb-icon-btn" aria-label="Close" onClick={onClose}>
+        <header className="folia-modal-header">
+          <h2 className="folia-modal-title">Edit column</h2>
+          <button className="folia-icon-btn" aria-label="Close" onClick={onClose}>
             <Icon name="close" size={16} />
           </button>
         </header>
 
-        <div className="mdkb-modal-body">
-          <label className="mdkb-field">
-            <span className="mdkb-field-label">Title</span>
+        <div className="folia-modal-body">
+          <label className="folia-field">
+            <span className="folia-field-label">Title</span>
             <input
               ref={titleRef}
               value={draft.title}
@@ -124,14 +124,14 @@ export function ColumnEditModal({ column, onClose }: Props) {
             />
           </label>
 
-          <div className="mdkb-field">
-            <span className="mdkb-field-label">Color</span>
-            <div className="mdkb-swatches">
+          <div className="folia-field">
+            <span className="folia-field-label">Color</span>
+            <div className="folia-swatches">
               {COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
-                  className={"mdkb-swatch" + (draft.color?.toLowerCase() === c.toLowerCase() ? " is-active" : "")}
+                  className={"folia-swatch" + (draft.color?.toLowerCase() === c.toLowerCase() ? " is-active" : "")}
                   style={{ background: c }}
                   aria-label={`Set color ${c}`}
                   aria-pressed={draft.color?.toLowerCase() === c.toLowerCase()}
@@ -140,7 +140,7 @@ export function ColumnEditModal({ column, onClose }: Props) {
               ))}
               <button
                 type="button"
-                className="mdkb-swatch mdkb-swatch-none"
+                className="folia-swatch folia-swatch-none"
                 aria-label="Clear color"
                 title="No color"
                 onClick={() => set("color", undefined)}
@@ -150,8 +150,8 @@ export function ColumnEditModal({ column, onClose }: Props) {
             </div>
           </div>
 
-          <label className="mdkb-field">
-            <span className="mdkb-field-label">WIP limit</span>
+          <label className="folia-field">
+            <span className="folia-field-label">WIP limit</span>
             <input
               type="number"
               min="0"
@@ -162,27 +162,27 @@ export function ColumnEditModal({ column, onClose }: Props) {
             />
           </label>
 
-          <label className="mdkb-field">
-            <span className="mdkb-field-label">Filter rule</span>
+          <label className="folia-field">
+            <span className="folia-field-label">Filter rule</span>
             <input
               value={draft.filter}
               placeholder="e.g. area:research status:todo"
               aria-label="Filter rule"
               onChange={(e) => set("filter", e.target.value)}
             />
-            <span className="mdkb-field-hint">Shows only cards matching this query. Leave blank to show all.</span>
+            <span className="folia-field-hint">Shows only cards matching this query. Leave blank to show all.</span>
           </label>
 
-          <div className="mdkb-field-row">
-            <label className="mdkb-field">
-              <span className="mdkb-field-label">Group by</span>
+          <div className="folia-field-row">
+            <label className="folia-field">
+              <span className="folia-field-label">Group by</span>
               <select aria-label="Group by" value={draft.group} onChange={(e) => set("group", e.target.value as ColumnGroup)}>
                 <option value="none">None</option>
                 <option value="due">Due date</option>
               </select>
             </label>
-            <label className="mdkb-field">
-              <span className="mdkb-field-label">Sort by</span>
+            <label className="folia-field">
+              <span className="folia-field-label">Sort by</span>
               <select aria-label="Sort by" value={draft.sort} onChange={(e) => set("sort", e.target.value as ColumnSort)}>
                 <option value="manual">Manual</option>
                 <option value="priority">Priority</option>
@@ -191,8 +191,8 @@ export function ColumnEditModal({ column, onClose }: Props) {
             </label>
           </div>
 
-          <label className="mdkb-field">
-            <span className="mdkb-field-label">Opacity — {pct(draft.opacity)}</span>
+          <label className="folia-field">
+            <span className="folia-field-label">Opacity — {pct(draft.opacity)}</span>
             <input
               type="range"
               min="0.1"
@@ -205,8 +205,8 @@ export function ColumnEditModal({ column, onClose }: Props) {
           </label>
 
           {faded && (
-            <label className="mdkb-field">
-              <span className="mdkb-field-label">Reveal on hover — {draft.hoverOpacity.trim() === "" ? "full" : `${draft.hoverOpacity}%`}</span>
+            <label className="folia-field">
+              <span className="folia-field-label">Reveal on hover — {draft.hoverOpacity.trim() === "" ? "full" : `${draft.hoverOpacity}%`}</span>
               <input
                 type="range"
                 min="0"
@@ -219,7 +219,7 @@ export function ColumnEditModal({ column, onClose }: Props) {
             </label>
           )}
 
-          <label className="mdkb-field mdkb-field-toggle">
+          <label className="folia-field folia-field-toggle">
             <input
               type="checkbox"
               checked={draft.parked}
@@ -227,15 +227,15 @@ export function ColumnEditModal({ column, onClose }: Props) {
               onChange={(e) => set("parked", e.target.checked)}
             />
             <span>
-              <span className="mdkb-field-label">Park aside</span>
-              <span className="mdkb-field-hint">Move this column off to the far right (de-emphasise a rabbit-hole column).</span>
+              <span className="folia-field-label">Park aside</span>
+              <span className="folia-field-hint">Move this column off to the far right (de-emphasise a rabbit-hole column).</span>
             </span>
           </label>
         </div>
 
-        <footer className="mdkb-modal-footer">
-          <button className="mdkb-btn" onClick={onClose}>Cancel</button>
-          <button className="mdkb-btn mdkb-btn-primary" onClick={save}>Save</button>
+        <footer className="folia-modal-footer">
+          <button className="folia-btn" onClick={onClose}>Cancel</button>
+          <button className="folia-btn folia-btn-primary" onClick={save}>Save</button>
         </footer>
       </div>
     </div>,

@@ -16,7 +16,7 @@ interface Props {
   columnId?: string;
   today: string;
   selected: boolean;
-  /** A nested subcard rendered inside its parent's `.mdkb-subcard-group`: not drag-reorderable,
+  /** A nested subcard rendered inside its parent's `.folia-subcard-group`: not drag-reorderable,
    *  rendered without a drag affordance, but keeps click/keyboard open and the context menu. */
   nested?: boolean;
 }
@@ -73,7 +73,7 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
   const onContextMenu = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const todoEl = (e.target as HTMLElement).closest(".mdkb-card-next-todo");
+    const todoEl = (e.target as HTMLElement).closest(".folia-card-next-todo");
     const todoIndex = todoEl ? Number(todoEl.getAttribute("data-todo-index")) : NaN;
     setMenu(
       todoEl && Number.isFinite(todoIndex)
@@ -123,13 +123,13 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
   return (
     <div
       ref={setNodeRef}
-      style={ctxColor ? { ...style, ["--mdkb-ctx-color" as string]: ctxColor } : style}
+      style={ctxColor ? { ...style, ["--folia-ctx-color" as string]: ctxColor } : style}
       className={
-        "mdkb-card" +
-        (nested ? " mdkb-card--nested" : "") +
+        "folia-card" +
+        (nested ? " folia-card--nested" : "") +
         (selected ? " is-selected" : "") +
         (isDragging ? " is-dragging" : "") +
-        (card.context ? " mdkb-card--has-context" : "")
+        (card.context ? " folia-card--has-context" : "")
       }
       data-testid="card"
       data-path={card.path}
@@ -140,9 +140,9 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
     >
       {/* #14 context grouping: a left accent strip, shown only when the context defines a color
           (inset past the priority bar so the two left-edge cues don't overlap). */}
-      {ctxColor && <span className="mdkb-card-context" aria-hidden="true" />}
+      {ctxColor && <span className="folia-card-context" aria-hidden="true" />}
       <div
-        className="mdkb-card-main"
+        className="folia-card-main"
         // Nested cards aren't draggable: skip the drag listeners/attributes (which also supply
         // tabIndex/role), and restore keyboard reachability + open semantics explicitly.
         {...(nested ? { tabIndex: 0, role: "button" } : attributes)}
@@ -155,7 +155,7 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
         {editing != null ? (
           <input
             ref={titleInputRef}
-            className="mdkb-card-title-input"
+            className="folia-card-title-input"
             value={editing}
             aria-label="Card title"
             // Stop the parent's click/pointer/keyboard handlers (open, drag) from firing while editing.
@@ -166,20 +166,20 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
             onBlur={commitEdit}
           />
         ) : (
-          <div className="mdkb-card-title">{card.basename}</div>
+          <div className="folia-card-title">{card.basename}</div>
         )}
         {(ctxLabel || chips.length > 0) && (
-          <div className="mdkb-chips">
+          <div className="folia-chips">
             {ctxLabel && (
               <span
-                className="mdkb-chip mdkb-chip-context"
+                className="folia-chip folia-chip-context"
                 title={`Context: ${ctx?.name ?? card.context}`}
               >
                 {ctxLabel}
               </span>
             )}
             {chips.map((c) => (
-              <span key={c.key} className={`mdkb-chip mdkb-chip-${c.tone}`} title={c.title}>
+              <span key={c.key} className={`folia-chip folia-chip-${c.tone}`} title={c.title}>
                 {c.icon && <Icon name={c.icon} size={11} />}
                 {c.label}
               </span>
@@ -188,34 +188,34 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
         )}
         {stats && stats.checklist > 0 && (
           <div
-            className={"mdkb-progress" + (allDone ? " is-complete" : "")}
+            className={"folia-progress" + (allDone ? " is-complete" : "")}
             title={`${stats.checklistDone} of ${stats.checklist} subtasks done`}
             aria-label={`${stats.checklistDone} of ${stats.checklist} subtasks done`}
           >
-            <div className="mdkb-progress-track">
+            <div className="folia-progress-track">
               <div
-                className="mdkb-progress-fill"
+                className="folia-progress-fill"
                 style={{ width: `${(stats.checklistDone / stats.checklist) * 100}%` }}
               />
             </div>
-            <span className="mdkb-progress-label">
+            <span className="folia-progress-label">
               {allDone ? <Icon name="check" size={12} /> : null}
               {stats.checklistDone}/{stats.checklist}
             </span>
           </div>
         )}
         {stats && cardNextTodos > 0 && stats.nextTodos.length > 0 && (
-          <ul className="mdkb-card-next-todos">
+          <ul className="folia-card-next-todos">
             {stats.nextTodos.slice(0, cardNextTodos).map((t) => (
-              <li key={t.index} className="mdkb-card-next-todo" data-todo-index={t.index}>
-                <span className="mdkb-card-next-todo-mark" aria-hidden="true" />
-                <span className="mdkb-card-next-todo-text">{t.text}</span>
+              <li key={t.index} className="folia-card-next-todo" data-todo-index={t.index}>
+                <span className="folia-card-next-todo-mark" aria-hidden="true" />
+                <span className="folia-card-next-todo-text">{t.text}</span>
               </li>
             ))}
           </ul>
         )}
         {stats && (stats.subcards > 0 || stats.comments > 0) && (
-          <div className="mdkb-card-meta">
+          <div className="folia-card-meta">
             {stats.subcards > 0 && (
               <span title="Subcards" aria-label={`${stats.subcards} subcard${stats.subcards === 1 ? "" : "s"}`}>
                 <Icon name="git-branch" size={13} /> {stats.subcards}
@@ -231,10 +231,10 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
       </div>
 
       {showActions && (
-        <div className="mdkb-card-actions">
+        <div className="folia-card-actions">
           {canComplete && (
             <button
-              className="mdkb-icon-btn mdkb-action-done"
+              className="folia-icon-btn folia-action-done"
               aria-label={`Mark "${card.basename}" done`}
               title="Mark done"
               onClick={(e) => {
@@ -246,7 +246,7 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
             </button>
           )}
           <button
-            className="mdkb-icon-btn"
+            className="folia-icon-btn"
             aria-label={`Open note for "${card.basename}"`}
             title="Open note"
             onClick={(e) => {
@@ -257,7 +257,7 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
             <Icon name="external-link" size={15} />
           </button>
           <button
-            className="mdkb-icon-btn mdkb-action-delete"
+            className="folia-icon-btn folia-action-delete"
             aria-label={`Delete "${card.basename}"`}
             title="Delete card"
             onClick={(e) => {
@@ -271,11 +271,11 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
       )}
 
       {confirming && (
-        <div className="mdkb-card-confirm" role="alertdialog" aria-label={`Delete ${card.basename}?`}>
+        <div className="folia-card-confirm" role="alertdialog" aria-label={`Delete ${card.basename}?`}>
           <span>Delete card?</span>
-          <div className="mdkb-row-actions">
+          <div className="folia-row-actions">
             <button
-              className="mdkb-btn mdkb-btn-danger"
+              className="folia-btn folia-btn-danger"
               onClick={(e) => {
                 e.stopPropagation();
                 actions.remove(card.path);
@@ -284,7 +284,7 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
               Delete
             </button>
             <button
-              className="mdkb-btn"
+              className="folia-btn"
               autoFocus
               onClick={(e) => {
                 e.stopPropagation();

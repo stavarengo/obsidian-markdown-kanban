@@ -1,13 +1,13 @@
 # Feature Showcase
 
-A single "kitchen-sink" board that exercises **every feature** of the Markdown Kanban plugin — columns, lanes, contexts, priorities, due-date buckets, subcards, comments, history, custom properties, and more. Use it to see the plugin's full surface without building a board from scratch.
+A single "kitchen-sink" board that exercises **every feature** of the Folia Kanban plugin — columns, lanes, contexts, priorities, due-date buckets, subcards, comments, history, custom properties, and more. Use it to see the plugin's full surface without building a board from scratch.
 
 ## How to open it
 
 The plugin resolves `card-folder` **relative to the vault root**, so the simplest path is:
 
 1. **Open the repository root as an Obsidian vault** (`Open folder as vault` → pick this repo).
-2. Enable **Markdown Kanban** under Settings → Community plugins (install it manually first if needed — see the repo README).
+2. Enable **Folia Kanban** under Settings → Community plugins (install it manually first if needed — see the repo README).
 3. Open **`Showcase Board.md`** and run the command **"Open Kanban board"** (or click the layout-grid ribbon icon).
 
 > If you'd rather drop this into your own vault, copy the whole `feature-showcase/` folder anywhere, then edit one line in `Showcase Board.md`: set `card-folder:` to the new folder's vault-relative path (e.g. `My Stuff/feature-showcase/Cards`).

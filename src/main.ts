@@ -2,7 +2,7 @@ import { Notice, Plugin, PluginSettingTab, Setting, TFile, type App } from "obsi
 import { KanbanView, VIEW_TYPE_KANBAN } from "./view";
 import { DEFAULT_SETTINGS, DETAIL_WIDTH_MAX, DETAIL_WIDTH_MIN, type KanbanSettings } from "./settings";
 
-export default class MarkdownKanbanPlugin extends Plugin {
+export default class FoliaKanbanPlugin extends Plugin {
   settings: KanbanSettings = DEFAULT_SETTINGS;
 
   async onload(): Promise<void> {
@@ -27,7 +27,7 @@ export default class MarkdownKanbanPlugin extends Plugin {
     const boardPath = this.resolveBoardPath();
     if (!boardPath) {
       new Notice(
-        "Markdown Kanban: no board note found. Add `kanban-board: true` to a note's frontmatter (and `columns` + `card-folder`).",
+        "Folia Kanban: no board note found. Add `kanban-board: true` to a note's frontmatter (and `columns` + `card-folder`).",
         8000,
       );
       return;
@@ -78,7 +78,7 @@ export default class MarkdownKanbanPlugin extends Plugin {
 class KanbanSettingTab extends PluginSettingTab {
   constructor(
     app: App,
-    private plugin: MarkdownKanbanPlugin,
+    private plugin: FoliaKanbanPlugin,
   ) {
     super(app, plugin);
   }

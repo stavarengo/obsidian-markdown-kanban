@@ -110,7 +110,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   useEffect(() => {
     if (!board || !rootRef.current) return;
     const h = document.querySelector(".status-bar")?.getBoundingClientRect().height ?? 0;
-    rootRef.current.style.setProperty("--mdkb-statusbar-clearance", `${h > 0 ? h + 6 : 32}px`);
+    rootRef.current.style.setProperty("--folia-statusbar-clearance", `${h > 0 ? h + 6 : 32}px`);
   }, [board]);
 
   const onMove = useCallback(
@@ -422,7 +422,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
 
   // "/" focuses the search box (the placeholder advertises it), but only when this board view is
   // the active, visible one and the user isn't already typing in a field. A document-level listener
-  // is required because `.mdkb-root` isn't focusable, so a `/` pressed with focus on <body> never
+  // is required because `.folia-root` isn't focusable, so a `/` pressed with focus on <body> never
   // bubbles to a React handler on it. Scoped to the root's owning document so pop-out windows work.
   useEffect(() => {
     const root = rootRef.current;
@@ -443,8 +443,8 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     return () => doc.removeEventListener("keydown", onKeyDown);
   }, [board]);
 
-  if (error) return <div className="mdkb-error">Couldn’t load the board: {error}</div>;
-  if (!board) return <div className="mdkb-loading">Loading board…</div>;
+  if (error) return <div className="folia-error">Couldn’t load the board: {error}</div>;
+  if (!board) return <div className="folia-loading">Loading board…</div>;
 
   // The add-card flows can override the presentation for one open; otherwise use the global setting.
   const globalDetailMode: DetailMode =
@@ -497,9 +497,9 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         <RepoContext.Provider value={repo}>
           <BoardActionsContext.Provider value={actions}>
             <ContextsContext.Provider value={stableContexts}>
-            <div className="mdkb-root" ref={rootRef}>
+            <div className="folia-root" ref={rootRef}>
               <Toolbar ref={searchRef} query={query} onChange={setQuery} matchCount={counts.match} totalCount={counts.total} />
-              <div className="mdkb-main">
+              <div className="folia-main">
                 <Board
                   board={board}
                   today={todayValue}
@@ -518,7 +518,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
                 createPortal(
                   // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
                   <div
-                    className="mdkb-detail-modal-backdrop"
+                    className="folia-detail-modal-backdrop"
                     onPointerDown={(e) => { if (e.target === e.currentTarget) closeDetail(); }}
                   >
                     {detail}
@@ -526,7 +526,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
                   rootRef.current,
                 )}
               {toast && (
-                <div className={"mdkb-toast mdkb-toast-" + toast.tone} role="status" aria-live="polite">
+                <div className={"folia-toast folia-toast-" + toast.tone} role="status" aria-live="polite">
                   <Icon name={toast.tone === "error" ? "alert" : "check-circle"} size={16} />
                   {toast.text}
                 </div>

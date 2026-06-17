@@ -22,7 +22,7 @@
     "autoGenerate": false,
     "preRelease": false,
     "draft": false,
-    "tokenRef": "OBSIDIAN_MARKDOWN_KANBAN_RELEASE_IT_GITHUB_TOKEN",
+    "tokenRef": "FOLIA_KANBAN_RELEASE_IT_GITHUB_TOKEN",
     "skipChecks": false,
     "web": false,
     "comments": {

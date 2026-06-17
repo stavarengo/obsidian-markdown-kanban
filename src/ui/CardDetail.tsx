@@ -36,17 +36,17 @@ function PropRow({ name, value, onCommit, onRemove }: { name: string; value: str
   useEffect(() => setDraft(value), [value]);
   const commit = () => { if (draft !== value) onCommit(draft); };
   return (
-    <div className="mdkb-prop-row">
-      <span className="mdkb-prop-key">{name}</span>
+    <div className="folia-prop-row">
+      <span className="folia-prop-key">{name}</span>
       <input
-        className="mdkb-prop-input"
+        className="folia-prop-input"
         value={draft}
         aria-label={`Value of ${name}`}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } }}
       />
-      <button className="mdkb-icon-btn mdkb-mini" aria-label={`Remove ${name}`} title="Remove property" onClick={onRemove}><Icon name="close" size={13} /></button>
+      <button className="folia-icon-btn folia-mini" aria-label={`Remove ${name}`} title="Remove property" onClick={onRemove}><Icon name="close" size={13} /></button>
     </div>
   );
 }
@@ -62,10 +62,10 @@ function CommentItem({ timestamp, text, sourcePath, onSave, onDelete }: { timest
   };
   return (
     <li>
-      <span className="mdkb-ts">{timestamp}</span>
+      <span className="folia-ts">{timestamp}</span>
       {editing ? (
         <textarea
-          className="mdkb-comment-edit"
+          className="folia-comment-edit"
           value={draft}
           autoFocus
           aria-label="Edit comment"
@@ -74,10 +74,10 @@ function CommentItem({ timestamp, text, sourcePath, onSave, onDelete }: { timest
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); } }}
         />
       ) : (
-        <div className="mdkb-comment-row">
-          <Markdown markdown={text} sourcePath={sourcePath} className="mdkb-comment-text" />
-          <button className="mdkb-icon-btn mdkb-mini" aria-label="Edit comment" title="Edit" onClick={() => { setDraft(text); setEditing(true); }}><Icon name="pencil" size={13} /></button>
-          <button className="mdkb-icon-btn mdkb-mini" aria-label="Delete comment" title="Delete" onClick={onDelete}><Icon name="trash" size={13} /></button>
+        <div className="folia-comment-row">
+          <Markdown markdown={text} sourcePath={sourcePath} className="folia-comment-text" />
+          <button className="folia-icon-btn folia-mini" aria-label="Edit comment" title="Edit" onClick={() => { setDraft(text); setEditing(true); }}><Icon name="pencil" size={13} /></button>
+          <button className="folia-icon-btn folia-mini" aria-label="Delete comment" title="Delete" onClick={onDelete}><Icon name="trash" size={13} /></button>
         </div>
       )}
     </li>
@@ -219,7 +219,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     if (!isSide) return;
     const onPointerDown = (e: globalThis.PointerEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t?.closest?.(".mdkb-detail, .mdkb-card, .mdkb-menu, .mdkb-card-context")) return;
+      if (t?.closest?.(".folia-detail, .folia-card, .folia-menu, .folia-card-context")) return;
       // Commit any in-progress edit before closing: blurring fires the focused field's onBlur,
       // which initiates its repo write synchronously — so clicking away saves instead of discarding.
       const ae = document.activeElement as HTMLElement | null;
@@ -264,7 +264,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     }
   };
 
-  const modeClass = mode === "float" ? " mdkb-detail--float" : mode === "modal" ? " mdkb-detail--modal" : "";
+  const modeClass = mode === "float" ? " folia-detail--float" : mode === "modal" ? " folia-detail--modal" : "";
   const panelStyle = isSide ? { width, flex: `0 0 ${width}px` } : undefined;
 
   if (isCreate) {
@@ -285,7 +285,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     };
     return (
       <aside
-        className={"mdkb-detail" + modeClass}
+        className={"folia-detail" + modeClass}
         data-testid="card-detail"
         role="dialog"
         aria-modal={mode === "modal"}
@@ -297,22 +297,22 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
       >
         {isSide && (
           // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-          <div className="mdkb-detail-resize" role="separator" aria-orientation="vertical" aria-label="Resize panel" onPointerDown={onResizeStart} />
+          <div className="folia-detail-resize" role="separator" aria-orientation="vertical" aria-label="Resize panel" onPointerDown={onResizeStart} />
         )}
-        <header className="mdkb-detail-header">
-          <h2 className="mdkb-detail-title">New card in {columnTitle}</h2>
-          <div className="mdkb-row-actions">
-            <button className="mdkb-icon-btn" aria-label="Close" title="Close (Esc)" onClick={onClose}>
+        <header className="folia-detail-header">
+          <h2 className="folia-detail-title">New card in {columnTitle}</h2>
+          <div className="folia-row-actions">
+            <button className="folia-icon-btn" aria-label="Close" title="Close (Esc)" onClick={onClose}>
               <Icon name="close" />
             </button>
           </div>
         </header>
-        <div className="mdkb-detail-body">
-          <section className="mdkb-section">
+        <div className="folia-detail-body">
+          <section className="folia-section">
             <label>
               Title
               <input
-                className="mdkb-create-title"
+                className="folia-create-title"
                 autoFocus
                 value={createTitle}
                 aria-label="New card title"
@@ -323,9 +323,9 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
                 }}
               />
             </label>
-            <div className="mdkb-row-actions">
-              <button className="mdkb-btn mdkb-btn-primary" disabled={!createTitle.trim()} onClick={submitCreate}>Create</button>
-              <button className="mdkb-btn" onClick={onClose}>Cancel</button>
+            <div className="folia-row-actions">
+              <button className="folia-btn folia-btn-primary" disabled={!createTitle.trim()} onClick={submitCreate}>Create</button>
+              <button className="folia-btn" onClick={onClose}>Cancel</button>
             </div>
           </section>
         </div>
@@ -335,10 +335,10 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
 
   if (!card) {
     return (
-      <aside className={"mdkb-detail" + modeClass} role="dialog" aria-modal={mode === "modal"} aria-label="Card not found" ref={panelRef} tabIndex={-1} onKeyDown={onKeyDown} style={panelStyle}>
-        <header className="mdkb-detail-header">
+      <aside className={"folia-detail" + modeClass} role="dialog" aria-modal={mode === "modal"} aria-label="Card not found" ref={panelRef} tabIndex={-1} onKeyDown={onKeyDown} style={panelStyle}>
+        <header className="folia-detail-header">
           <span>Card not found</span>
-          <button className="mdkb-icon-btn" aria-label="Close" onClick={onClose}><Icon name="close" /></button>
+          <button className="folia-icon-btn" aria-label="Close" onClick={onClose}><Icon name="close" /></button>
         </header>
       </aside>
     );
@@ -352,7 +352,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
 
   return (
     <aside
-      className={"mdkb-detail" + modeClass}
+      className={"folia-detail" + modeClass}
       data-testid="card-detail"
       role="dialog"
       aria-modal={mode === "modal"}
@@ -364,40 +364,40 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     >
       {isSide && (
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-        <div className="mdkb-detail-resize" role="separator" aria-orientation="vertical" aria-label="Resize panel" onPointerDown={onResizeStart} />
+        <div className="folia-detail-resize" role="separator" aria-orientation="vertical" aria-label="Resize panel" onPointerDown={onResizeStart} />
       )}
-      <header className="mdkb-detail-header">
-        <h2 className="mdkb-detail-title">{card.basename}</h2>
-        <div className="mdkb-row-actions">
+      <header className="folia-detail-header">
+        <h2 className="folia-detail-title">{card.basename}</h2>
+        <div className="folia-row-actions">
           {actions.doneColumnId && fm.status !== actions.doneColumnId && (
-            <button className="mdkb-icon-btn mdkb-action-done" aria-label="Mark done" title="Mark done" onClick={() => actions.complete(path)}>
+            <button className="folia-icon-btn folia-action-done" aria-label="Mark done" title="Mark done" onClick={() => actions.complete(path)}>
               <Icon name="check-circle" />
             </button>
           )}
-          <button className="mdkb-icon-btn" aria-label="Open note" title="Open note in Obsidian" onClick={() => void repo.openCard(path)}>
+          <button className="folia-icon-btn" aria-label="Open note" title="Open note in Obsidian" onClick={() => void repo.openCard(path)}>
             <Icon name="external-link" />
           </button>
-          <button className="mdkb-icon-btn mdkb-action-delete" aria-label="Delete card" title="Delete card" onClick={() => setConfirmDelete(true)}>
+          <button className="folia-icon-btn folia-action-delete" aria-label="Delete card" title="Delete card" onClick={() => setConfirmDelete(true)}>
             <Icon name="trash" />
           </button>
-          <button className="mdkb-icon-btn" aria-label="Close" title="Close (Esc)" onClick={onClose}>
+          <button className="folia-icon-btn" aria-label="Close" title="Close (Esc)" onClick={onClose}>
             <Icon name="close" />
           </button>
         </div>
       </header>
 
       {confirmDelete && (
-        <div className="mdkb-detail-confirm" role="alertdialog" aria-label="Confirm delete">
+        <div className="folia-detail-confirm" role="alertdialog" aria-label="Confirm delete">
           <span>Delete this card? The note moves to trash.</span>
-          <div className="mdkb-row-actions">
-            <button className="mdkb-btn mdkb-btn-danger" onClick={() => actions.remove(path)}>Delete</button>
-            <button className="mdkb-btn" autoFocus onClick={() => setConfirmDelete(false)}>Cancel</button>
+          <div className="folia-row-actions">
+            <button className="folia-btn folia-btn-danger" onClick={() => actions.remove(path)}>Delete</button>
+            <button className="folia-btn" autoFocus onClick={() => setConfirmDelete(false)}>Cancel</button>
           </div>
         </div>
       )}
 
-      <div className="mdkb-detail-body">
-        <div className="mdkb-fields">
+      <div className="folia-detail-body">
+        <div className="folia-fields">
           <label>
             Status
             <select value={String(fm.status ?? "")} onChange={(e) => void mutate(() => repo.setFrontmatter(path, { status: e.target.value }))}>
@@ -419,7 +419,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
           </label>
         </div>
 
-        <div className="mdkb-props">
+        <div className="folia-props">
           {extraProps.map(([k, v]) => (
             <PropRow
               key={k}
@@ -429,23 +429,23 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
               onRemove={() => void mutate(() => repo.unsetFrontmatterKey(path, k))}
             />
           ))}
-          <div className="mdkb-prop-add">
+          <div className="folia-prop-add">
             <input
-              className="mdkb-prop-input"
+              className="folia-prop-input"
               value={newPropKey}
               placeholder="property"
               aria-label="New property name"
               onChange={(e) => setNewPropKey(e.target.value)}
             />
             <input
-              className="mdkb-prop-input"
+              className="folia-prop-input"
               value={newPropVal}
               placeholder="value"
               aria-label="New property value"
               onChange={(e) => setNewPropVal(e.target.value)}
             />
             <button
-              className="mdkb-btn"
+              className="folia-btn"
               aria-label="Add property"
               disabled={!newPropKey.trim() || EDITED_KEYS.has(newPropKey.trim())}
               onClick={() => {
@@ -461,13 +461,13 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
           </div>
         </div>
 
-        <section className="mdkb-section">
+        <section className="folia-section">
           <h3>Description</h3>
           {editingDesc ? (
             <>
               <textarea
                 ref={descRef}
-                className="mdkb-desc"
+                className="folia-desc"
                 value={descDraft}
                 aria-label="Edit description"
                 style={preservedDescHeight != null ? { minHeight: `${preservedDescHeight}px` } : undefined}
@@ -482,55 +482,55 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
                   }
                 }}
               />
-              <div className="mdkb-row-actions">
-                <button className="mdkb-btn mdkb-btn-primary" onClick={() => void mutate(() => repo.setDescription(path, descDraft)).then(() => setEditingDesc(false))}>Save</button>
-                <button className="mdkb-btn" onClick={() => { if (body) setDescDraft(body.description); setEditingDesc(false); }}>Revert</button>
+              <div className="folia-row-actions">
+                <button className="folia-btn folia-btn-primary" onClick={() => void mutate(() => repo.setDescription(path, descDraft)).then(() => setEditingDesc(false))}>Save</button>
+                <button className="folia-btn" onClick={() => { if (body) setDescDraft(body.description); setEditingDesc(false); }}>Revert</button>
               </div>
             </>
           ) : body && body.description.trim() ? (
             // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
             <div
               ref={descViewRef}
-              className="mdkb-desc-view"
-              style={descMaxHeight != null ? ({ "--mdkb-desc-max-h": `${descMaxHeight}px` } as CSSProperties) : undefined}
+              className="folia-desc-view"
+              style={descMaxHeight != null ? ({ "--folia-desc-max-h": `${descMaxHeight}px` } as CSSProperties) : undefined}
               onClick={(e) => { if ((e.target as HTMLElement).closest("a")) return; beginEditDesc(); }}
             >
-              <Markdown markdown={body.description} sourcePath={path} className="mdkb-desc-rendered" />
-              <button className="mdkb-icon-btn mdkb-mini mdkb-desc-edit" aria-label="Edit description" title="Edit" onClick={(e) => { e.stopPropagation(); beginEditDesc(); }}><Icon name="pencil" size={13} /></button>
+              <Markdown markdown={body.description} sourcePath={path} className="folia-desc-rendered" />
+              <button className="folia-icon-btn folia-mini folia-desc-edit" aria-label="Edit description" title="Edit" onClick={(e) => { e.stopPropagation(); beginEditDesc(); }}><Icon name="pencil" size={13} /></button>
             </div>
           ) : (
-            <button className="mdkb-desc-empty mdkb-muted" aria-label="Edit description" onClick={() => setEditingDesc(true)}>Add a description…</button>
+            <button className="folia-desc-empty folia-muted" aria-label="Edit description" onClick={() => setEditingDesc(true)}>Add a description…</button>
           )}
         </section>
 
-        <section className="mdkb-section">
+        <section className="folia-section">
           <h3>Subtasks &amp; subcards</h3>
-          <ul className="mdkb-subtasks">
+          <ul className="folia-subtasks">
             {body?.subtasks.map((s) => (
-              <li key={s.index} className="mdkb-subtask">
+              <li key={s.index} className="folia-subtask">
                 <input type="checkbox" checked={s.done} aria-label={`Toggle ${s.text}`} onChange={() => void mutate(() => repo.toggleSubtask(path, s.index, !s.done))} />
                 {s.kind === "card" && s.link ? (
                   (() => {
                     const child = resolveBasename(board, s.link);
                     return child ? (
-                      <button className="mdkb-link" onClick={() => onNavigate?.(child)}>
+                      <button className="folia-link" onClick={() => onNavigate?.(child)}>
                         {s.link}
                       </button>
                     ) : (
-                      <span className="mdkb-link-missing" title="No card with this name on the board">
+                      <span className="folia-link-missing" title="No card with this name on the board">
                         {s.link}
                       </span>
                     );
                   })()
                 ) : (
-                  <span className={s.done ? "mdkb-done" : ""}>{s.text}</span>
+                  <span className={s.done ? "folia-done" : ""}>{s.text}</span>
                 )}
-                <button className="mdkb-icon-btn mdkb-mini" aria-label="Remove" title="Remove" onClick={() => void mutate(() => repo.removeSubtask(path, s.index))}><Icon name="close" size={13} /></button>
+                <button className="folia-icon-btn folia-mini" aria-label="Remove" title="Remove" onClick={() => void mutate(() => repo.removeSubtask(path, s.index))}><Icon name="close" size={13} /></button>
               </li>
             ))}
-            {body && body.subtasks.length === 0 && <li className="mdkb-muted">No subtasks yet.</li>}
+            {body && body.subtasks.length === 0 && <li className="folia-muted">No subtasks yet.</li>}
           </ul>
-          <div className="mdkb-add-inline">
+          <div className="folia-add-inline">
             <input
               value={newTodo}
               placeholder="Add a todo…"
@@ -544,7 +544,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
               }}
             />
           </div>
-          <div className="mdkb-add-inline">
+          <div className="folia-add-inline">
             <input
               ref={subcardRef}
               value={newSubcard}
@@ -561,9 +561,9 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
           </div>
         </section>
 
-        <section className="mdkb-section">
+        <section className="folia-section">
           <h3>Comments</h3>
-          <ul className="mdkb-comments">
+          <ul className="folia-comments">
             {body?.comments.map((c, i) => (
               <CommentItem
                 key={i}
@@ -574,9 +574,9 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
                 onDelete={() => void mutate(() => repo.removeComment(path, i))}
               />
             ))}
-            {body && body.comments.length === 0 && <li className="mdkb-muted">No comments yet.</li>}
+            {body && body.comments.length === 0 && <li className="folia-muted">No comments yet.</li>}
           </ul>
-          <div className="mdkb-add-inline">
+          <div className="folia-add-inline">
             <textarea
               value={newComment}
               placeholder="Write a comment…"
@@ -593,16 +593,16 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
           </div>
         </section>
 
-        <section className="mdkb-section">
+        <section className="folia-section">
           <h3>History</h3>
-          <ul className="mdkb-history">
+          <ul className="folia-history">
             {body?.history.map((h, i) => (
               <li key={i}>
-                <span className="mdkb-ts">{h.timestamp}</span>
+                <span className="folia-ts">{h.timestamp}</span>
                 <span>{h.text}</span>
               </li>
             ))}
-            {body && body.history.length === 0 && <li className="mdkb-muted">No history yet.</li>}
+            {body && body.history.length === 0 && <li className="folia-muted">No history yet.</li>}
           </ul>
         </section>
       </div>

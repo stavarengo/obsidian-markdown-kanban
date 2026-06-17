@@ -1,4 +1,4 @@
-// Domain types for the Markdown Kanban model. Everything here is plain data so the
+// Domain types for the Folia Kanban model. Everything here is plain data so the
 // model layer stays pure and unit-testable with no Obsidian dependency.
 
 export interface CardFrontmatter {

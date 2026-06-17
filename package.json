@@ -1,5 +1,5 @@
 {
-  "name": "markdown-kanban",
+  "name": "folia-kanban",
   "version": "0.1.0",
   "packageManager": "pnpm@11.3.0",
   "description": "A real Kanban board for Obsidian, with Markdown files as the source of truth.",

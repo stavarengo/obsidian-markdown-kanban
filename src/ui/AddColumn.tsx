@@ -16,7 +16,7 @@ export function AddColumn() {
 
   if (!adding) {
     return (
-      <button className="mdkb-add-column" aria-label="Add column" onClick={() => setAdding(true)}>
+      <button className="folia-add-column" aria-label="Add column" onClick={() => setAdding(true)}>
         <Icon name="plus" size={16} />
         Add column
       </button>
@@ -24,7 +24,7 @@ export function AddColumn() {
   }
 
   return (
-    <div className="mdkb-add-column is-editing">
+    <div className="folia-add-column is-editing">
       <input
         autoFocus
         value={title}
@@ -39,11 +39,11 @@ export function AddColumn() {
           }
         }}
       />
-      <div className="mdkb-row-actions">
-        <button className="mdkb-btn mdkb-btn-primary" onMouseDown={(e) => e.preventDefault()} onClick={submit}>
+      <div className="folia-row-actions">
+        <button className="folia-btn folia-btn-primary" onMouseDown={(e) => e.preventDefault()} onClick={submit}>
           Add
         </button>
-        <button className="mdkb-btn" onClick={() => { setAdding(false); setTitle(""); }}>
+        <button className="folia-btn" onClick={() => { setAdding(false); setTitle(""); }}>
           Cancel
         </button>
       </div>

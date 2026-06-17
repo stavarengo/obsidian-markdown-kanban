@@ -103,7 +103,7 @@ interface IconProps extends SVGProps<SVGSVGElement> {
 export function Icon({ name, size = 16, ...rest }: IconProps): JSX.Element {
   return (
     <svg
-      className="mdkb-icon"
+      className="folia-icon"
       width={size}
       height={size}
       viewBox="0 0 24 24"

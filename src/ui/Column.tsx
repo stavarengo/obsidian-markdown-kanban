@@ -30,11 +30,11 @@ function SubcardGroup({
   const children = (board.childrenOf[parentPath] ?? []).filter((p) => board.cards[p] && !seen.has(p));
   if (children.length === 0) return null;
   return (
-    <div className="mdkb-subcard-group">
+    <div className="folia-subcard-group">
       {children.map((p) => {
         const next = new Set(seen).add(p);
         return (
-          <div key={p} className="mdkb-subcard">
+          <div key={p} className="folia-subcard">
             <CardItem card={board.cards[p]} today={today} selected={p === selectedPath} nested />
             <SubcardGroup parentPath={p} board={board} today={today} selectedPath={selectedPath} seen={next} />
           </div>
@@ -203,15 +203,15 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
   const faded = opacity < 1;
   const parked = column.parked === true;
   const style: Record<string, string | number | undefined> = {
-    ["--mdkb-col-accent" as string]: accent,
+    ["--folia-col-accent" as string]: accent,
     // Header drag-reorder (#2): the sortable's live transform/transition move the column as it
     // drags. `transition` is undefined when idle, which React simply omits.
     transform: CSS.Transform.toString(transform),
     transition,
   };
   if (faded) {
-    style["--mdkb-col-opacity"] = opacity;
-    style["--mdkb-col-hover-opacity"] = typeof column.hoverOpacity === "number" ? column.hoverOpacity : 1;
+    style["--folia-col-opacity"] = opacity;
+    style["--folia-col-hover-opacity"] = typeof column.hoverOpacity === "number" ? column.hoverOpacity : 1;
   }
 
   return (
@@ -221,7 +221,7 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
       // column still reports over.id === column.id (no separate useDroppable).
       ref={setNodeRef}
       className={
-        "mdkb-column" +
+        "folia-column" +
         (overLimit ? " is-over-limit" : "") +
         (faded ? " is-faded" : "") +
         (parked ? " is-parked" : "") +
@@ -231,12 +231,12 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
       data-column={column.id}
       style={style as CSSProperties}
     >
-      <header className="mdkb-column-header">
-        <span className="mdkb-column-dot" aria-hidden="true" />
+      <header className="folia-column-header">
+        <span className="folia-column-dot" aria-hidden="true" />
         {editing ? (
           <input
             ref={titleInputRef}
-            className="mdkb-column-title-input"
+            className="folia-column-title-input"
             value={titleDraft}
             aria-label={`Rename column ${column.title}`}
             onChange={(e) => setTitleDraft(e.target.value)}
@@ -258,7 +258,7 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
           // ≥5px movement → drag (the click never fires); a clean click → enterEdit.
           <span
             ref={setActivatorNodeRef}
-            className="mdkb-column-title"
+            className="folia-column-title"
             title="Drag to reorder, click to rename"
             {...attributes}
             {...listeners}
@@ -285,7 +285,7 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
           </span>
         )}
         <span
-          className={"mdkb-column-count" + (overLimit ? " is-over-limit" : "")}
+          className={"folia-column-count" + (overLimit ? " is-over-limit" : "")}
           title={
             overLimit
               ? `${count} of ${wipLimit} — over the WIP limit`
@@ -306,7 +306,7 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
         </span>
         <button
           ref={menuBtnRef}
-          className="mdkb-icon-btn mdkb-column-menu-btn"
+          className="folia-icon-btn folia-column-menu-btn"
           aria-label={`Column options for ${column.title}`}
           aria-haspopup="dialog"
           aria-expanded={menuOpen}
@@ -334,13 +334,13 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
       {/* No ref here: the section root is the sortable/droppable node (its id === column.id), so a
           card dropped anywhere on the column still reports over.id === column.id. `isOver` comes
           from useSortable and still drives the body drop highlight. */}
-      <div className={"mdkb-column-body" + (isOver ? " is-over" : "")}>
+      <div className={"folia-column-body" + (isOver ? " is-over" : "")}>
         <SortableContext items={orderedDragIds} strategy={verticalListSortingStrategy}>
           {groups.map((g) => (
-            <div key={g.key || "_"} className="mdkb-card-group" data-group={g.key || undefined}>
-              {g.label && <div className="mdkb-card-group-heading">{g.label}</div>}
+            <div key={g.key || "_"} className="folia-card-group" data-group={g.key || undefined}>
+              {g.label && <div className="folia-card-group-heading">{g.label}</div>}
               {g.cards.map((c) => (
-                <div key={c.path} className="mdkb-card-tree">
+                <div key={c.path} className="folia-card-tree">
                   <CardItem card={c} columnId={column.id} today={today} selected={c.path === selectedPath} />
                   <SubcardGroup parentPath={c.path} board={board} today={today} selectedPath={selectedPath} seen={new Set([c.path])} />
                 </div>
@@ -350,18 +350,18 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
         </SortableContext>
         {paths.length === 0 && !adding && (
           filtering ? (
-            <div className="mdkb-column-empty is-filtered">
+            <div className="folia-column-empty is-filtered">
               <span>No matches</span>
             </div>
           ) : (
-            <div className="mdkb-column-empty" aria-hidden="true">
+            <div className="folia-column-empty" aria-hidden="true">
               <Icon name="inbox" size={20} />
               <span>Nothing here</span>
             </div>
           )
         )}
         {adding && (
-          <div className="mdkb-add-card">
+          <div className="folia-add-card">
             <textarea
               autoFocus
               rows={2}
@@ -379,11 +379,11 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
                 }
               }}
             />
-            <div className="mdkb-row-actions">
-              <button className="mdkb-btn mdkb-btn-primary" onMouseDown={(e) => e.preventDefault()} onClick={() => submit(false)}>
+            <div className="folia-row-actions">
+              <button className="folia-btn folia-btn-primary" onMouseDown={(e) => e.preventDefault()} onClick={() => submit(false)}>
                 Add card
               </button>
-              <button className="mdkb-btn" onClick={() => { setAdding(false); setTitle(""); }}>
+              <button className="folia-btn" onClick={() => { setAdding(false); setTitle(""); }}>
                 Cancel
               </button>
             </div>
@@ -391,7 +391,7 @@ export function Column({ column, cardPaths, board, today, selectedPath, wipLimit
         )}
       </div>
       {!adding && (
-        <button className="mdkb-column-add" aria-label={`Add card to ${column.title}`} onClick={onAddClick}>
+        <button className="folia-column-add" aria-label={`Add card to ${column.title}`} onClick={onAddClick}>
           <Icon name="plus" size={15} />
           Add a card
         </button>

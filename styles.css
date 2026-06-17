@@ -1,61 +1,61 @@
-/* Markdown Kanban — board styling.
+/* Folia Kanban — board styling.
    A small design-token layer mapped onto Obsidian's theme variables, so the board adopts the
    user's light/dark theme automatically while keeping a consistent, shadcn-grade visual system.
    Raw values live only in the token block; everything below consumes the tokens. */
 
-.mdkb-root {
+.folia-root {
   /* radii */
-  --mdkb-r-sm: 6px;
-  --mdkb-r: 8px;
-  --mdkb-r-lg: 10px;
-  --mdkb-r-xl: 14px;
+  --folia-r-sm: 6px;
+  --folia-r: 8px;
+  --folia-r-lg: 10px;
+  --folia-r-xl: 14px;
 
   /* spacing */
-  --mdkb-gap: 10px;
-  --mdkb-pad: 12px;
-  --mdkb-col-w: 300px; /* single source for column width + drag-overlay width */
-  --mdkb-detail-w: 380px; /* side panel width; overridden inline from settings.detailWidth */
-  --mdkb-statusbar-clearance: 32px; /* fallback; App measures the real status bar and sets it live */
+  --folia-gap: 10px;
+  --folia-pad: 12px;
+  --folia-col-w: 300px; /* single source for column width + drag-overlay width */
+  --folia-detail-w: 380px; /* side panel width; overridden inline from settings.detailWidth */
+  --folia-statusbar-clearance: 32px; /* fallback; App measures the real status bar and sets it live */
 
   /* motion */
-  --mdkb-dur-fast: 110ms;
-  --mdkb-dur: 170ms;
-  --mdkb-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --folia-dur-fast: 110ms;
+  --folia-dur: 170ms;
+  --folia-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* surfaces & lines */
-  --mdkb-border: var(--background-modifier-border);
-  --mdkb-border-strong: var(--background-modifier-border-hover, var(--background-modifier-border));
-  --mdkb-card-bg: var(--background-primary);
-  --mdkb-col-bg: var(--background-secondary);
+  --folia-border: var(--background-modifier-border);
+  --folia-border-strong: var(--background-modifier-border-hover, var(--background-modifier-border));
+  --folia-card-bg: var(--background-primary);
+  --folia-col-bg: var(--background-secondary);
 
   /* elevation (subtle in dark, structure carried by borders) */
-  --mdkb-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.16);
-  --mdkb-shadow-card-hover: 0 4px 14px rgba(0, 0, 0, 0.22);
-  --mdkb-shadow-overlay: 0 14px 36px rgba(0, 0, 0, 0.4);
-  --mdkb-shadow-pop: 0 6px 20px rgba(0, 0, 0, 0.28);
+  --folia-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.16);
+  --folia-shadow-card-hover: 0 4px 14px rgba(0, 0, 0, 0.22);
+  --folia-shadow-overlay: 0 14px 36px rgba(0, 0, 0, 0.4);
+  --folia-shadow-pop: 0 6px 20px rgba(0, 0, 0, 0.28);
 
   /* priority ramp (urgent -> trivial), tinted off the theme's accent palette */
-  --mdkb-prio-1: var(--color-red, #e5534b);
-  --mdkb-prio-2: var(--color-orange, #d9882f);
-  --mdkb-prio-3: var(--color-yellow, #c2a312);
-  --mdkb-prio-4: var(--color-blue, #5b8def);
-  --mdkb-accent: var(--interactive-accent);
-  --mdkb-on-accent: var(--text-on-accent, #fff);
-  --mdkb-danger: var(--color-red, #e5534b);
-  --mdkb-success: var(--color-green, #4caf7d);
+  --folia-prio-1: var(--color-red, #e5534b);
+  --folia-prio-2: var(--color-orange, #d9882f);
+  --folia-prio-3: var(--color-yellow, #c2a312);
+  --folia-prio-4: var(--color-blue, #5b8def);
+  --folia-accent: var(--interactive-accent);
+  --folia-on-accent: var(--text-on-accent, #fff);
+  --folia-danger: var(--color-red, #e5534b);
+  --folia-success: var(--color-green, #4caf7d);
 }
 
 /* The view content area has default padding; the board needs the full pane with no inset. */
-.workspace-leaf-content[data-type="markdown-kanban-view"] {
+.workspace-leaf-content[data-type="folia-kanban-view"] {
   padding: 0;
 }
-.workspace-leaf-content[data-type="markdown-kanban-view"] .view-content {
+.workspace-leaf-content[data-type="folia-kanban-view"] .view-content {
   padding: 0;
   height: 100%;
   overflow: hidden;
 }
 
-.mdkb-root {
+.folia-root {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -64,7 +64,7 @@
   font-size: var(--font-ui-small, 13px);
   position: relative;
 }
-.mdkb-main {
+.folia-main {
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
@@ -72,7 +72,7 @@
 }
 
 /* completion celebration */
-.mdkb-toast {
+.folia-toast {
   position: absolute;
   bottom: 22px;
   left: 50%;
@@ -85,29 +85,29 @@
   color: #fff;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: var(--mdkb-shadow-overlay);
+  box-shadow: var(--folia-shadow-overlay);
   z-index: 50;
   pointer-events: none;
-  animation: mdkb-toast-in 220ms var(--mdkb-ease);
+  animation: folia-toast-in 220ms var(--folia-ease);
 }
-.mdkb-toast-success { background: var(--mdkb-success); }
-.mdkb-toast-error { background: var(--mdkb-danger); }
-@keyframes mdkb-toast-in {
+.folia-toast-success { background: var(--folia-success); }
+.folia-toast-error { background: var(--folia-danger); }
+@keyframes folia-toast-in {
   from { opacity: 0; transform: translate(-50%, 12px) scale(0.94); }
   to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
 /* ------------------------------------------------------------------ toolbar */
-.mdkb-toolbar {
+.folia-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
-  border-bottom: 1px solid var(--mdkb-border);
+  border-bottom: 1px solid var(--folia-border);
   background: var(--background-primary);
   flex: 0 0 auto;
 }
-.mdkb-search {
+.folia-search {
   position: relative; /* anchors the #9 filter-suggestion dropdown */
   display: flex;
   align-items: center;
@@ -115,17 +115,17 @@
   flex: 0 1 320px;
   padding: 0 8px;
   height: 30px;
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r);
   background: var(--background-primary);
   color: var(--text-muted);
-  transition: border-color var(--mdkb-dur-fast) ease, box-shadow var(--mdkb-dur-fast) ease;
+  transition: border-color var(--folia-dur-fast) ease, box-shadow var(--folia-dur-fast) ease;
 }
-.mdkb-search:focus-within {
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+.folia-search:focus-within {
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
-.mdkb-search input {
+.folia-search input {
   flex: 1 1 auto;
   border: none;
   background: transparent;
@@ -134,35 +134,35 @@
   outline: none;
   min-width: 0;
 }
-.mdkb-toolbar-filters {
+.folia-toolbar-filters {
   display: flex;
   gap: 6px;
 }
-.mdkb-filter-chip {
+.folia-filter-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   height: 30px;
   padding: 0 11px;
-  border-radius: var(--mdkb-r);
-  border: 1px solid var(--mdkb-border);
+  border-radius: var(--folia-r);
+  border: 1px solid var(--folia-border);
   background: var(--background-primary);
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--mdkb-dur-fast) ease, color var(--mdkb-dur-fast) ease, border-color var(--mdkb-dur-fast) ease;
+  transition: background var(--folia-dur-fast) ease, color var(--folia-dur-fast) ease, border-color var(--folia-dur-fast) ease;
 }
-.mdkb-filter-chip:hover {
+.folia-filter-chip:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
-.mdkb-filter-chip.is-on {
-  background: color-mix(in srgb, var(--mdkb-accent) 16%, transparent);
-  border-color: color-mix(in srgb, var(--mdkb-accent) 45%, transparent);
-  color: var(--mdkb-accent);
+.folia-filter-chip.is-on {
+  background: color-mix(in srgb, var(--folia-accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--folia-accent) 45%, transparent);
+  color: var(--folia-accent);
 }
-.mdkb-toolbar-status {
+.folia-toolbar-status {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -173,7 +173,7 @@
 }
 
 /* ---- #9 filter-syntax autocomplete dropdown (press / to focus, then type a key) ---- */
-.mdkb-filter-suggest {
+.folia-filter-suggest {
   position: absolute;
   z-index: 30;
   top: calc(100% + 4px);
@@ -184,62 +184,62 @@
   list-style: none;
   max-height: 280px;
   overflow-y: auto;
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r);
   background: var(--background-primary);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
 }
-.mdkb-filter-suggest li {
+.folia-filter-suggest li {
   margin: 0;
 }
-.mdkb-filter-suggest-item {
+.folia-filter-suggest-item {
   display: flex;
   align-items: baseline;
   gap: 8px;
   width: 100%;
   padding: 5px 8px;
   border: none;
-  border-radius: calc(var(--mdkb-r) - 2px);
+  border-radius: calc(var(--folia-r) - 2px);
   background: transparent;
   color: var(--text-normal);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
-.mdkb-filter-suggest-item.is-active,
-.mdkb-filter-suggest-item:hover {
+.folia-filter-suggest-item.is-active,
+.folia-filter-suggest-item:hover {
   background: var(--background-modifier-hover);
 }
-.mdkb-filter-suggest-key {
+.folia-filter-suggest-key {
   font-family: var(--font-monospace, monospace);
   font-size: 12px;
-  color: var(--mdkb-accent);
+  color: var(--folia-accent);
 }
-.mdkb-filter-suggest-hint {
+.folia-filter-suggest-hint {
   font-size: 11px;
   color: var(--text-muted);
   margin-left: auto;
 }
 
-.mdkb-loading,
-.mdkb-error {
+.folia-loading,
+.folia-error {
   padding: 2em;
   color: var(--text-muted);
 }
-.mdkb-error {
+.folia-error {
   color: var(--text-error);
 }
 
-.mdkb-icon {
+.folia-icon {
   flex: 0 0 auto;
   vertical-align: -0.15em;
 }
 
 /* ------------------------------------------------------------------ board + columns */
-.mdkb-board {
+.folia-board {
   display: flex;
   align-items: flex-start;
-  gap: var(--mdkb-gap);
+  gap: var(--folia-gap);
   padding: 14px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -248,60 +248,60 @@
   height: 100%;
   scrollbar-width: thin;
 }
-.mdkb-board.is-pan-scrolling {
+.folia-board.is-pan-scrolling {
   cursor: grabbing;
   user-select: none;
 }
 /* In "click and drag" mode the bare board background is itself draggable to pan, so it advertises a
    grab cursor. Columns/cards/buttons sit above and keep their own cursors, so the hint only shows on
    the empty space the pan actually responds to. */
-.mdkb-board[data-pan="empty"] {
+.folia-board[data-pan="empty"] {
   cursor: grab;
 }
-.mdkb-board[data-pan="empty"].is-pan-scrolling {
+.folia-board[data-pan="empty"].is-pan-scrolling {
   cursor: grabbing;
 }
 
-.mdkb-column {
+.folia-column {
   display: flex;
   flex-direction: column;
-  flex: 0 0 var(--mdkb-col-w);
-  width: var(--mdkb-col-w);
+  flex: 0 0 var(--folia-col-w);
+  width: var(--folia-col-w);
   max-height: 100%;
-  background: var(--mdkb-col-bg);
-  border: 1px solid var(--mdkb-border);
-  border-top: 3px solid var(--mdkb-col-accent, var(--mdkb-accent));
-  border-radius: var(--mdkb-r-lg);
+  background: var(--folia-col-bg);
+  border: 1px solid var(--folia-border);
+  border-top: 3px solid var(--folia-col-accent, var(--folia-accent));
+  border-radius: var(--folia-r-lg);
   overflow: hidden;
 }
 
-.mdkb-column-header {
+.folia-column-header {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  background: var(--mdkb-col-bg);
+  background: var(--folia-col-bg);
   position: relative;
 }
-.mdkb-column-menu-btn {
+.folia-column-menu-btn {
   width: 24px;
   height: 24px;
   opacity: 0;
-  transition: opacity var(--mdkb-dur-fast) ease, background var(--mdkb-dur-fast) ease, color var(--mdkb-dur-fast) ease;
+  transition: opacity var(--folia-dur-fast) ease, background var(--folia-dur-fast) ease, color var(--folia-dur-fast) ease;
 }
-.mdkb-column:hover .mdkb-column-menu-btn,
-.mdkb-column-menu-btn:focus-visible,
-.mdkb-column-menu-btn[aria-expanded="true"] {
+.folia-column:hover .folia-column-menu-btn,
+.folia-column-menu-btn:focus-visible,
+.folia-column-menu-btn[aria-expanded="true"] {
   opacity: 1;
 }
-.mdkb-column-dot {
+.folia-column-dot {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: var(--mdkb-col-accent, var(--mdkb-accent));
+  background: var(--folia-col-accent, var(--folia-accent));
   flex: 0 0 auto;
 }
-.mdkb-column-title {
+.folia-column-title {
   font-weight: 600;
   font-size: 13px;
   color: var(--text-normal);
@@ -310,7 +310,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mdkb-column-count {
+.folia-column-count {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -323,33 +323,33 @@
   min-width: 20px;
   justify-content: center;
 }
-.mdkb-column-count.is-over-limit {
-  color: var(--mdkb-on-accent);
-  background: var(--mdkb-danger);
+.folia-column-count.is-over-limit {
+  color: var(--folia-on-accent);
+  background: var(--folia-danger);
 }
-.mdkb-column.is-over-limit {
-  border-color: color-mix(in srgb, var(--mdkb-danger) 50%, var(--mdkb-border));
+.folia-column.is-over-limit {
+  border-color: color-mix(in srgb, var(--folia-danger) 50%, var(--folia-border));
 }
-.mdkb-column.is-over-limit .mdkb-column-header {
-  background: color-mix(in srgb, var(--mdkb-danger) 8%, var(--mdkb-col-bg));
+.folia-column.is-over-limit .folia-column-header {
+  background: color-mix(in srgb, var(--folia-danger) 8%, var(--folia-col-bg));
 }
 
-.mdkb-column-body {
+.folia-column-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 8px;
-  padding-bottom: var(--mdkb-statusbar-clearance); /* last card clears the fixed status bar */
+  padding-bottom: var(--folia-statusbar-clearance); /* last card clears the fixed status bar */
   overflow-y: auto;
   min-height: 48px;
   flex: 1 1 auto;
   scrollbar-width: thin;
-  transition: background var(--mdkb-dur-fast) ease;
+  transition: background var(--folia-dur-fast) ease;
 }
-.mdkb-column-body.is-over {
-  background: color-mix(in srgb, var(--mdkb-accent) 9%, transparent);
+.folia-column-body.is-over {
+  background: color-mix(in srgb, var(--folia-accent) 9%, transparent);
 }
-.mdkb-column-empty {
+.folia-column-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -358,18 +358,18 @@
   padding: 18px 8px;
   color: var(--text-faint, var(--text-muted));
   font-size: 12px;
-  border: 1px dashed var(--mdkb-border);
-  border-radius: var(--mdkb-r);
+  border: 1px dashed var(--folia-border);
+  border-radius: var(--folia-r);
   opacity: 0.7;
 }
-.mdkb-column-empty.is-filtered {
+.folia-column-empty.is-filtered {
   border: none;
   padding: 10px 8px;
   opacity: 0.5;
   font-style: italic;
 }
 
-.mdkb-column-add {
+.folia-column-add {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -377,21 +377,21 @@
   padding: 7px 9px;
   background: transparent;
   border: none;
-  border-radius: var(--mdkb-r);
+  border-radius: var(--folia-r);
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
-  transition: background var(--mdkb-dur-fast) ease, color var(--mdkb-dur-fast) ease;
+  transition: background var(--folia-dur-fast) ease, color var(--folia-dur-fast) ease;
 }
-.mdkb-column-add:hover {
+.folia-column-add:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
 /* ------------------------------------------------------------------ column menu popover */
-.mdkb-menu {
+.folia-menu {
   position: fixed;
   z-index: 60;
   width: 224px;
@@ -402,46 +402,46 @@
   gap: 10px;
   padding: 11px;
   background: var(--background-primary);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r);
-  box-shadow: var(--mdkb-shadow-pop);
-  animation: mdkb-pop var(--mdkb-dur-fast) var(--mdkb-ease);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r);
+  box-shadow: var(--folia-shadow-pop);
+  animation: folia-pop var(--folia-dur-fast) var(--folia-ease);
 }
-@keyframes mdkb-pop {
+@keyframes folia-pop {
   from { opacity: 0; transform: translateY(-4px) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
-.mdkb-menu-field {
+.folia-menu-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-.mdkb-menu-label {
+.folia-menu-label {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-faint, var(--text-muted));
 }
-.mdkb-menu-field input {
+.folia-menu-field input {
   font: inherit;
   padding: 6px 8px;
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   background: var(--background-primary);
   color: var(--text-normal);
 }
-.mdkb-menu-field input:focus {
+.folia-menu-field input:focus {
   outline: none;
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
-.mdkb-swatches {
+.folia-swatches {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-.mdkb-swatch {
+.folia-swatch {
   width: 24px;
   height: 24px;
   border-radius: 999px;
@@ -449,27 +449,27 @@
   background-clip: padding-box;
   cursor: pointer;
   padding: 0;
-  transition: transform var(--mdkb-dur-fast) ease, box-shadow var(--mdkb-dur-fast) ease;
+  transition: transform var(--folia-dur-fast) ease, box-shadow var(--folia-dur-fast) ease;
 }
-.mdkb-swatch:hover {
+.folia-swatch:hover {
   transform: scale(1.1);
 }
-.mdkb-swatch.is-active {
+.folia-swatch.is-active {
   /* two-tone ring readable over any swatch fill, in either theme */
   box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--text-normal);
 }
-.mdkb-swatch-none {
+.folia-swatch-none {
   display: grid;
   place-items: center;
   background: var(--background-modifier-hover);
   color: var(--text-muted);
 }
-.mdkb-menu-divider {
+.folia-menu-divider {
   height: 1px;
-  background: var(--mdkb-border);
+  background: var(--folia-border);
   margin: 1px 0;
 }
-.mdkb-menu-item {
+.folia-menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -480,24 +480,24 @@
   color: var(--text-normal);
   font: inherit;
   font-size: 13px;
-  border-radius: var(--mdkb-r-sm);
+  border-radius: var(--folia-r-sm);
   cursor: pointer;
   text-align: left;
 }
-.mdkb-menu-item:hover:not(:disabled) {
+.folia-menu-item:hover:not(:disabled) {
   background: var(--background-modifier-hover);
 }
-.mdkb-menu-item:disabled {
+.folia-menu-item:disabled {
   opacity: 0.4;
   cursor: default;
 }
-.mdkb-menu-danger {
-  color: var(--mdkb-danger);
+.folia-menu-danger {
+  color: var(--folia-danger);
 }
-.mdkb-menu-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--mdkb-danger) 14%, transparent);
+.folia-menu-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--folia-danger) 14%, transparent);
 }
-.mdkb-menu-confirm {
+.folia-menu-confirm {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -506,7 +506,7 @@
 }
 
 /* ------------------------------------------------------------------ card context menu (right-click) */
-.mdkb-card-context {
+.folia-card-context {
   /* Above cards (z 2), the float detail panel (z 55) and the modal backdrop (z 70). Stacking holds
      because the menu is portalled to <body> and the board containers create no stacking context. */
   z-index: 80;
@@ -514,16 +514,16 @@
   gap: 2px;
   padding: 6px;
 }
-.mdkb-card-context .mdkb-menu-label {
+.folia-card-context .folia-menu-label {
   padding: 4px 8px 0;
 }
-.mdkb-menu-priorities {
+.folia-menu-priorities {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
   padding: 2px 4px;
 }
-.mdkb-menu-prio {
+.folia-menu-prio {
   font: inherit;
   font-size: 12px;
   padding: 3px 9px;
@@ -532,10 +532,10 @@
   cursor: pointer;
   text-transform: capitalize;
 }
-.mdkb-menu-prio.is-active {
-  box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--mdkb-accent);
+.folia-menu-prio.is-active {
+  box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--folia-accent);
 }
-.mdkb-menu-prio-none {
+.folia-menu-prio-none {
   display: grid;
   place-items: center;
   background: var(--background-modifier-hover);
@@ -543,7 +543,7 @@
 }
 
 /* ------------------------------------------------------------------ add column */
-.mdkb-add-column {
+.folia-add-column {
   flex: 0 0 220px;
   align-self: flex-start;
   display: flex;
@@ -551,50 +551,50 @@
   gap: 6px;
   padding: 10px 12px;
   background: transparent;
-  border: 1px dashed var(--mdkb-border);
-  border-radius: var(--mdkb-r-lg);
+  border: 1px dashed var(--folia-border);
+  border-radius: var(--folia-r-lg);
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--mdkb-dur-fast) ease, color var(--mdkb-dur-fast) ease, border-color var(--mdkb-dur-fast) ease;
+  transition: background var(--folia-dur-fast) ease, color var(--folia-dur-fast) ease, border-color var(--folia-dur-fast) ease;
 }
-.mdkb-add-column:hover {
+.folia-add-column:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
-  border-color: var(--mdkb-border-strong);
+  border-color: var(--folia-border-strong);
 }
-.mdkb-add-column.is-editing {
+.folia-add-column.is-editing {
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
   cursor: default;
   border-style: solid;
 }
-.mdkb-add-column.is-editing input {
+.folia-add-column.is-editing input {
   font: inherit;
   padding: 7px 9px;
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   background: var(--background-primary);
   color: var(--text-normal);
 }
-.mdkb-add-column.is-editing input:focus {
+.folia-add-column.is-editing input:focus {
   outline: none;
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
 
 /* ------------------------------------------------------------------ cards */
-.mdkb-card {
+.folia-card {
   position: relative;
-  background: var(--mdkb-card-bg);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-lg);
-  box-shadow: var(--mdkb-shadow-card);
-  transition: box-shadow var(--mdkb-dur) var(--mdkb-ease), border-color var(--mdkb-dur-fast) ease;
+  background: var(--folia-card-bg);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-lg);
+  box-shadow: var(--folia-shadow-card);
+  transition: box-shadow var(--folia-dur) var(--folia-ease), border-color var(--folia-dur-fast) ease;
 }
-.mdkb-card::before {
+.folia-card::before {
   content: "";
   position: absolute;
   left: 0;
@@ -604,10 +604,10 @@
   border-radius: 999px;
   background: transparent;
 }
-.mdkb-card[data-prio="prio-1"]::before { background: var(--mdkb-prio-1); }
-.mdkb-card[data-prio="prio-2"]::before { background: var(--mdkb-prio-2); }
-.mdkb-card[data-prio="prio-3"]::before { background: var(--mdkb-prio-3); }
-.mdkb-card[data-prio="prio-4"]::before { background: var(--mdkb-prio-4); }
+.folia-card[data-prio="prio-1"]::before { background: var(--folia-prio-1); }
+.folia-card[data-prio="prio-2"]::before { background: var(--folia-prio-2); }
+.folia-card[data-prio="prio-3"]::before { background: var(--folia-prio-3); }
+.folia-card[data-prio="prio-4"]::before { background: var(--folia-prio-4); }
 
 /* #3 urgency cue — a whole-card, at-a-glance signal that intensifies as the due date nears
    (strongest when overdue), for fast visual scanning. It is distinct from the easy-to-miss due chip.
@@ -617,71 +617,71 @@
    (those carry no data-urgency), so default cards stay neutral.
    Drawn entirely via `background` (a 3px top accent band + a flat tint) layered over the card bg, so
    it adds NO layout shift and never fights the card's border/box-shadow (which toggle on hover/drag). */
-.mdkb-card[data-urgency] {
+.folia-card[data-urgency] {
   background:
     /* top accent band */
-    linear-gradient(var(--mdkb-urgency-color), var(--mdkb-urgency-color)) top / 100% 3px no-repeat,
+    linear-gradient(var(--folia-urgency-color), var(--folia-urgency-color)) top / 100% 3px no-repeat,
     /* flat background tint over the whole card */
-    linear-gradient(var(--mdkb-urgency-tint, transparent), var(--mdkb-urgency-tint, transparent)),
-    var(--mdkb-card-bg);
+    linear-gradient(var(--folia-urgency-tint, transparent), var(--folia-urgency-tint, transparent)),
+    var(--folia-card-bg);
 }
-.mdkb-card[data-urgency="overdue"] {
-  --mdkb-urgency-color: var(--mdkb-danger);
-  --mdkb-urgency-tint: color-mix(in srgb, var(--mdkb-danger) 10%, transparent);
+.folia-card[data-urgency="overdue"] {
+  --folia-urgency-color: var(--folia-danger);
+  --folia-urgency-tint: color-mix(in srgb, var(--folia-danger) 10%, transparent);
 }
-.mdkb-card[data-urgency="today"] {
-  --mdkb-urgency-color: var(--mdkb-prio-2);
-  --mdkb-urgency-tint: color-mix(in srgb, var(--mdkb-prio-2) 9%, transparent);
+.folia-card[data-urgency="today"] {
+  --folia-urgency-color: var(--folia-prio-2);
+  --folia-urgency-tint: color-mix(in srgb, var(--folia-prio-2) 9%, transparent);
 }
-.mdkb-card[data-urgency="soon"] {
+.folia-card[data-urgency="soon"] {
   /* medium: amber top band, no background tint */
-  --mdkb-urgency-color: var(--mdkb-prio-2);
+  --folia-urgency-color: var(--folia-prio-2);
 }
 
-.mdkb-card:hover {
-  border-color: var(--mdkb-border-strong);
-  box-shadow: var(--mdkb-shadow-card-hover);
+.folia-card:hover {
+  border-color: var(--folia-border-strong);
+  box-shadow: var(--folia-shadow-card-hover);
 }
-.mdkb-card.is-selected {
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 1px var(--mdkb-accent), var(--mdkb-shadow-card);
+.folia-card.is-selected {
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 1px var(--folia-accent), var(--folia-shadow-card);
 }
 /* The dragged card stays in flow as a quiet "slot" — the lifted copy lives in the DragOverlay. We
    hollow the source out (drop its content, shadow and own border) and leave only a dashed accent
    outline, so the gap reads as "this is where it'll land" rather than a half-faded duplicate. */
-.mdkb-card.is-dragging {
+.folia-card.is-dragging {
   opacity: 1;
-  background: color-mix(in srgb, var(--mdkb-accent) 7%, transparent);
+  background: color-mix(in srgb, var(--folia-accent) 7%, transparent);
   border-color: transparent;
   box-shadow: none;
 }
-.mdkb-card.is-dragging > * {
+.folia-card.is-dragging > * {
   opacity: 0;
 }
-.mdkb-card.is-dragging::after {
+.folia-card.is-dragging::after {
   content: "";
   position: absolute;
   inset: 0;
-  border: 1.5px dashed color-mix(in srgb, var(--mdkb-accent) 60%, transparent);
-  border-radius: var(--mdkb-r-lg);
+  border: 1.5px dashed color-mix(in srgb, var(--folia-accent) 60%, transparent);
+  border-radius: var(--folia-r-lg);
 }
 /* The priority strip would otherwise still show on the hollowed slot. */
-.mdkb-card.is-dragging::before {
+.folia-card.is-dragging::before {
   background: transparent;
 }
 
-.mdkb-card-main {
+.folia-card-main {
   display: flex;
   flex-direction: column;
   gap: 7px;
   padding: 10px 12px;
   cursor: grab;
-  border-radius: var(--mdkb-r-lg);
+  border-radius: var(--folia-r-lg);
 }
-.mdkb-card-main:active {
+.folia-card-main:active {
   cursor: grabbing;
 }
-.mdkb-card-title {
+.folia-card-title {
   font-size: 13.5px;
   font-weight: 600;
   line-height: 1.4;
@@ -701,7 +701,7 @@
 
 /* #12 inline title edit — the <input> that replaces the title in place. Inherits the title's
    metrics so swapping in/out doesn't shift the card; keeps the same right gutter as the title. */
-.mdkb-card-title-input {
+.folia-card-title-input {
   font: inherit;
   font-size: 13.5px;
   font-weight: 600;
@@ -711,67 +711,67 @@
   padding: 1px 4px;
   color: var(--text-normal);
   background: var(--background-primary);
-  border: 1px solid var(--mdkb-accent);
-  border-radius: var(--mdkb-r-sm);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 25%, transparent);
+  border: 1px solid var(--folia-accent);
+  border-radius: var(--folia-r-sm);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 25%, transparent);
 }
 
 /* ------------------------------------------------------------ subcard groups
-   A top-level card and its nested subtree share one .mdkb-card-tree slot in the column. Children
-   sit in a bordered, indented .mdkb-subcard-group so they read as "these belong to the card above"
+   A top-level card and its nested subtree share one .folia-card-tree slot in the column. Children
+   sit in a bordered, indented .folia-subcard-group so they read as "these belong to the card above"
    (Jira-style). The group draws the left accent + inset; nested cards stay denser and own-border-less
    so the group frame carries the grouping. Deep nesting indents only via the small group padding,
    so it never runs away across the column width. */
-.mdkb-card-tree {
+.folia-card-tree {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.mdkb-subcard-group {
+.folia-subcard-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-left: 10px;
   padding: 6px 0 6px 8px;
-  border-left: 2px solid color-mix(in srgb, var(--mdkb-col-accent, var(--mdkb-accent)) 55%, transparent);
-  background: color-mix(in srgb, var(--mdkb-col-accent, var(--mdkb-accent)) 5%, transparent);
-  border-radius: 0 var(--mdkb-r-sm) var(--mdkb-r-sm) 0;
+  border-left: 2px solid color-mix(in srgb, var(--folia-col-accent, var(--folia-accent)) 55%, transparent);
+  background: color-mix(in srgb, var(--folia-col-accent, var(--folia-accent)) 5%, transparent);
+  border-radius: 0 var(--folia-r-sm) var(--folia-r-sm) 0;
 }
-.mdkb-subcard {
+.folia-subcard {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 /* Nested cards are a touch smaller/denser and shed their own grab affordance. */
-.mdkb-card--nested {
+.folia-card--nested {
   box-shadow: none;
-  border-color: color-mix(in srgb, var(--mdkb-border) 80%, transparent);
+  border-color: color-mix(in srgb, var(--folia-border) 80%, transparent);
 }
-.mdkb-card--nested .mdkb-card-main {
+.folia-card--nested .folia-card-main {
   cursor: default;
   gap: 5px;
   padding: 7px 10px;
 }
-.mdkb-card--nested .mdkb-card-main:active {
+.folia-card--nested .folia-card-main:active {
   cursor: default;
 }
-.mdkb-card--nested .mdkb-card-title {
+.folia-card--nested .folia-card-title {
   font-size: 12.5px;
 }
 
 /* drag overlay (the lifted ghost) — the card the cursor actually carries. A faint lift (scale + tilt)
    plus a deep shadow reads as "picked up and floating above the board". */
-.mdkb-card-overlay {
+.folia-card-overlay {
   cursor: grabbing;
-  box-shadow: var(--mdkb-shadow-overlay);
-  border-color: var(--mdkb-accent);
+  box-shadow: var(--folia-shadow-overlay);
+  border-color: var(--folia-accent);
   transform: scale(1.03) rotate(1.5deg);
   /* matches a card's rendered width: column width minus its 1px borders + 8px body padding */
-  width: calc(var(--mdkb-col-w) - 18px);
+  width: calc(var(--folia-col-w) - 18px);
   /* The lift is the resting state; the drop animation tweens back to the slot from here. */
-  animation: mdkb-card-lift var(--mdkb-dur-fast) var(--mdkb-ease);
+  animation: folia-card-lift var(--folia-dur-fast) var(--folia-ease);
 }
-@keyframes mdkb-card-lift {
+@keyframes folia-card-lift {
   from {
     transform: scale(1) rotate(0deg);
   }
@@ -781,25 +781,25 @@
 }
 
 /* Column drag overlay (#1 fix) — the lifted ghost the cursor carries while reordering a column. The
-   source column dims in place (`.mdkb-column.is-dragging`) to read as the drop slot; this header-only
+   source column dims in place (`.folia-column.is-dragging`) to read as the drop slot; this header-only
    ghost (rendered by the DragOverlay) is what actually follows the pointer, mirroring the card lift. */
-.mdkb-column-overlay {
-  width: var(--mdkb-col-w);
+.folia-column-overlay {
+  width: var(--folia-col-w);
   cursor: grabbing;
-  box-shadow: var(--mdkb-shadow-overlay);
-  border-color: var(--mdkb-col-accent, var(--mdkb-accent));
+  box-shadow: var(--folia-shadow-overlay);
+  border-color: var(--folia-col-accent, var(--folia-accent));
   transform: rotate(1.5deg);
   /* A header-only ghost — no body — so it reads as "this column, picked up" without a tall slab. */
   overflow: hidden;
 }
 
 /* ------------------------------------------------------------------ chips */
-.mdkb-chips {
+.folia-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
-.mdkb-chip {
+.folia-chip {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -815,38 +815,38 @@
 }
 /* Chip text is mixed toward --text-normal so it keeps the hue but stays legible (WCAG AA) in
    BOTH light and dark themes; a same-hue border defines the edge on the low-opacity tint. */
-.mdkb-chip-prio-1 { color: color-mix(in srgb, var(--mdkb-prio-1) 60%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-prio-1) 20%, transparent); border-color: color-mix(in srgb, var(--mdkb-prio-1) 32%, transparent); }
-.mdkb-chip-prio-2 { color: color-mix(in srgb, var(--mdkb-prio-2) 60%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-prio-2) 20%, transparent); border-color: color-mix(in srgb, var(--mdkb-prio-2) 32%, transparent); }
-.mdkb-chip-prio-3 { color: color-mix(in srgb, var(--mdkb-prio-3) 58%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-prio-3) 22%, transparent); border-color: color-mix(in srgb, var(--mdkb-prio-3) 34%, transparent); }
-.mdkb-chip-prio-4 { color: color-mix(in srgb, var(--mdkb-prio-4) 60%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-prio-4) 20%, transparent); border-color: color-mix(in srgb, var(--mdkb-prio-4) 32%, transparent); }
-.mdkb-chip-danger { color: color-mix(in srgb, var(--mdkb-danger) 58%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-danger) 22%, transparent); border-color: color-mix(in srgb, var(--mdkb-danger) 36%, transparent); }
-.mdkb-chip-warn { color: color-mix(in srgb, var(--mdkb-prio-2) 60%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-prio-2) 20%, transparent); border-color: color-mix(in srgb, var(--mdkb-prio-2) 32%, transparent); }
-.mdkb-chip-accent { color: color-mix(in srgb, var(--mdkb-accent) 55%, var(--text-normal)); background: color-mix(in srgb, var(--mdkb-accent) 18%, transparent); border-color: color-mix(in srgb, var(--mdkb-accent) 32%, transparent); }
-.mdkb-chip-muted { color: var(--text-muted); background: var(--background-modifier-hover); }
+.folia-chip-prio-1 { color: color-mix(in srgb, var(--folia-prio-1) 60%, var(--text-normal)); background: color-mix(in srgb, var(--folia-prio-1) 20%, transparent); border-color: color-mix(in srgb, var(--folia-prio-1) 32%, transparent); }
+.folia-chip-prio-2 { color: color-mix(in srgb, var(--folia-prio-2) 60%, var(--text-normal)); background: color-mix(in srgb, var(--folia-prio-2) 20%, transparent); border-color: color-mix(in srgb, var(--folia-prio-2) 32%, transparent); }
+.folia-chip-prio-3 { color: color-mix(in srgb, var(--folia-prio-3) 58%, var(--text-normal)); background: color-mix(in srgb, var(--folia-prio-3) 22%, transparent); border-color: color-mix(in srgb, var(--folia-prio-3) 34%, transparent); }
+.folia-chip-prio-4 { color: color-mix(in srgb, var(--folia-prio-4) 60%, var(--text-normal)); background: color-mix(in srgb, var(--folia-prio-4) 20%, transparent); border-color: color-mix(in srgb, var(--folia-prio-4) 32%, transparent); }
+.folia-chip-danger { color: color-mix(in srgb, var(--folia-danger) 58%, var(--text-normal)); background: color-mix(in srgb, var(--folia-danger) 22%, transparent); border-color: color-mix(in srgb, var(--folia-danger) 36%, transparent); }
+.folia-chip-warn { color: color-mix(in srgb, var(--folia-prio-2) 60%, var(--text-normal)); background: color-mix(in srgb, var(--folia-prio-2) 20%, transparent); border-color: color-mix(in srgb, var(--folia-prio-2) 32%, transparent); }
+.folia-chip-accent { color: color-mix(in srgb, var(--folia-accent) 55%, var(--text-normal)); background: color-mix(in srgb, var(--folia-accent) 18%, transparent); border-color: color-mix(in srgb, var(--folia-accent) 32%, transparent); }
+.folia-chip-muted { color: var(--text-muted); background: var(--background-modifier-hover); }
 
 /* ------------------------------------------------------------------ progress + meta */
-.mdkb-progress {
+.folia-progress {
   display: flex;
   align-items: center;
   gap: 7px;
 }
-.mdkb-progress-track {
+.folia-progress-track {
   flex: 1 1 auto;
   height: 4px;
   border-radius: 999px;
   background: var(--background-modifier-border);
   overflow: hidden;
 }
-.mdkb-progress-fill {
+.folia-progress-fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--mdkb-accent);
-  transition: width var(--mdkb-dur) var(--mdkb-ease);
+  background: var(--folia-accent);
+  transition: width var(--folia-dur) var(--folia-ease);
 }
-.mdkb-progress.is-complete .mdkb-progress-fill {
-  background: var(--mdkb-success);
+.folia-progress.is-complete .folia-progress-fill {
+  background: var(--folia-success);
 }
-.mdkb-progress-label {
+.folia-progress-label {
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -854,24 +854,24 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
-.mdkb-progress.is-complete .mdkb-progress-label {
-  color: var(--mdkb-success);
+.folia-progress.is-complete .folia-progress-label {
+  color: var(--folia-success);
 }
 
-.mdkb-card-meta {
+.folia-card-meta {
   display: flex;
   gap: 12px;
   font-size: 11px;
   color: var(--text-muted);
 }
-.mdkb-card-meta span {
+.folia-card-meta span {
   display: inline-flex;
   align-items: center;
   gap: 3px;
 }
 
 /* ------------------------------------------------------------------ next todos (inline preview) */
-.mdkb-card-next-todos {
+.folia-card-next-todos {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -879,21 +879,21 @@
   padding: 0;
   list-style: none;
 }
-.mdkb-card-next-todo {
+.folia-card-next-todo {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
   color: var(--text-muted);
 }
-.mdkb-card-next-todo-mark {
+.folia-card-next-todo-mark {
   flex-shrink: 0;
   width: 9px;
   height: 9px;
   border: 1.5px solid var(--text-faint, var(--text-muted));
   border-radius: 3px;
 }
-.mdkb-card-next-todo-text {
+.folia-card-next-todo-text {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -901,32 +901,32 @@
 }
 
 /* ------------------------------------------------------------------ card quick actions + confirm */
-.mdkb-card-actions {
+.folia-card-actions {
   position: absolute;
   top: 6px;
   right: 6px;
   display: flex;
   gap: 1px;
   padding: 2px;
-  border-radius: var(--mdkb-r);
-  background: color-mix(in srgb, var(--mdkb-card-bg) 88%, transparent);
+  border-radius: var(--folia-r);
+  background: color-mix(in srgb, var(--folia-card-bg) 88%, transparent);
   backdrop-filter: blur(3px);
-  box-shadow: var(--mdkb-shadow-pop);
+  box-shadow: var(--folia-shadow-pop);
   opacity: 0;
   transform: translateY(-2px);
-  transition: opacity var(--mdkb-dur-fast) ease, transform var(--mdkb-dur-fast) var(--mdkb-ease);
+  transition: opacity var(--folia-dur-fast) ease, transform var(--folia-dur-fast) var(--folia-ease);
   pointer-events: none;
 }
-.mdkb-card:hover .mdkb-card-actions,
-.mdkb-card:focus-within .mdkb-card-actions {
+.folia-card:hover .folia-card-actions,
+.folia-card:focus-within .folia-card-actions {
   opacity: 1;
   transform: none;
   pointer-events: auto;
 }
-.mdkb-action-done:hover { color: var(--mdkb-success); }
-.mdkb-action-delete:hover { color: var(--mdkb-danger); }
+.folia-action-done:hover { color: var(--folia-success); }
+.folia-action-delete:hover { color: var(--folia-danger); }
 
-.mdkb-card-confirm {
+.folia-card-confirm {
   position: absolute;
   inset: 0;
   display: flex;
@@ -938,48 +938,48 @@
   text-align: center;
   font-size: 12px;
   color: var(--text-normal);
-  background: color-mix(in srgb, var(--mdkb-card-bg) 92%, transparent);
+  background: color-mix(in srgb, var(--folia-card-bg) 92%, transparent);
   backdrop-filter: blur(2px);
-  border-radius: var(--mdkb-r-lg);
+  border-radius: var(--folia-r-lg);
   z-index: 2;
 }
 
 /* ------------------------------------------------------------------ buttons */
-.mdkb-btn {
+.folia-btn {
   font: inherit;
   font-size: 12px;
   font-weight: 500;
   padding: 5px 11px;
-  border-radius: var(--mdkb-r-sm);
-  border: 1px solid var(--mdkb-border);
+  border-radius: var(--folia-r-sm);
+  border: 1px solid var(--folia-border);
   background: var(--background-primary);
   color: var(--text-normal);
   cursor: pointer;
-  transition: background var(--mdkb-dur-fast) ease, border-color var(--mdkb-dur-fast) ease;
+  transition: background var(--folia-dur-fast) ease, border-color var(--folia-dur-fast) ease;
 }
-.mdkb-btn:hover {
+.folia-btn:hover {
   background: var(--background-modifier-hover);
-  border-color: var(--mdkb-border-strong);
+  border-color: var(--folia-border-strong);
 }
-.mdkb-btn-primary {
-  background: var(--mdkb-accent);
+.folia-btn-primary {
+  background: var(--folia-accent);
   border-color: transparent;
-  color: var(--mdkb-on-accent);
+  color: var(--folia-on-accent);
 }
-.mdkb-btn-primary:hover {
-  background: var(--interactive-accent-hover, var(--mdkb-accent));
+.folia-btn-primary:hover {
+  background: var(--interactive-accent-hover, var(--folia-accent));
   filter: brightness(1.06);
 }
-.mdkb-btn-danger {
-  color: var(--mdkb-on-accent);
-  background: var(--mdkb-danger);
+.folia-btn-danger {
+  color: var(--folia-on-accent);
+  background: var(--folia-danger);
   border-color: transparent;
 }
-.mdkb-btn-danger:hover {
+.folia-btn-danger:hover {
   filter: brightness(1.06);
 }
 
-.mdkb-icon-btn {
+.folia-icon-btn {
   display: inline-grid;
   place-items: center;
   width: 26px;
@@ -988,71 +988,71 @@
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  border-radius: var(--mdkb-r-sm);
-  transition: background var(--mdkb-dur-fast) ease, color var(--mdkb-dur-fast) ease;
+  border-radius: var(--folia-r-sm);
+  transition: background var(--folia-dur-fast) ease, color var(--folia-dur-fast) ease;
 }
-.mdkb-icon-btn:hover {
+.folia-icon-btn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
-.mdkb-mini {
+.folia-mini {
   width: 24px;
   height: 24px;
   margin-left: auto;
 }
 
 /* ------------------------------------------------------------------ inline add / inputs */
-.mdkb-add-card {
+.folia-add-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 2px;
 }
-.mdkb-add-card textarea,
-.mdkb-add-inline input,
-.mdkb-add-inline textarea {
+.folia-add-card textarea,
+.folia-add-inline input,
+.folia-add-inline textarea {
   width: 100%;
   resize: vertical;
   font: inherit;
   background: var(--background-primary);
   color: var(--text-normal);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   padding: 7px 9px;
-  transition: border-color var(--mdkb-dur-fast) ease, box-shadow var(--mdkb-dur-fast) ease;
+  transition: border-color var(--folia-dur-fast) ease, box-shadow var(--folia-dur-fast) ease;
 }
-.mdkb-add-card textarea:focus,
-.mdkb-add-inline input:focus,
-.mdkb-add-inline textarea:focus,
-.mdkb-desc:focus,
-.mdkb-fields select:focus,
-.mdkb-fields input:focus {
+.folia-add-card textarea:focus,
+.folia-add-inline input:focus,
+.folia-add-inline textarea:focus,
+.folia-desc:focus,
+.folia-fields select:focus,
+.folia-fields input:focus {
   outline: none;
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
-.mdkb-row-actions {
+.folia-row-actions {
   display: flex;
   gap: 6px;
 }
 
 /* ------------------------------------------------------------------ detail panel */
-.mdkb-detail {
+.folia-detail {
   position: relative; /* anchors the left-edge resize handle */
-  flex: 0 0 var(--mdkb-detail-w);
-  width: var(--mdkb-detail-w);
-  border-left: 1px solid var(--mdkb-border-strong);
-  background: var(--mdkb-col-bg);
+  flex: 0 0 var(--folia-detail-w);
+  width: var(--folia-detail-w);
+  border-left: 1px solid var(--folia-border-strong);
+  background: var(--folia-col-bg);
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   scrollbar-width: thin;
-  animation: mdkb-slide-in var(--mdkb-dur) var(--mdkb-ease);
+  animation: folia-slide-in var(--folia-dur) var(--folia-ease);
 }
 
 /* Float: panel overlays the columns; the board keeps full width underneath. */
-.mdkb-detail--float {
+.folia-detail--float {
   position: absolute;
   top: 0;
   right: 0;
@@ -1061,7 +1061,7 @@
 }
 
 /* Modal: centered dialog, sized by CSS (resize/inline width ignored). */
-.mdkb-detail-modal-backdrop {
+.folia-detail-modal-backdrop {
   position: absolute;
   inset: 0;
   z-index: 70;
@@ -1070,19 +1070,19 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
 }
-.mdkb-detail--modal {
+.folia-detail--modal {
   /* A balanced dialog width DECOUPLED from the side-panel detailWidth (App never passes an inline
      width in modal mode). width:auto would collapse to the body's narrow intrinsic size — the sliver. */
   flex: 0 0 auto;
   width: min(640px, 92vw);
   max-height: 85vh;
-  border: 1px solid var(--mdkb-border-strong);
-  border-radius: var(--mdkb-r-lg);
-  box-shadow: var(--mdkb-shadow-overlay);
+  border: 1px solid var(--folia-border-strong);
+  border-radius: var(--folia-r-lg);
+  box-shadow: var(--folia-shadow-overlay);
 }
 
 /* Left-border drag handle (side modes only). */
-.mdkb-detail-resize {
+.folia-detail-resize {
   position: absolute;
   left: -3px;
   top: 0;
@@ -1091,22 +1091,22 @@
   cursor: col-resize;
   z-index: 1;
 }
-@keyframes mdkb-slide-in {
+@keyframes folia-slide-in {
   from { transform: translateX(14px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
-.mdkb-detail-header {
+.folia-detail-header {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   padding: 14px;
-  border-bottom: 1px solid var(--mdkb-border);
+  border-bottom: 1px solid var(--folia-border);
   position: sticky;
   top: 0;
-  background: var(--mdkb-col-bg);
+  background: var(--folia-col-bg);
   z-index: 1;
 }
-.mdkb-detail-title {
+.folia-detail-title {
   flex: 1 1 auto;
   margin: 0;
   font-size: 16px;
@@ -1114,33 +1114,33 @@
   line-height: 1.35;
   color: var(--text-normal);
 }
-.mdkb-detail-confirm {
+.folia-detail-confirm {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 14px;
   font-size: 12px;
   color: var(--text-normal);
-  background: color-mix(in srgb, var(--mdkb-danger) 10%, var(--mdkb-col-bg));
-  border-bottom: 1px solid var(--mdkb-border);
+  background: color-mix(in srgb, var(--folia-danger) 10%, var(--folia-col-bg));
+  border-bottom: 1px solid var(--folia-border);
 }
-.mdkb-detail-body {
+.folia-detail-body {
   padding: 14px;
   /* last content (History) clears Obsidian's fixed status bar in side modes; modal is centered. */
-  padding-bottom: calc(14px + var(--mdkb-statusbar-clearance));
+  padding-bottom: calc(14px + var(--folia-statusbar-clearance));
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
-.mdkb-detail--modal .mdkb-detail-body {
+.folia-detail--modal .folia-detail-body {
   padding-bottom: 14px;
 }
-.mdkb-fields {
+.folia-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-.mdkb-fields label {
+.folia-fields label {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1150,33 +1150,33 @@
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
-.mdkb-fields label:first-child {
+.folia-fields label:first-child {
   grid-column: 1 / -1;
 }
-.mdkb-fields select,
-.mdkb-fields input {
+.folia-fields select,
+.folia-fields input {
   font: inherit;
   background: var(--background-primary);
   color: var(--text-normal);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   padding: 6px 8px;
   text-transform: none;
   letter-spacing: normal;
 }
 
-.mdkb-props {
+.folia-props {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.mdkb-prop-row,
-.mdkb-prop-add {
+.folia-prop-row,
+.folia-prop-add {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.mdkb-prop-key {
+.folia-prop-key {
   flex: 0 0 86px;
   color: var(--text-faint, var(--text-muted));
   text-transform: uppercase;
@@ -1185,31 +1185,31 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mdkb-prop-add .mdkb-prop-input:first-child {
+.folia-prop-add .folia-prop-input:first-child {
   flex: 0 0 86px;
 }
-.mdkb-prop-input {
+.folia-prop-input {
   flex: 1 1 auto;
   min-width: 0;
   font: inherit;
   font-size: 12px;
   background: var(--background-primary);
   color: var(--text-normal);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   padding: 4px 7px;
-  transition: border-color var(--mdkb-dur-fast) ease, box-shadow var(--mdkb-dur-fast) ease;
+  transition: border-color var(--folia-dur-fast) ease, box-shadow var(--folia-dur-fast) ease;
 }
-.mdkb-prop-input:focus {
+.folia-prop-input:focus {
   outline: none;
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
-.mdkb-prop-add .mdkb-btn {
+.folia-prop-add .folia-btn {
   flex: 0 0 auto;
 }
 
-.mdkb-section h3 {
+.folia-section h3 {
   margin: 0 0 8px;
   font-size: 11px;
   font-weight: 600;
@@ -1217,119 +1217,119 @@
   letter-spacing: 0.05em;
   color: var(--text-muted);
 }
-.mdkb-desc {
+.folia-desc {
   width: 100%;
   min-height: 72px;
   resize: vertical;
   font: inherit;
   background: var(--background-primary);
   color: var(--text-normal);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   padding: 8px 10px;
   margin-bottom: 8px;
 }
 
 /* Rendered-description view: click anywhere to edit; pencil surfaces on hover. */
-.mdkb-desc-view {
+.folia-desc-view {
   position: relative;
   cursor: text;
   border: 1px solid transparent;
-  border-radius: var(--mdkb-r-sm);
+  border-radius: var(--folia-r-sm);
   padding: 4px 6px;
   margin: 0 -6px;
-  transition: background var(--mdkb-dur-fast) ease, border-color var(--mdkb-dur-fast) ease;
+  transition: background var(--folia-dur-fast) ease, border-color var(--folia-dur-fast) ease;
 }
 
-/* #15: cap the rendered prose to the viewport-derived height (set inline as --mdkb-desc-max-h on
+/* #15: cap the rendered prose to the viewport-derived height (set inline as --folia-desc-max-h on
    mount/resize) and scroll it internally, so a long description never grows the panel past the
    screen. The fallback caps at calc(100vh - chrome) for the first paint before the measured value
-   lands. Scroll lives on the prose (not .mdkb-desc-view), so the pencil button — absolutely
+   lands. Scroll lives on the prose (not .folia-desc-view), so the pencil button — absolutely
    positioned against the non-scrolling view box — stays pinned while the text scrolls. Works across
    split/float/modal: the measured value reflects each presentation's on-screen position. */
-.mdkb-desc-view .mdkb-desc-rendered {
-  max-height: var(--mdkb-desc-max-h, calc(100vh - 220px));
+.folia-desc-view .folia-desc-rendered {
+  max-height: var(--folia-desc-max-h, calc(100vh - 220px));
   overflow-y: auto;
   scrollbar-width: thin;
 }
-.mdkb-desc-view:hover {
+.folia-desc-view:hover {
   background: var(--background-modifier-hover);
-  border-color: var(--mdkb-border);
+  border-color: var(--folia-border);
 }
-.mdkb-desc-edit {
+.folia-desc-edit {
   position: absolute;
   top: 4px;
   right: 4px;
   opacity: 0;
-  transition: opacity var(--mdkb-dur-fast) ease;
+  transition: opacity var(--folia-dur-fast) ease;
 }
-.mdkb-desc-view:hover .mdkb-desc-edit,
-.mdkb-desc-view:focus-within .mdkb-desc-edit {
+.folia-desc-view:hover .folia-desc-edit,
+.folia-desc-view:focus-within .folia-desc-edit {
   opacity: 1;
 }
-.mdkb-desc-empty {
+.folia-desc-empty {
   display: block;
   width: 100%;
   text-align: left;
   background: transparent;
-  border: 1px dashed var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px dashed var(--folia-border);
+  border-radius: var(--folia-r-sm);
   padding: 8px 10px;
   cursor: text;
 }
 
 /* Rendered markdown block: tidy prose spacing, constrained within the panel width. */
-.mdkb-desc-rendered {
+.folia-desc-rendered {
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-normal);
   overflow-wrap: anywhere;
 }
-.mdkb-desc-rendered > :first-child,
-.mdkb-comment-text > :first-child {
+.folia-desc-rendered > :first-child,
+.folia-comment-text > :first-child {
   margin-top: 0;
 }
-.mdkb-desc-rendered > :last-child,
-.mdkb-comment-text > :last-child {
+.folia-desc-rendered > :last-child,
+.folia-comment-text > :last-child {
   margin-bottom: 0;
 }
-.mdkb-desc-rendered p {
+.folia-desc-rendered p {
   margin: 0 0 8px;
 }
-.mdkb-desc-rendered ul,
-.mdkb-desc-rendered ol {
+.folia-desc-rendered ul,
+.folia-desc-rendered ol {
   margin: 0 0 8px;
   padding-left: 20px;
 }
-.mdkb-desc-rendered h1,
-.mdkb-desc-rendered h2,
-.mdkb-desc-rendered h3,
-.mdkb-desc-rendered h4 {
+.folia-desc-rendered h1,
+.folia-desc-rendered h2,
+.folia-desc-rendered h3,
+.folia-desc-rendered h4 {
   margin: 12px 0 6px;
   line-height: 1.3;
 }
-.mdkb-desc-rendered pre,
-.mdkb-desc-rendered code,
-.mdkb-comment-text pre,
-.mdkb-comment-text code {
+.folia-desc-rendered pre,
+.folia-desc-rendered code,
+.folia-comment-text pre,
+.folia-comment-text code {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   max-width: 100%;
 }
-.mdkb-desc-rendered img,
-.mdkb-comment-text img {
+.folia-desc-rendered img,
+.folia-comment-text img {
   max-width: 100%;
   height: auto;
 }
 /* Comments render inline-ish: keep paragraph margins flat so the edit/delete
-   buttons stay aligned with the first text line under .mdkb-comment-row. */
-.mdkb-comment-text p {
+   buttons stay aligned with the first text line under .folia-comment-row. */
+.folia-comment-text p {
   margin: 0;
 }
 
-.mdkb-subtasks,
-.mdkb-comments,
-.mdkb-history {
+.folia-subtasks,
+.folia-comments,
+.folia-history {
   list-style: none;
   margin: 0 0 8px;
   padding: 0;
@@ -1337,21 +1337,21 @@
   flex-direction: column;
   gap: 6px;
 }
-.mdkb-subtask {
+.folia-subtask {
   display: flex;
   align-items: flex-start; /* keep checkbox + remove aligned to the first line of wrapped text */
   gap: 8px;
   font-size: 13px;
   line-height: 1.4;
 }
-.mdkb-subtask input[type="checkbox"] {
+.folia-subtask input[type="checkbox"] {
   flex: 0 0 auto;
   margin-top: 2px;
 }
-.mdkb-link {
+.folia-link {
   background: transparent;
   border: none;
-  color: var(--link-color, var(--mdkb-accent));
+  color: var(--link-color, var(--folia-accent));
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -1359,45 +1359,45 @@
   font: inherit;
   text-align: left;
 }
-.mdkb-link-missing {
+.folia-link-missing {
   color: var(--text-muted);
   text-decoration: underline dashed;
   text-underline-offset: 2px;
   cursor: help;
 }
-.mdkb-done {
+.folia-done {
   text-decoration: line-through;
   color: var(--text-muted);
 }
-.mdkb-comments li,
-.mdkb-history li {
+.folia-comments li,
+.folia-history li {
   display: flex;
   flex-direction: column;
   gap: 1px;
   font-size: 13px;
   padding-left: 10px;
-  border-left: 2px solid var(--mdkb-border);
+  border-left: 2px solid var(--folia-border);
 }
-.mdkb-comment-row {
+.folia-comment-row {
   display: flex;
   align-items: flex-start;
   gap: 4px;
 }
-.mdkb-comment-text {
+.folia-comment-text {
   flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 /* edit/delete affordances stay quiet until the comment is hovered/focused */
-.mdkb-comment-row .mdkb-mini {
+.folia-comment-row .folia-mini {
   opacity: 0;
-  transition: opacity var(--mdkb-dur-fast) ease;
+  transition: opacity var(--folia-dur-fast) ease;
 }
-.mdkb-comments li:hover .mdkb-mini,
-.mdkb-comments li:focus-within .mdkb-mini {
+.folia-comments li:hover .folia-mini,
+.folia-comments li:focus-within .folia-mini {
   opacity: 1;
 }
-.mdkb-comment-edit {
+.folia-comment-edit {
   width: 100%;
   min-height: 48px;
   resize: vertical;
@@ -1405,33 +1405,33 @@
   font-size: 13px;
   background: var(--background-primary);
   color: var(--text-normal);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   padding: 6px 8px;
 }
-.mdkb-comment-edit:focus {
+.folia-comment-edit:focus {
   outline: none;
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
-.mdkb-ts {
+.folia-ts {
   font-size: 10.5px;
   color: var(--text-faint, var(--text-muted));
   font-variant-numeric: tabular-nums;
 }
-.mdkb-muted {
+.folia-muted {
   color: var(--text-faint, var(--text-muted));
   font-size: 12px;
   font-style: italic;
 }
 
 /* ------------------------------------------------------------------ focus visibility */
-.mdkb-root :focus-visible {
-  outline: 2px solid var(--mdkb-accent);
+.folia-root :focus-visible {
+  outline: 2px solid var(--folia-accent);
   outline-offset: 2px;
-  border-radius: var(--mdkb-r-sm);
+  border-radius: var(--folia-r-sm);
 }
-.mdkb-card-main:focus-visible {
+.folia-card-main:focus-visible {
   outline-offset: -2px;
 }
 
@@ -1439,15 +1439,15 @@
 
 /* #6 — in-column grouping. A group heading (only rendered when grouped) reads as a quiet
    section label; a single ungrouped group renders no heading, so a plain column is unchanged. */
-.mdkb-card-group {
+.folia-card-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.mdkb-card-group + .mdkb-card-group {
+.folia-card-group + .folia-card-group {
   margin-top: 4px;
 }
-.mdkb-card-group-heading {
+.folia-card-group-heading {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1457,27 +1457,27 @@
 }
 
 /* #10 — per-column de-emphasis. opacity fades the resting column; on hover it reveals to
-   --mdkb-col-hover-opacity (default 1). The transition makes the reveal feel intentional. */
-.mdkb-column {
-  transition: opacity var(--mdkb-dur) var(--mdkb-ease), margin var(--mdkb-dur) var(--mdkb-ease);
+   --folia-col-hover-opacity (default 1). The transition makes the reveal feel intentional. */
+.folia-column {
+  transition: opacity var(--folia-dur) var(--folia-ease), margin var(--folia-dur) var(--folia-ease);
 }
-.mdkb-column.is-faded {
-  opacity: var(--mdkb-col-opacity, 1);
+.folia-column.is-faded {
+  opacity: var(--folia-col-opacity, 1);
 }
-.mdkb-column.is-faded:hover,
-.mdkb-column.is-faded:focus-within {
-  opacity: var(--mdkb-col-hover-opacity, 1);
+.folia-column.is-faded:hover,
+.folia-column.is-faded:focus-within {
+  opacity: var(--folia-col-hover-opacity, 1);
 }
 /* #10 — parked: shove the column to the far right with a large left margin so a rabbit-hole
    column hides off-screen. Flex `order` moves it visually last without reordering the board's
    logical column array (which still drives Move-left/right + dnd). */
-.mdkb-column.is-parked {
+.folia-column.is-parked {
   order: 1;
-  margin-left: var(--mdkb-col-park-margin, 60vw);
+  margin-left: var(--folia-col-park-margin, 60vw);
 }
 
 /* #8 — Edit-column modal. A centered dialog over a dimming backdrop, portalled to <body>. */
-.mdkb-modal-backdrop {
+.folia-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -1486,38 +1486,38 @@
   padding: 24px;
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(2px);
-  animation: mdkb-fade-in var(--mdkb-dur-fast) ease;
+  animation: folia-fade-in var(--folia-dur-fast) ease;
 }
-@keyframes mdkb-fade-in {
+@keyframes folia-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.mdkb-modal {
+.folia-modal {
   width: min(440px, 100%);
   max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
   background: var(--background-primary);
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-lg);
-  box-shadow: var(--mdkb-shadow-pop);
-  animation: mdkb-pop var(--mdkb-dur-fast) var(--mdkb-ease);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-lg);
+  box-shadow: var(--folia-shadow-pop);
+  animation: folia-pop var(--folia-dur-fast) var(--folia-ease);
 }
-.mdkb-modal-header {
+.folia-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--mdkb-border);
+  border-bottom: 1px solid var(--folia-border);
 }
-.mdkb-modal-title {
+.folia-modal-title {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-normal);
 }
-.mdkb-modal-body {
+.folia-modal-body {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1525,92 +1525,92 @@
   overflow-y: auto;
   scrollbar-width: thin;
 }
-.mdkb-modal-footer {
+.folia-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 16px;
-  border-top: 1px solid var(--mdkb-border);
+  border-top: 1px solid var(--folia-border);
 }
-.mdkb-field {
+.folia-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-.mdkb-field-row {
+.folia-field-row {
   display: flex;
   gap: 12px;
 }
-.mdkb-field-row .mdkb-field {
+.folia-field-row .folia-field {
   flex: 1 1 0;
 }
-.mdkb-field-label {
+.folia-field-label {
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-faint, var(--text-muted));
 }
-.mdkb-field-hint {
+.folia-field-hint {
   font-size: 11px;
   color: var(--text-faint, var(--text-muted));
 }
-.mdkb-field input[type="text"],
-.mdkb-field input:not([type]),
-.mdkb-field input[type="number"],
-.mdkb-field select {
+.folia-field input[type="text"],
+.folia-field input:not([type]),
+.folia-field input[type="number"],
+.folia-field select {
   font: inherit;
   padding: 6px 8px;
-  border: 1px solid var(--mdkb-border);
-  border-radius: var(--mdkb-r-sm);
+  border: 1px solid var(--folia-border);
+  border-radius: var(--folia-r-sm);
   background: var(--background-primary);
   color: var(--text-normal);
 }
-.mdkb-field input:focus,
-.mdkb-field select:focus {
+.folia-field input:focus,
+.folia-field select:focus {
   outline: none;
-  border-color: var(--mdkb-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdkb-accent) 30%, transparent);
+  border-color: var(--folia-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);
 }
-.mdkb-field input[type="range"] {
+.folia-field input[type="range"] {
   width: 100%;
-  accent-color: var(--mdkb-accent);
+  accent-color: var(--folia-accent);
 }
-.mdkb-field-toggle {
+.folia-field-toggle {
   flex-direction: row;
   align-items: flex-start;
   gap: 9px;
 }
-.mdkb-field-toggle input[type="checkbox"] {
+.folia-field-toggle input[type="checkbox"] {
   margin-top: 2px;
-  accent-color: var(--mdkb-accent);
+  accent-color: var(--folia-accent);
 }
-.mdkb-field-toggle > span {
+.folia-field-toggle > span {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mdkb-root *,
-  .mdkb-detail,
-  .mdkb-menu,
-  .mdkb-modal,
-  .mdkb-modal-backdrop,
-  .mdkb-toast {
+  .folia-root *,
+  .folia-detail,
+  .folia-menu,
+  .folia-modal,
+  .folia-modal-backdrop,
+  .folia-toast {
     transition-duration: 0.01ms !important;
   }
   /* No positional slide/scale for motion-sensitive users — these surfaces just appear. */
-  .mdkb-detail,
-  .mdkb-menu,
-  .mdkb-modal,
-  .mdkb-modal-backdrop,
-  .mdkb-toast {
+  .folia-detail,
+  .folia-menu,
+  .folia-modal,
+  .folia-modal-backdrop,
+  .folia-toast {
     animation: none !important;
   }
   /* The drag overlays still lift (their shadow/outline mark the grab), but without the scale/tilt tween. */
-  .mdkb-card-overlay,
-  .mdkb-column-overlay {
+  .folia-card-overlay,
+  .folia-column-overlay {
     animation: none !important;
     transform: none !important;
   }
@@ -1618,11 +1618,11 @@
 
 /* ------------------------------------------------------- context grouping (#14)
    A card in a `<cardFolder>/<context>/` subfolder gets a left accent strip colored from its
-   context (`--mdkb-ctx-color`) plus a label chip. The strip is INSET to left:5px so it sits
+   context (`--folia-ctx-color`) plus a label chip. The strip is INSET to left:5px so it sits
    beside — never on top of — the priority bar (left:0, 3px), keeping the two left-edge cues
    distinct. The chip tints toward the context color when set, else falls back to a muted badge.
    Cross-track note: the #3 urgency cue (card track) owns the top edge + bg tint per contract §6/§8. */
-.mdkb-card-context {
+.folia-card-context {
   content: "";
   position: absolute;
   left: 5px;
@@ -1630,53 +1630,53 @@
   bottom: 6px;
   width: 2px;
   border-radius: 999px;
-  background: var(--mdkb-ctx-color, var(--mdkb-border-strong));
+  background: var(--folia-ctx-color, var(--folia-border-strong));
   pointer-events: none;
 }
-/* The strip occupies left 5–7px; `.mdkb-card-main`'s existing 12px left padding already clears it,
+/* The strip occupies left 5–7px; `.folia-card-main`'s existing 12px left padding already clears it,
    so no extra body inset is needed (and a folder-only card with no color must stay visually inert). */
-.mdkb-chip-context {
-  color: var(--mdkb-ctx-color, var(--text-muted));
-  background: color-mix(in srgb, var(--mdkb-ctx-color, var(--text-muted)) 16%, transparent);
-  border-color: color-mix(in srgb, var(--mdkb-ctx-color, var(--text-muted)) 30%, transparent);
+.folia-chip-context {
+  color: var(--folia-ctx-color, var(--text-muted));
+  background: color-mix(in srgb, var(--folia-ctx-color, var(--text-muted)) 16%, transparent);
+  border-color: color-mix(in srgb, var(--folia-ctx-color, var(--text-muted)) 30%, transparent);
 }
 
 /* --- col-header (#2 drag-to-reorder + #7 inline title edit) --- */
 /* The title doubles as the drag handle and the rename click target. Grab cursor signals drag;
    the dnd distance:5 sensor still lets a clean click through to enter rename. */
-.mdkb-column-title {
+.folia-column-title {
   cursor: grab;
   user-select: none;
 }
-.mdkb-column-title:focus-visible {
-  outline: 2px solid var(--mdkb-col-accent, var(--mdkb-accent));
+.folia-column-title:focus-visible {
+  outline: 2px solid var(--folia-col-accent, var(--folia-accent));
   outline-offset: 2px;
-  border-radius: var(--mdkb-r-sm, 4px);
+  border-radius: var(--folia-r-sm, 4px);
 }
 /* The column being dragged: dim + lift it out of the row so the gap reads as the drop slot.
-   A faded column (#10 `--mdkb-col-opacity` < 1, e.g. parked) must still read as "dragging", so
+   A faded column (#10 `--folia-col-opacity` < 1, e.g. parked) must still read as "dragging", so
    force a visible opacity here and let this rule win — a parked+faded column never goes invisible
    mid-drag. */
-.mdkb-column.is-dragging {
+.folia-column.is-dragging {
   opacity: 0.6 !important;
   cursor: grabbing;
   z-index: 2;
 }
-.mdkb-column.is-dragging .mdkb-column-title {
+.folia-column.is-dragging .folia-column-title {
   cursor: grabbing;
 }
 /* Inline rename input — sits in the title's slot, inheriting its weight/size so the swap is seamless. */
-.mdkb-column-title-input {
+.folia-column-title-input {
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
   font-size: 13px;
   color: var(--text-normal);
   background: var(--background-primary);
-  border: 1px solid var(--mdkb-col-accent, var(--mdkb-accent));
-  border-radius: var(--mdkb-r-sm, 4px);
+  border: 1px solid var(--folia-col-accent, var(--folia-accent));
+  border-radius: var(--folia-r-sm, 4px);
   padding: 1px 6px;
 }
-.mdkb-column-title-input:focus {
+.folia-column-title-input:focus {
   outline: none;
 }

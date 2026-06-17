@@ -39,26 +39,26 @@ describe("board rendering", () => {
     const todoCol = screen.getByText("Todo").closest("section") as HTMLElement;
     expect(within(todoCol).getByText("Alpha")).toBeInTheDocument();
     // Beta is a subcard: it renders nested under Alpha (not standalone) and doesn't bump the count.
-    expect(within(todoCol).getByText("Beta").closest(".mdkb-card")).toHaveClass("mdkb-card--nested");
+    expect(within(todoCol).getByText("Beta").closest(".folia-card")).toHaveClass("folia-card--nested");
     expect(within(todoCol).getByTitle("1 cards")).toHaveTextContent("1"); // count = top-level only
 
     const doingCol = screen.getByText("Doing").closest("section") as HTMLElement;
     expect(within(doingCol).getByText("Gamma")).toBeInTheDocument();
   });
 
-  it("nests a subcard in a .mdkb-subcard-group under its parent, not as a standalone card", async () => {
+  it("nests a subcard in a .folia-subcard-group under its parent, not as a standalone card", async () => {
     render_(makeRepo());
-    const alphaTree = (await screen.findByText("Alpha")).closest(".mdkb-card-tree") as HTMLElement;
-    const group = alphaTree.querySelector(".mdkb-subcard-group") as HTMLElement;
+    const alphaTree = (await screen.findByText("Alpha")).closest(".folia-card-tree") as HTMLElement;
+    const group = alphaTree.querySelector(".folia-subcard-group") as HTMLElement;
     expect(group).not.toBeNull();
     // Beta renders inside the group as a nested card...
-    const beta = within(group).getByText("Beta").closest(".mdkb-card") as HTMLElement;
-    expect(beta).toHaveClass("mdkb-card--nested");
+    const beta = within(group).getByText("Beta").closest(".folia-card") as HTMLElement;
+    expect(beta).toHaveClass("folia-card--nested");
     // ...and is the only place Beta appears — not as a top-level card in any column.
     const todoCol = screen.getByText("Todo").closest("section") as HTMLElement;
     const betaCards = within(todoCol).getAllByText("Beta");
     expect(betaCards).toHaveLength(1);
-    expect(betaCards[0].closest(".mdkb-card-tree > .mdkb-card")).toBeNull();
+    expect(betaCards[0].closest(".folia-card-tree > .folia-card")).toBeNull();
   });
 
   it("renders a grandchild recursively so a 2-level subtree never vanishes", async () => {
@@ -68,7 +68,7 @@ describe("board rendering", () => {
       "Tasks/Leaf.md": { fm: { type: "task", status: "done" }, body: "\n# Leaf\n" },
     });
     render_(repo);
-    const tree = (await screen.findByText("Root")).closest(".mdkb-card-tree") as HTMLElement;
+    const tree = (await screen.findByText("Root")).closest(".folia-card-tree") as HTMLElement;
     // Mid nested under Root, Leaf nested under Mid — both present despite their own statuses.
     expect(within(tree).getByText("Mid")).toBeInTheDocument();
     expect(within(tree).getByText("Leaf")).toBeInTheDocument();
@@ -79,13 +79,13 @@ describe("board rendering", () => {
 
   it("shows chips and subtask/subcard/comment stats on a card", async () => {
     render_(makeRepo());
-    const alpha = (await screen.findByText("Alpha")).closest(".mdkb-card") as HTMLElement;
+    const alpha = (await screen.findByText("Alpha")).closest(".folia-card") as HTMLElement;
     expect(within(alpha).getByText("A")).toBeInTheDocument(); // priority chip
     expect(within(alpha).getByText("1/3")).toBeInTheDocument(); // 1 of 3 checklist lines done (2 todos + 1 subcard)
     expect(within(alpha).getByTitle("Subcards")).toHaveTextContent("1"); // 1 subcard
     expect(within(alpha).getByTitle("Comments")).toHaveTextContent("1"); // 1 comment
 
-    const gamma = screen.getByText("Gamma").closest(".mdkb-card") as HTMLElement;
+    const gamma = screen.getByText("Gamma").closest(".folia-card") as HTMLElement;
     expect(within(gamma).getByTitle("Due 2026-06-01")).toHaveTextContent("12d ago"); // overdue, relative
   });
 });
@@ -109,7 +109,7 @@ describe("card detail", () => {
     const detail = await screen.findByTestId("card-detail");
     // View mode: fakeRepo renders the markdown as textContent (no raw editor yet).
     const rendered = await within(detail).findByText("Desc A");
-    expect(rendered).toHaveClass("mdkb-desc-rendered");
+    expect(rendered).toHaveClass("folia-desc-rendered");
     expect(within(detail).queryByLabelText("Edit description")).not.toBeNull();
     expect(within(detail).queryByRole("textbox", { name: "Edit description" })).toBeNull();
     // Clicking the rendered area flips to the raw textarea.
@@ -139,10 +139,10 @@ describe("card detail", () => {
     render_(makeRepo());
     await user.click(await screen.findByText("Alpha"));
     const detail = await screen.findByTestId("card-detail");
-    const view = (await within(detail).findByText("Desc A")).closest(".mdkb-desc-view") as HTMLElement;
+    const view = (await within(detail).findByText("Desc A")).closest(".folia-desc-view") as HTMLElement;
     // The layout effect measures the preview's position against the viewport and writes the ceiling
     // as a CSS var; assert it wired through (px value, robust to the test viewport's innerHeight).
-    await waitFor(() => expect(view.style.getPropertyValue("--mdkb-desc-max-h")).toMatch(/^\d+px$/));
+    await waitFor(() => expect(view.style.getPropertyValue("--folia-desc-max-h")).toMatch(/^\d+px$/));
   });
 
   it("preserves the rendered preview's height as the textarea's min-height when entering edit (#15)", async () => {
@@ -152,7 +152,7 @@ describe("card detail", () => {
     const detail = await screen.findByTestId("card-detail");
     const rendered = await within(detail).findByText("Desc A");
     // jsdom reports 0 for layout; stub the preview wrapper's measured height so the capture is real.
-    const view = rendered.closest(".mdkb-desc-view") as HTMLElement;
+    const view = rendered.closest(".folia-desc-view") as HTMLElement;
     Object.defineProperty(view, "offsetHeight", { configurable: true, value: 247 });
     await user.click(rendered);
     const box = within(detail).getByRole("textbox", { name: "Edit description" });
@@ -165,13 +165,13 @@ describe("card detail", () => {
     await user.click(await screen.findByText("Alpha"));
     const detail = await screen.findByTestId("card-detail");
     const rendered = await within(detail).findByText("Desc A");
-    Object.defineProperty(rendered.closest(".mdkb-desc-view") as HTMLElement, "offsetHeight", { configurable: true, value: 247 });
+    Object.defineProperty(rendered.closest(".folia-desc-view") as HTMLElement, "offsetHeight", { configurable: true, value: 247 });
     await user.click(rendered);
     expect(within(detail).getByRole("textbox", { name: "Edit description" }).style.minHeight).toBe("247px");
     // Revert returns to view mode; re-entering with no measured height carries nothing over.
     await user.click(within(detail).getByRole("button", { name: "Revert" }));
     const back = await within(detail).findByText("Desc A");
-    Object.defineProperty(back.closest(".mdkb-desc-view") as HTMLElement, "offsetHeight", { configurable: true, value: 0 });
+    Object.defineProperty(back.closest(".folia-desc-view") as HTMLElement, "offsetHeight", { configurable: true, value: 0 });
     await user.click(back);
     expect(within(detail).getByRole("textbox", { name: "Edit description" }).style.minHeight).toBe("");
   });
@@ -182,7 +182,7 @@ describe("card detail", () => {
     await user.click(await screen.findByText("Alpha"));
     const detail = await screen.findByTestId("card-detail");
     const comment = await within(detail).findByText("hi there");
-    expect(comment).toHaveClass("mdkb-comment-text");
+    expect(comment).toHaveClass("folia-comment-text");
     // The Markdown component renders a <div>; the pre-Batch-E code rendered a raw <span>,
     // so the tag discriminates that the text now flows through repo.renderMarkdown.
     expect(comment.tagName).toBe("DIV");
@@ -314,8 +314,8 @@ describe("detail presentation", () => {
   it("renders a backdrop in modal mode", async () => {
     await open({ ...DEFAULT_SETTINGS, detailPresentation: "modal" });
     const detail = await screen.findByTestId("card-detail");
-    expect(document.querySelector(".mdkb-detail-modal-backdrop")).not.toBeNull();
-    expect(detail).toHaveClass("mdkb-detail--modal");
+    expect(document.querySelector(".folia-detail-modal-backdrop")).not.toBeNull();
+    expect(detail).toHaveClass("folia-detail--modal");
     expect(detail).toHaveAttribute("aria-modal", "true");
   });
 
@@ -325,25 +325,25 @@ describe("detail presentation", () => {
     // it carries no inline width style (only side/float read settings.detailWidth into one).
     await open({ ...DEFAULT_SETTINGS, detailPresentation: "modal" });
     const detail = await screen.findByTestId("card-detail");
-    expect(detail.parentElement).toHaveClass("mdkb-detail-modal-backdrop");
+    expect(detail.parentElement).toHaveClass("folia-detail-modal-backdrop");
     expect(detail.style.width).toBe("");
   });
 
   it("uses the float class with no backdrop in side+float mode", async () => {
     await open({ ...DEFAULT_SETTINGS, detailPresentation: "side", sidePanelMode: "float" });
     const detail = await screen.findByTestId("card-detail");
-    expect(detail).toHaveClass("mdkb-detail--float");
-    expect(document.querySelector(".mdkb-detail-modal-backdrop")).toBeNull();
+    expect(detail).toHaveClass("folia-detail--float");
+    expect(document.querySelector(".folia-detail-modal-backdrop")).toBeNull();
     expect(detail).toHaveAttribute("aria-modal", "false");
   });
 
   it("is a plain sibling with no backdrop in side+split mode", async () => {
     await open({ ...DEFAULT_SETTINGS, detailPresentation: "side", sidePanelMode: "split" });
     const detail = await screen.findByTestId("card-detail");
-    expect(detail).not.toHaveClass("mdkb-detail--float");
-    expect(detail).not.toHaveClass("mdkb-detail--modal");
-    expect(document.querySelector(".mdkb-detail-modal-backdrop")).toBeNull();
-    expect(detail.parentElement).toHaveClass("mdkb-main");
+    expect(detail).not.toHaveClass("folia-detail--float");
+    expect(detail).not.toHaveClass("folia-detail--modal");
+    expect(document.querySelector(".folia-detail-modal-backdrop")).toBeNull();
+    expect(detail.parentElement).toHaveClass("folia-main");
   });
 });
 
@@ -431,8 +431,8 @@ describe("inline card title edit (#12)", () => {
   // Enter inline edit via the right-click menu's "Rename" (single click opens the detail, so the
   // rename gesture lives in the context menu). Returns the live <input>.
   const startRename = async (user: ReturnType<typeof userEvent.setup>, scope: HTMLElement, cardName: string) => {
-    const card = (within(scope).getAllByText(cardName)[0]).closest(".mdkb-card") as HTMLElement;
-    fireEvent.contextMenu(card.querySelector(".mdkb-card-title")!);
+    const card = (within(scope).getAllByText(cardName)[0]).closest(".folia-card") as HTMLElement;
+    fireEvent.contextMenu(card.querySelector(".folia-card-title")!);
     await user.click(within(await screen.findByRole("menu")).getByRole("menuitem", { name: /Rename/ }));
     return within(scope).getByLabelText("Card title") as HTMLInputElement;
   };
@@ -462,8 +462,8 @@ describe("inline card title edit (#12)", () => {
     await user.clear(input);
     await user.type(input, "Beta Renamed{Enter}");
     // Beta still nests under Alpha (the parent's wikilink was rewritten), not surfaced top-level.
-    const alphaTree = (await within(todoCol).findByText("Alpha")).closest(".mdkb-card-tree") as HTMLElement;
-    const group = alphaTree.querySelector(".mdkb-subcard-group") as HTMLElement;
+    const alphaTree = (await within(todoCol).findByText("Alpha")).closest(".folia-card-tree") as HTMLElement;
+    const group = alphaTree.querySelector(".folia-subcard-group") as HTMLElement;
     expect(within(group).getByText("Beta Renamed")).toBeInTheDocument();
     expect(repo.files.get("Tasks/Alpha.md")!.body).toContain("[[Beta Renamed]]");
   });
@@ -499,7 +499,7 @@ describe("urgency cue (#3)", () => {
     });
     render_(repo); // today = 2026-06-13
     await screen.findByText("Over");
-    const cardOf = (name: string) => screen.getByText(name).closest(".mdkb-card") as HTMLElement;
+    const cardOf = (name: string) => screen.getByText(name).closest(".folia-card") as HTMLElement;
     expect(cardOf("Over").dataset.urgency).toBe("overdue");
     expect(cardOf("Now").dataset.urgency).toBe("today");
     expect(cardOf("Soon").dataset.urgency).toBe("soon");
@@ -538,8 +538,8 @@ describe("next todos on cards", () => {
 
   it("renders up to cardNextTodos rows with the SubItem index as data-todo-index", async () => {
     render_(nextTodosRepo(), { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
-    const card = (await screen.findByText("WithTodos")).closest(".mdkb-card") as HTMLElement;
-    const rows = card.querySelectorAll(".mdkb-card-next-todo");
+    const card = (await screen.findByText("WithTodos")).closest(".folia-card") as HTMLElement;
+    const rows = card.querySelectorAll(".folia-card-next-todo");
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent("real one");
     expect(rows[0].getAttribute("data-todo-index")).toBe("1");
@@ -549,8 +549,8 @@ describe("next todos on cards", () => {
 
   it("renders no next-todo rows when cardNextTodos is 0", async () => {
     render_(nextTodosRepo(), { ...DEFAULT_SETTINGS, cardNextTodos: 0 });
-    const card = (await screen.findByText("WithTodos")).closest(".mdkb-card") as HTMLElement;
-    expect(card.querySelectorAll(".mdkb-card-next-todo")).toHaveLength(0);
+    const card = (await screen.findByText("WithTodos")).closest(".folia-card") as HTMLElement;
+    expect(card.querySelectorAll(".folia-card-next-todo")).toHaveLength(0);
   });
 
   it("caps the rendered rows at cardNextTodos even with more undone todos", async () => {
@@ -563,8 +563,8 @@ describe("next todos on cards", () => {
       },
     });
     render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
-    const card = (await screen.findByText("ThreeTodos")).closest(".mdkb-card") as HTMLElement;
-    const rows = card.querySelectorAll(".mdkb-card-next-todo");
+    const card = (await screen.findByText("ThreeTodos")).closest(".folia-card") as HTMLElement;
+    const rows = card.querySelectorAll(".folia-card-next-todo");
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent("a");
     expect(rows[1]).toHaveTextContent("b");
@@ -584,7 +584,7 @@ describe("board pan-scroll", () => {
   it("toggles is-pan-scrolling on a shift pan and clears it on pointerup", async () => {
     render_(makeRepo());
     await screen.findByText("Alpha");
-    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    const board = document.querySelector(".folia-board") as HTMLElement;
     dispatchPointer(board, "pointerdown", { shiftKey: true, button: 0, clientX: 100 });
     expect(board).toHaveClass("is-pan-scrolling");
     dispatchPointer(board, "pointermove", { clientX: 60 });
@@ -595,7 +595,7 @@ describe("board pan-scroll", () => {
   it("defaults to shift-pan mode and ignores a plain left-press (cards stay clickable)", async () => {
     render_(makeRepo()); // DEFAULT_SETTINGS.boardPan === "shift"
     await screen.findByText("Alpha");
-    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    const board = document.querySelector(".folia-board") as HTMLElement;
     expect(board).toHaveAttribute("data-pan", "shift");
     // A plain left-press must NOT pan in shift mode — it's reserved for card drag / clicks.
     dispatchPointer(board, "pointerdown", { button: 0, clientX: 100 });
@@ -606,7 +606,7 @@ describe("board pan-scroll", () => {
   it("middle-button pans regardless of mode", async () => {
     render_(makeRepo());
     await screen.findByText("Alpha");
-    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    const board = document.querySelector(".folia-board") as HTMLElement;
     dispatchPointer(board, "pointerdown", { button: 1, clientX: 100 });
     expect(board).toHaveClass("is-pan-scrolling");
     dispatchPointer(board, "pointerup", { clientX: 100 });
@@ -616,7 +616,7 @@ describe("board pan-scroll", () => {
   it("empty mode pans a plain left-press on bare background but not over a column/card", async () => {
     render_(makeRepo(), { ...DEFAULT_SETTINGS, boardPan: "empty" });
     await screen.findByText("Alpha");
-    const board = document.querySelector(".mdkb-board") as HTMLElement;
+    const board = document.querySelector(".folia-board") as HTMLElement;
     expect(board).toHaveAttribute("data-pan", "empty");
 
     // Plain left-press on the bare board background → pans.
@@ -627,7 +627,7 @@ describe("board pan-scroll", () => {
 
     // Plain left-press whose target sits inside a column (a card) must NOT pan — that gesture belongs
     // to the card (drag/click). The handler reads the real event target, so dispatch from the card.
-    const card = screen.getByText("Alpha").closest(".mdkb-card") as HTMLElement;
+    const card = screen.getByText("Alpha").closest(".folia-card") as HTMLElement;
     dispatchPointer(card, "pointerdown", { button: 0, clientX: 100 });
     expect(board).not.toHaveClass("is-pan-scrolling");
     dispatchPointer(card, "pointerup", { clientX: 100 });
@@ -647,8 +647,8 @@ describe("card context menu", () => {
 
   const openCardMenu = async (cardName: string, repo = ctxRepo()) => {
     render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
-    const card = (await screen.findByText(cardName)).closest(".mdkb-card") as HTMLElement;
-    fireEvent.contextMenu(card.querySelector(".mdkb-card-title")!);
+    const card = (await screen.findByText(cardName)).closest(".folia-card") as HTMLElement;
+    fireEvent.contextMenu(card.querySelector(".folia-card-title")!);
     return { repo, menu: await screen.findByRole("menu") };
   };
 
@@ -711,8 +711,8 @@ describe("card context menu", () => {
       "Tasks/Finished.md": { fm: { type: "task", status: "done" }, body: "\n# Finished\n" },
     });
     render_(repo);
-    const card = (await screen.findByText("Finished")).closest(".mdkb-card") as HTMLElement;
-    fireEvent.contextMenu(card.querySelector(".mdkb-card-title")!);
+    const card = (await screen.findByText("Finished")).closest(".folia-card") as HTMLElement;
+    fireEvent.contextMenu(card.querySelector(".folia-card-title")!);
     const menu = await screen.findByRole("menu");
     expect(within(menu).queryByRole("menuitem", { name: /Mark done/ })).toBeNull();
   });
@@ -720,8 +720,8 @@ describe("card context menu", () => {
   it("opens a todo-scoped menu on a next-todo row and toggles by its data-todo-index", async () => {
     const repo = ctxRepo();
     render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
-    const card = (await screen.findByText("First")).closest(".mdkb-card") as HTMLElement;
-    const todoRow = card.querySelector('.mdkb-card-next-todo[data-todo-index="1"]') as HTMLElement;
+    const card = (await screen.findByText("First")).closest(".folia-card") as HTMLElement;
+    const todoRow = card.querySelector('.folia-card-next-todo[data-todo-index="1"]') as HTMLElement;
     fireEvent.contextMenu(todoRow);
     const menu = await screen.findByRole("menu", { name: "Todo actions" });
     const user = userEvent.setup();
@@ -733,8 +733,8 @@ describe("card context menu", () => {
   it("removes a todo from the todo menu", async () => {
     const repo = ctxRepo();
     render_(repo, { ...DEFAULT_SETTINGS, cardNextTodos: 2 });
-    const card = (await screen.findByText("First")).closest(".mdkb-card") as HTMLElement;
-    const todoRow = card.querySelector('.mdkb-card-next-todo[data-todo-index="2"]') as HTMLElement;
+    const card = (await screen.findByText("First")).closest(".folia-card") as HTMLElement;
+    const todoRow = card.querySelector('.folia-card-next-todo[data-todo-index="2"]') as HTMLElement;
     fireEvent.contextMenu(todoRow);
     const menu = await screen.findByRole("menu", { name: "Todo actions" });
     const user = userEvent.setup();
@@ -864,7 +864,7 @@ describe("column config (#1 filter, #6 group/sort, #8 edit modal, #10 opacity/pa
     expect(within(researchCol).getByText("ResearchB")).toBeInTheDocument();
     expect(within(researchCol).queryByText("Other")).toBeNull();
     // The lane badge counts the matched cards actually shown (2), not the (empty) "research" status bucket.
-    expect(within(researchCol).getByText("2", { selector: ".mdkb-column-count" })).toBeInTheDocument();
+    expect(within(researchCol).getByText("2", { selector: ".folia-column-count" })).toBeInTheDocument();
     // The pulled cards still ALSO render in their own status columns (no cross-column de-dupe).
     const todoCol = (await screen.findByText("Todo")).closest("section") as HTMLElement;
     expect(within(todoCol).getByText("ResearchA")).toBeInTheDocument();
@@ -886,7 +886,7 @@ describe("column config (#1 filter, #6 group/sort, #8 edit modal, #10 opacity/pa
     // The same card (data-path) mounts twice — once in its status column, once in the lane. With the
     // namespaced sortable ids each placement registers its OWN sortable, so both render as distinct
     // nodes (a bare-path collision would have dnd-kit drop/duplicate one). Both must be present.
-    const placements = document.querySelectorAll('.mdkb-card[data-path="Tasks/ResearchA.md"]');
+    const placements = document.querySelectorAll('.folia-card[data-path="Tasks/ResearchA.md"]');
     expect(placements).toHaveLength(2);
     // Both are real draggable sortables (dnd-kit marks the activator with this roledescription),
     // proving neither placement was de-registered by an id clash.
@@ -905,7 +905,7 @@ describe("column config (#1 filter, #6 group/sort, #8 edit modal, #10 opacity/pa
     );
     render_(repo); // today=2026-06-13 → Late overdue, Soon today
     const todoCol = (await screen.findByText("Todo")).closest("section") as HTMLElement;
-    const headings = [...todoCol.querySelectorAll(".mdkb-card-group-heading")].map((h) => h.textContent);
+    const headings = [...todoCol.querySelectorAll(".folia-card-group-heading")].map((h) => h.textContent);
     expect(headings).toEqual(["Overdue", "Today"]);
   });
 
@@ -918,8 +918,8 @@ describe("column config (#1 filter, #6 group/sort, #8 edit modal, #10 opacity/pa
     const rabbit = (await screen.findByText("Rabbit")).closest("section") as HTMLElement;
     expect(rabbit).toHaveClass("is-faded");
     expect(rabbit).toHaveClass("is-parked");
-    expect(rabbit.style.getPropertyValue("--mdkb-col-opacity")).toBe("0.4");
-    expect(rabbit.style.getPropertyValue("--mdkb-col-hover-opacity")).toBe("0.8");
+    expect(rabbit.style.getPropertyValue("--folia-col-opacity")).toBe("0.4");
+    expect(rabbit.style.getPropertyValue("--folia-col-hover-opacity")).toBe("0.8");
   });
 });
 
@@ -936,17 +936,17 @@ describe("search filter (single source of truth)", () => {
     const doingCol = screen.getByText("Doing").closest("section") as HTMLElement;
     expect(within(doingCol).queryByText("Gamma")).toBeNull();
     // match count reflects the filtered set
-    expect(screen.getByText(/of/, { selector: ".mdkb-toolbar-status span" })).toHaveTextContent("1 of");
+    expect(screen.getByText(/of/, { selector: ".folia-toolbar-status span" })).toHaveTextContent("1 of");
   });
 
   it("pressing '/' (focus not in a field) focuses the search input, as the placeholder promises", async () => {
     render_(makeRepo());
     await screen.findByText("Alpha");
     const search = screen.getByLabelText("Search cards");
-    // jsdom has no layout, so .mdkb-root's getClientRects() is empty and the "is this board the
+    // jsdom has no layout, so .folia-root's getClientRects() is empty and the "is this board the
     // visible tab?" guard would bail. Fake a non-empty rect list (mirrors the offsetHeight stub
     // used elsewhere) so the guard sees a visible board, like in a real foregrounded leaf.
-    const root = document.querySelector(".mdkb-root") as HTMLElement;
+    const root = document.querySelector(".folia-root") as HTMLElement;
     Object.defineProperty(root, "getClientRects", { configurable: true, value: () => [{}] });
     expect(document.activeElement).not.toBe(search);
     // The hint advertises "(press /)"; dispatch it at the document level (focus on <body>).
@@ -1050,23 +1050,23 @@ describe("context grouping marker (#14)", () => {
 
   it("marks a context member with the strip, color var, data-context, and label chip", async () => {
     render_(ctxRepo());
-    const a = (await screen.findByText("A")).closest(".mdkb-card") as HTMLElement;
-    expect(a).toHaveClass("mdkb-card--has-context");
+    const a = (await screen.findByText("A")).closest(".folia-card") as HTMLElement;
+    expect(a).toHaveClass("folia-card--has-context");
     expect(a).toHaveAttribute("data-context", "Acme");
-    expect(a.style.getPropertyValue("--mdkb-ctx-color")).toBe("rgb(91, 141, 239)");
-    expect(a.querySelector(".mdkb-card-context")).not.toBeNull();
+    expect(a.style.getPropertyValue("--folia-ctx-color")).toBe("rgb(91, 141, 239)");
+    expect(a.querySelector(".folia-card-context")).not.toBeNull();
     // The label chip shows the short label and names the context in its tooltip.
     const chip = within(a).getByText("client");
-    expect(chip).toHaveClass("mdkb-chip-context");
+    expect(chip).toHaveClass("folia-chip-context");
     expect(chip).toHaveAttribute("title", "Context: Acme Corp");
   });
 
   it("leaves a card without a context unmarked", async () => {
     render_(ctxRepo());
-    const loose = (await screen.findByText("Loose")).closest(".mdkb-card") as HTMLElement;
-    expect(loose).not.toHaveClass("mdkb-card--has-context");
+    const loose = (await screen.findByText("Loose")).closest(".folia-card") as HTMLElement;
+    expect(loose).not.toHaveClass("folia-card--has-context");
     expect(loose).not.toHaveAttribute("data-context");
-    expect(loose.querySelector(".mdkb-card-context")).toBeNull();
+    expect(loose.querySelector(".folia-card-context")).toBeNull();
     expect(within(loose).queryByText("client")).toBeNull();
   });
 
@@ -1075,13 +1075,13 @@ describe("context grouping marker (#14)", () => {
       "Tasks/Beta/B.md": { fm: { type: "task", status: "todo" }, body: "\n# B\n" },
     });
     render_(repo);
-    const b = (await screen.findByText("B")).closest(".mdkb-card") as HTMLElement;
+    const b = (await screen.findByText("B")).closest(".folia-card") as HTMLElement;
     // It still carries the derived context (so context:beta filters it)...
-    expect(b).toHaveClass("mdkb-card--has-context");
+    expect(b).toHaveClass("folia-card--has-context");
     expect(b).toHaveAttribute("data-context", "Beta");
     // ...but with no color/label configured, neither the colored strip nor a chip renders.
-    expect(b.querySelector(".mdkb-card-context")).toBeNull();
-    expect(b.style.getPropertyValue("--mdkb-ctx-color")).toBe("");
+    expect(b.querySelector(".folia-card-context")).toBeNull();
+    expect(b.style.getPropertyValue("--folia-ctx-color")).toBe("");
   });
 });
 
@@ -1089,7 +1089,7 @@ describe("inline column-title edit (#7)", () => {
   const user = userEvent.setup();
 
   const titleSpan = (text: string) =>
-    screen.getByText(text, { selector: ".mdkb-column-title" });
+    screen.getByText(text, { selector: ".folia-column-title" });
 
   it("clicking a column title swaps in an input seeded with the current title, selected", async () => {
     render_(makeRepo());
@@ -1111,7 +1111,7 @@ describe("inline column-title edit (#7)", () => {
     const input = screen.getByLabelText("Rename column Todo");
     await user.clear(input);
     await user.type(input, "Backlog{Enter}");
-    expect(await screen.findByText("Backlog", { selector: ".mdkb-column-title" })).toBeInTheDocument();
+    expect(await screen.findByText("Backlog", { selector: ".folia-column-title" })).toBeInTheDocument();
     expect(repo.config.columns.find((c) => c.id === "todo")?.title).toBe("Backlog");
   });
 
@@ -1124,7 +1124,7 @@ describe("inline column-title edit (#7)", () => {
     await user.clear(input);
     await user.type(input, "In progress");
     fireEvent.blur(input);
-    expect(await screen.findByText("In progress", { selector: ".mdkb-column-title" })).toBeInTheDocument();
+    expect(await screen.findByText("In progress", { selector: ".folia-column-title" })).toBeInTheDocument();
     expect(repo.config.columns.find((c) => c.id === "doing")?.title).toBe("In progress");
   });
 
@@ -1136,8 +1136,8 @@ describe("inline column-title edit (#7)", () => {
     const input = screen.getByLabelText("Rename column Done");
     await user.clear(input);
     await user.type(input, "Shipped{Escape}");
-    expect(await screen.findByText("Done", { selector: ".mdkb-column-title" })).toBeInTheDocument();
-    expect(screen.queryByText("Shipped", { selector: ".mdkb-column-title" })).toBeNull();
+    expect(await screen.findByText("Done", { selector: ".folia-column-title" })).toBeInTheDocument();
+    expect(screen.queryByText("Shipped", { selector: ".folia-column-title" })).toBeNull();
     expect(repo.config.columns.find((c) => c.id === "done")?.title).toBe("Done");
   });
 
@@ -1149,7 +1149,7 @@ describe("inline column-title edit (#7)", () => {
     const input = screen.getByLabelText("Rename column Todo");
     await user.clear(input);
     await user.type(input, "   {Enter}");
-    expect(await screen.findByText("Todo", { selector: ".mdkb-column-title" })).toBeInTheDocument();
+    expect(await screen.findByText("Todo", { selector: ".folia-column-title" })).toBeInTheDocument();
     expect(repo.config.columns.find((c) => c.id === "todo")?.title).toBe("Todo");
   });
 

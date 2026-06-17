@@ -124,11 +124,11 @@ export function Board({ board, today, selectedPath, wipLimits, filter, doneColum
     let didPan = false;
 
     // In "empty" mode a plain left-press only pans when it lands on bare board background — never on a
-    // card, column, or any interactive control. (.mdkb-board is the background; the columns/AddColumn
+    // card, column, or any interactive control. (.folia-board is the background; the columns/AddColumn
     // are its children, so a press whose closest interactive ancestor is the board itself is "empty".)
     const isEmptyBackground = (e: PointerEvent) => {
       const t = e.target as HTMLElement | null;
-      return !!t && !t.closest(".mdkb-column, .mdkb-add-column, button, a, input, textarea, [role='button']");
+      return !!t && !t.closest(".folia-column, .folia-add-column, button, a, input, textarea, [role='button']");
     };
 
     const shouldPan = (e: PointerEvent) => {
@@ -237,7 +237,7 @@ export function Board({ board, today, selectedPath, wipLimits, filter, doneColum
       }}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="mdkb-board" data-pan={boardPan} ref={boardRef}>
+      <div className="folia-board" data-pan={boardPan} ref={boardRef}>
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
           {board.config.columns.map((col, i) => (
             <Column
@@ -270,29 +270,29 @@ export function Board({ board, today, selectedPath, wipLimits, filter, doneColum
         {activeColumn ? (
           // #1 (fix) — a dragged COLUMN gets a real lifted ghost too (col-header gave columns a
           // sortable but no overlay). A header-only ghost reads as "this column, picked up".
-          <div className="mdkb-column mdkb-column-overlay" style={{ ["--mdkb-col-accent" as string]: activeColumn.color || undefined }}>
-            <div className="mdkb-column-header">
-              <span className="mdkb-column-dot" aria-hidden="true" />
-              <span className="mdkb-column-title">{activeColumn.title}</span>
+          <div className="folia-column folia-column-overlay" style={{ ["--folia-col-accent" as string]: activeColumn.color || undefined }}>
+            <div className="folia-column-header">
+              <span className="folia-column-dot" aria-hidden="true" />
+              <span className="folia-column-title">{activeColumn.title}</span>
             </div>
           </div>
         ) : activeCard ? (
           <div
-            className="mdkb-card mdkb-card-overlay"
+            className="folia-card folia-card-overlay"
             data-prio={
               typeof activeCard.frontmatter.priority === "string" && activeCard.frontmatter.priority
                 ? priorityTone(activeCard.frontmatter.priority)
                 : undefined
             }
           >
-            <div className="mdkb-card-main">
-              <div className="mdkb-card-title">{activeCard.basename}</div>
+            <div className="folia-card-main">
+              <div className="folia-card-title">{activeCard.basename}</div>
               {(() => {
                 const chips = cardChips(activeCard, today, doneColumnId);
                 return chips.length > 0 ? (
-                  <div className="mdkb-chips">
+                  <div className="folia-chips">
                     {chips.map((c) => (
-                      <span key={c.key} className={`mdkb-chip mdkb-chip-${c.tone}`}>
+                      <span key={c.key} className={`folia-chip folia-chip-${c.tone}`}>
                         {c.label}
                       </span>
                     ))}

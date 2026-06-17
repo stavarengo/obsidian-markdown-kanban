@@ -1,4 +1,4 @@
-# AGENTS.md - Obsidian Markdown Kanban
+# AGENTS.md - Folia Kanban
 
 ## Basic Rule
 

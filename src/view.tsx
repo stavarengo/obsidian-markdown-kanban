@@ -5,7 +5,7 @@ import { App as BoardApp } from "./ui/App";
 import { VaultRepository } from "./obsidian/vaultRepo";
 import type { KanbanSettings } from "./settings";
 
-export const VIEW_TYPE_KANBAN = "markdown-kanban-view";
+export const VIEW_TYPE_KANBAN = "folia-kanban-view";
 
 export class KanbanView extends ItemView {
   private root: Root | null = null;
@@ -65,7 +65,7 @@ export class KanbanView extends ItemView {
     if (!this.root) this.root = createRoot(this.contentEl);
     if (!this.boardPath) {
       this.root.render(
-        <div className="mdkb-loading">
+        <div className="folia-loading">
           Open a board with the “Open Kanban board” command (it looks for a note with
           <code> kanban-board: true</code> in its frontmatter).
         </div>,

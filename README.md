@@ -1,18 +1,20 @@
-# Markdown Kanban
+# Folia Kanban
 
-[![Version](https://img.shields.io/github/manifest-json/v/stavarengo/obsidian-markdown-kanban?label=version&color=06b6d4)](https://github.com/stavarengo/obsidian-markdown-kanban/releases)
-[![Obsidian](https://img.shields.io/github/manifest-json/minAppVersion/stavarengo/obsidian-markdown-kanban?label=obsidian&color=7c3aed)](https://obsidian.md)
-[![Downloads](https://img.shields.io/github/downloads/stavarengo/obsidian-markdown-kanban/total?label=downloads&color=22c55e)](https://github.com/stavarengo/obsidian-markdown-kanban/releases)
-[![License: AGPL-3.0](https://img.shields.io/github/license/stavarengo/obsidian-markdown-kanban?color=64748b)](LICENSE)
+**Kanban from plain Markdown.**
+
+[![Version](https://img.shields.io/github/manifest-json/v/stavarengo/folia-kanban?label=version&color=06b6d4)](https://github.com/stavarengo/folia-kanban/releases)
+[![Obsidian](https://img.shields.io/github/manifest-json/minAppVersion/stavarengo/folia-kanban?label=obsidian&color=7c3aed)](https://obsidian.md)
+[![Downloads](https://img.shields.io/github/downloads/stavarengo/folia-kanban/total?label=downloads&color=22c55e)](https://github.com/stavarengo/folia-kanban/releases)
+[![License: AGPL-3.0](https://img.shields.io/github/license/stavarengo/folia-kanban?color=64748b)](LICENSE)
 
 <!--
 Once the plugin is accepted into the Obsidian community store, you can also add the official install-count badge:
-[![Community installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22markdown-kanban%22%5D.downloads&label=community%20installs&color=22c55e)](https://obsidian.md/plugins?id=markdown-kanban)
+[![Community installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22folia-kanban%22%5D.downloads&label=community%20installs&color=22c55e)](https://obsidian.md/plugins?id=folia-kanban)
 -->
 
 > A real, interactive Kanban board for [Obsidian](https://obsidian.md) where **every card is a plain Markdown file** — drag-and-drop, nested subcards, comments, and history, with no database and no lock-in.
 
-![Dragging a card across columns on the Markdown Kanban board](images/board-demo.gif)
+![Dragging a card across columns on the Folia Kanban board](images/board-demo.gif)
 
 <!-- TODO(asset): record a short GIF (~10–15s) showing a card dragged between columns, then the detail panel opening. Save as images/board-demo.gif and keep it under ~5 MB so it loads fast on GitHub. -->
 
@@ -101,7 +103,7 @@ plugin reads and writes that frontmatter list either way. A column entry may be 
 
 ## Settings
 
-Under **Settings → Markdown Kanban** (changes apply live, no reload):
+Under **Settings → Folia Kanban** (changes apply live, no reload):
 
 - **Card details — presentation** — `side` (docked beside the board) or `modal` (centred dialog).
 - **Side panel — layout** — `split` (shrinks the columns to the left) or `float` (overlays the columns); used when presentation is `side`.
@@ -125,7 +127,7 @@ Under **Settings → Markdown Kanban** (changes apply live, no reload):
 
 ## Your data stays yours
 
-Markdown Kanban runs entirely on the files in your vault. There is **no database, no account, no sync service, and no telemetry** — the plugin makes no network requests at all. Every card is a `.md` file you can read, edit, grep, version-control, or open in any other editor. Switch to a different app tomorrow and your board comes with you, because it was never anything but Markdown.
+Folia Kanban runs entirely on the files in your vault. There is **no database, no account, no sync service, and no telemetry** — the plugin makes no network requests at all. Every card is a `.md` file you can read, edit, grep, version-control, or open in any other editor. Switch to a different app tomorrow and your board comes with you, because it was never anything but Markdown.
 
 Edits are surgical: body changes splice only the section they touch, and frontmatter is written through Obsidian's `processFrontMatter`, so unrelated bytes are never rewritten. A byte-stability round-trip over the fixtures in `test/fixtures/` proves it.
 
@@ -135,15 +137,15 @@ Edits are surgical: body changes splice only the section they touch, and frontma
 
 ### From Community Plugins
 
-> _Coming soon — Markdown Kanban is awaiting review for the Obsidian community store. Until it's listed, use the manual install below._
+> _Coming soon — Folia Kanban is awaiting review for the Obsidian community store. Until it's listed, use the manual install below._
 
 1. Open **Settings → Community plugins** and turn off restricted mode.
-2. Click **Browse**, search for **Markdown Kanban**, and install it.
+2. Click **Browse**, search for **Folia Kanban**, and install it.
 3. Enable it under **Settings → Community plugins**.
 
 ### Manual
 
-Download a release from the [Releases page](https://github.com/stavarengo/obsidian-markdown-kanban/releases) (or build it yourself — see [Develop](#develop); the bundle lands in `dist/`), then copy `main.js`, `manifest.json` and `styles.css` into `<your-vault>/.obsidian/plugins/markdown-kanban/` and enable it under **Settings → Community plugins**.
+Download a release from the [Releases page](https://github.com/stavarengo/folia-kanban/releases) (or build it yourself — see [Develop](#develop); the bundle lands in `dist/`), then copy `main.js`, `manifest.json` and `styles.css` into `<your-vault>/.obsidian/plugins/folia-kanban/` and enable it under **Settings → Community plugins**.
 
 ## Develop
 
@@ -159,7 +161,7 @@ The pure model (`src/model`), board graph + drag reducer, and UI logic are unit-
 
 ## Support
 
-If Markdown Kanban makes your week a little easier, a ⭐ on [GitHub](https://github.com/stavarengo/obsidian-markdown-kanban) genuinely helps other people find it.
+If Folia Kanban makes your week a little easier, a ⭐ on [GitHub](https://github.com/stavarengo/folia-kanban) genuinely helps other people find it.
 
 <!-- Add sponsor links here if/when you set them up, e.g.:
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/stavarengo)
@@ -168,7 +170,7 @@ If Markdown Kanban makes your week a little easier, a ⭐ on [GitHub](https://gi
 
 ## Feedback & issues
 
-Found a bug or have an idea? Open an issue on [GitHub Issues](https://github.com/stavarengo/obsidian-markdown-kanban/issues).
+Found a bug or have an idea? Open an issue on [GitHub Issues](https://github.com/stavarengo/folia-kanban/issues).
 
 ## License
 

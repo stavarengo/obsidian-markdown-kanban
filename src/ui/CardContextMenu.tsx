@@ -53,7 +53,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
   // capture/restore).
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
-    ref.current?.querySelector<HTMLButtonElement>(".mdkb-menu-item:not(:disabled)")?.focus();
+    ref.current?.querySelector<HTMLButtonElement>(".folia-menu-item:not(:disabled)")?.focus();
     return () => { if (!actioned.current) opener?.focus?.(); };
   }, []);
 
@@ -75,7 +75,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
     e.preventDefault();
     const items = Array.from(
-      ref.current?.querySelectorAll<HTMLButtonElement>(".mdkb-menu-item:not(:disabled)") ?? [],
+      ref.current?.querySelectorAll<HTMLButtonElement>(".folia-menu-item:not(:disabled)") ?? [],
     );
     if (items.length === 0) return;
     const cur = items.indexOf(document.activeElement as HTMLButtonElement);
@@ -86,7 +86,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
 
   const item = (label: string, icon: IconName, onClick: () => void, opts?: { disabled?: boolean; danger?: boolean }) => (
     <button
-      className={"mdkb-menu-item" + (opts?.danger ? " mdkb-menu-danger" : "")}
+      className={"folia-menu-item" + (opts?.danger ? " folia-menu-danger" : "")}
       role="menuitem"
       disabled={opts?.disabled}
       onClick={() => {
@@ -101,7 +101,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
 
   return createPortal(
     <div
-      className="mdkb-menu mdkb-card-context"
+      className="folia-menu folia-card-context"
       ref={ref}
       role="menu"
       aria-label={target.kind === "todo" ? "Todo actions" : "Card actions"}
@@ -112,7 +112,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
         <>
           {item("Mark done", "check-circle", () => a.toggleTodo(path, target.todoIndex!, true))}
           {item("Remove todo", "trash", () => a.removeTodo(path, target.todoIndex!), { danger: true })}
-          <div className="mdkb-menu-divider" />
+          <div className="folia-menu-divider" />
           {item("Open card", "external-link", () => a.open(path))}
         </>
       ) : (
@@ -122,13 +122,13 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
           {!isDone && item("Mark done", "check-circle", () => a.complete(path))}
           {item("Open note", "external-link", () => a.openNote(path))}
 
-          <div className="mdkb-menu-divider" />
-          <span className="mdkb-menu-label">Priority</span>
-          <div className="mdkb-menu-priorities" role="group" aria-label="Change priority">
+          <div className="folia-menu-divider" />
+          <span className="folia-menu-label">Priority</span>
+          <div className="folia-menu-priorities" role="group" aria-label="Change priority">
             {priorityOptions(priority).map((p) => (
               <button
                 key={p}
-                className={"mdkb-menu-prio mdkb-chip-" + priorityTone(p) + (p === priority ? " is-active" : "")}
+                className={"folia-menu-prio folia-chip-" + priorityTone(p) + (p === priority ? " is-active" : "")}
                 role="menuitemradio"
                 aria-checked={p === priority}
                 onClick={() => {
@@ -141,7 +141,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
               </button>
             ))}
             <button
-              className={"mdkb-menu-prio mdkb-menu-prio-none" + (priority === "" ? " is-active" : "")}
+              className={"folia-menu-prio folia-menu-prio-none" + (priority === "" ? " is-active" : "")}
               role="menuitemradio"
               aria-checked={priority === ""}
               aria-label="No priority"
@@ -156,11 +156,11 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
             </button>
           </div>
 
-          <div className="mdkb-menu-divider" />
+          <div className="folia-menu-divider" />
           {item("Move up", "arrow-left", () => a.moveWithinColumn(path, -1), { disabled: !canMoveUp })}
           {item("Move down", "arrow-right", () => a.moveWithinColumn(path, 1), { disabled: !canMoveDown })}
 
-          <div className="mdkb-menu-divider" />
+          <div className="folia-menu-divider" />
           {item("Add subcard", "git-branch", () => a.addSubcard(path))}
           {item("Delete card", "trash", () => a.remove(path), { danger: true })}
         </>
