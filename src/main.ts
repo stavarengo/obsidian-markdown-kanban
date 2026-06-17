@@ -15,7 +15,7 @@ export default class FoliaKanbanPlugin extends Plugin {
 
     this.addRibbonIcon("layout-grid", "Open Folia Kanban board", () => void this.activateView());
     this.addCommand({
-      id: "open-kanban-board",
+      id: "folia-open-kanban-board",
       name: "Open Folia Kanban board",
       callback: () => void this.activateView(),
     });
