@@ -430,7 +430,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     const doc = root.ownerDocument;
     const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      // Skip when this kanban tab is hidden/backgrounded (display:none → no client rects), so a
+      // Skip when this Folia Kanban tab is hidden/backgrounded (display:none → no client rects), so a
       // foregrounded note doesn't have its "/" stolen by an off-screen board.
       if (root.getClientRects().length === 0) return;
       const t = e.target as HTMLElement | null;

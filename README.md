@@ -12,7 +12,7 @@ Once the plugin is accepted into the Obsidian community store, you can also add 
 [![Community installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22folia-kanban%22%5D.downloads&label=community%20installs&color=22c55e)](https://obsidian.md/plugins?id=folia-kanban)
 -->
 
-> A real, interactive Kanban board for [Obsidian](https://obsidian.md) where **every card is a plain Markdown file** — drag-and-drop, nested subcards, comments, and history, with no database and no lock-in.
+> An interactive Kanban board for [Obsidian](https://obsidian.md) where **every card is a plain Markdown file** — drag-and-drop, nested subcards, comments, and history, with no database and no lock-in.
 
 ![Dragging a card across columns on the Folia Kanban board](images/board-demo.gif)
 
@@ -86,7 +86,7 @@ Parentage has a single source of truth: a card is a subcard of P **iff** P's `##
 
 1. Make a **board note** — any note with this frontmatter (see `examples/basic/` for a minimal board, or `examples/feature-showcase/` for one that exercises every feature):
    ```yaml
-   kanban-board: true
+   folia-board: true
    card-folder: Cards      # folder holding the card notes
    columns:
      - todo
@@ -94,7 +94,7 @@ Parentage has a single source of truth: a card is a subcard of P **iff** P's `##
      - done
    ```
 2. Put card notes (each with a `status` matching a column) in that folder.
-3. Run the command **“Open Kanban board”** or click the layout-grid ribbon icon.
+3. Run the command **“Open Folia Kanban board”** or click the layout-grid ribbon icon.
 
 Columns can be edited by hand in the board note's `columns` property, or managed in-app from each
 column's `⋯` menu (rename, recolour, WIP limit, reorder, delete) and the **Add column** button — the

@@ -1,5 +1,5 @@
 ---
-kanban-board: true
+folia-board: true
 card-folder: examples/feature-showcase/Cards
 columns:
   - todo
@@ -34,4 +34,4 @@ columns:
 
 The "kitchen-sink" board for **Folia Kanban** — it exercises every feature of the plugin in one place. Open `README.md` in this folder for the guided tour and the things to try (search queries, settings, drag, right-click).
 
-Run **"Open Kanban board"** with this note focused, or click the layout-grid ribbon icon.
+Run **"Open Folia Kanban board"** with this note focused, or click the layout-grid ribbon icon.

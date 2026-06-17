@@ -1,4 +1,4 @@
-import { Notice, Plugin, PluginSettingTab, Setting, type App } from "obsidian";
+import { FuzzySuggestModal, Notice, Plugin, PluginSettingTab, Setting, TFile, type App } from "obsidian";
 import { KanbanView, VIEW_TYPE_KANBAN } from "./view";
 import { DEFAULT_SETTINGS, DETAIL_WIDTH_MAX, DETAIL_WIDTH_MIN, type KanbanSettings } from "./settings";
 
@@ -13,10 +13,10 @@ export default class FoliaKanbanPlugin extends Plugin {
       (leaf) => new KanbanView(leaf, () => this.settings, (p) => void this.updateSettings(p)),
     );
 
-    this.addRibbonIcon("layout-grid", "Open Kanban board", () => void this.activateView());
+    this.addRibbonIcon("layout-grid", "Open Folia Kanban board", () => void this.activateView());
     this.addCommand({
       id: "open-kanban-board",
-      name: "Open Kanban board",
+      name: "Open Folia Kanban board",
       callback: () => void this.activateView(),
     });
 
@@ -24,28 +24,44 @@ export default class FoliaKanbanPlugin extends Plugin {
   }
 
   async activateView(): Promise<void> {
-    const boardPath = this.resolveBoardPath();
-    if (!boardPath) {
+    // If the note in the editor is itself a board, open that one — no prompting.
+    const active = this.app.workspace.getActiveFile();
+    if (active && this.isBoard(active)) {
+      await this.openBoard(active.path);
+      return;
+    }
+
+    const boards = this.findBoards();
+    if (boards.length === 0) {
       new Notice(
-        "Folia Kanban: no board note found. Add `kanban-board: true` to a note's frontmatter (and `columns` + `card-folder`).",
+        "Folia Kanban: no board note found. Add `folia-board: true` to a note's frontmatter (and `columns` + `card-folder`).",
         8000,
       );
       return;
     }
+    if (boards.length === 1) {
+      await this.openBoard(boards[0].path);
+      return;
+    }
+    // Several boards — let the user pick which to open.
+    new BoardChooserModal(this.app, boards, (f) => void this.openBoard(f.path)).open();
+  }
+
+  /** Every note flagged `folia-board: true` in its frontmatter. */
+  findBoards(): TFile[] {
+    return this.app.vault.getMarkdownFiles().filter((f) => this.isBoard(f));
+  }
+
+  private isBoard(f: TFile): boolean {
+    return this.app.metadataCache.getFileCache(f)?.frontmatter?.["folia-board"] === true;
+  }
+
+  private async openBoard(boardPath: string): Promise<void> {
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(VIEW_TYPE_KANBAN)[0] ?? null;
     if (!leaf) leaf = workspace.getLeaf(true); // wide board → main area tab
     await leaf.setViewState({ type: VIEW_TYPE_KANBAN, active: true, state: { boardPath } });
     await workspace.revealLeaf(leaf);
-  }
-
-  /** The first note flagged `kanban-board: true` in its frontmatter. */
-  resolveBoardPath(): string | null {
-    for (const f of this.app.vault.getMarkdownFiles()) {
-      const fm = this.app.metadataCache.getFileCache(f)?.frontmatter;
-      if (fm && fm["kanban-board"] === true) return f.path;
-    }
-    return null;
   }
 
   async loadSettings(): Promise<void> {
@@ -63,11 +79,36 @@ export default class FoliaKanbanPlugin extends Plugin {
     this.refreshViews();
   }
 
-  /** Re-render all open Kanban views so settings changes reflect without a reload. */
+  /** Re-render all open Folia Kanban views so settings changes reflect without a reload. */
   refreshViews(): void {
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_KANBAN)) {
       if (leaf.view instanceof KanbanView) leaf.view.refresh();
     }
+  }
+}
+
+/** Picker shown when more than one `folia-board: true` note exists. */
+class BoardChooserModal extends FuzzySuggestModal<TFile> {
+  constructor(
+    app: App,
+    private boards: TFile[],
+    private onChoose: (file: TFile) => void,
+  ) {
+    super(app);
+    this.setPlaceholder("Choose a Folia Kanban board to open");
+  }
+
+  getItems(): TFile[] {
+    return this.boards;
+  }
+
+  // Disambiguate same-named boards in different folders by showing the parent path.
+  getItemText(file: TFile): string {
+    return file.parent && file.parent.path !== "/" ? `${file.basename}  (${file.parent.path})` : file.basename;
+  }
+
+  onChooseItem(file: TFile): void {
+    this.onChoose(file);
   }
 }
 

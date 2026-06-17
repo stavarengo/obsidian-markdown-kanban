@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, TFile, WorkspaceLeaf } from "obsidian";
 import { StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { App as BoardApp } from "./ui/App";
@@ -25,7 +25,10 @@ export class KanbanView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Kanban board";
+    if (!this.boardPath) return "Folia Kanban";
+    const file = this.app.vault.getAbstractFileByPath(this.boardPath);
+    const name = file instanceof TFile ? file.basename : this.boardPath.replace(/\.md$/, "");
+    return `${name} - Folia Kanban`;
   }
 
   getIcon(): string {
@@ -66,8 +69,8 @@ export class KanbanView extends ItemView {
     if (!this.boardPath) {
       this.root.render(
         <div className="folia-loading">
-          Open a board with the “Open Kanban board” command (it looks for a note with
-          <code> kanban-board: true</code> in its frontmatter).
+          Open a board with the “Open Folia Kanban board” command (it looks for a note with
+          <code> folia-board: true</code> in its frontmatter).
         </div>,
       );
       return;

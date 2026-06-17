@@ -80,7 +80,7 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
 ) {
   const inputRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, []);
-  // Unique per Toolbar so two open kanban panes don't collide on the listbox id / aria-controls.
+  // Unique per Toolbar so two open Folia Kanban panes don't collide on the listbox id / aria-controls.
   const listId = useId();
 
   const [open, setOpen] = useState(false);

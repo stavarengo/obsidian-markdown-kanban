@@ -8,13 +8,13 @@ The plugin resolves `card-folder` **relative to the vault root**, so the simples
 
 1. **Open the repository root as an Obsidian vault** (`Open folder as vault` → pick this repo).
 2. Enable **Folia Kanban** under Settings → Community plugins (install it manually first if needed — see the repo README).
-3. Open **`Showcase Board.md`** and run the command **"Open Kanban board"** (or click the layout-grid ribbon icon).
+3. Open **`Showcase Board.md`** and run the command **"Open Folia Kanban board"** (or click the layout-grid ribbon icon).
 
 > If you'd rather drop this into your own vault, copy the whole `feature-showcase/` folder anywhere, then edit one line in `Showcase Board.md`: set `card-folder:` to the new folder's vault-relative path (e.g. `My Stuff/feature-showcase/Cards`).
 
 ## What's where
 
-- `Showcase Board.md` — the board note (`kanban-board: true` + the `columns:` config).
+- `Showcase Board.md` — the board note (`folia-board: true` + the `columns:` config).
 - `Cards/` — every card (this is the `card-folder`).
 - `Cards/Engineering/`, `Cards/Design/` — context subfolders; each `_context.md` gives its cards a coloured strip + badge.
 
