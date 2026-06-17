@@ -1,4 +1,4 @@
-import { Notice, Plugin, PluginSettingTab, Setting, TFile, type App } from "obsidian";
+import { Notice, Plugin, PluginSettingTab, Setting, type App } from "obsidian";
 import { KanbanView, VIEW_TYPE_KANBAN } from "./view";
 import { DEFAULT_SETTINGS, DETAIL_WIDTH_MAX, DETAIL_WIDTH_MIN, type KanbanSettings } from "./settings";
 
@@ -39,12 +39,8 @@ export default class FoliaKanbanPlugin extends Plugin {
     await workspace.revealLeaf(leaf);
   }
 
-  /** Configured board note, else the first note flagged `kanban-board: true`. */
+  /** The first note flagged `kanban-board: true` in its frontmatter. */
   resolveBoardPath(): string | null {
-    if (this.settings.boardPath) {
-      const f = this.app.vault.getAbstractFileByPath(this.settings.boardPath);
-      if (f instanceof TFile) return f.path;
-    }
     for (const f of this.app.vault.getMarkdownFiles()) {
       const fm = this.app.metadataCache.getFileCache(f)?.frontmatter;
       if (fm && fm["kanban-board"] === true) return f.path;
@@ -87,16 +83,6 @@ class KanbanSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     const s = this.plugin.settings;
     containerEl.empty();
-
-    new Setting(containerEl)
-      .setName("Board note")
-      .setDesc("Path to the note that defines the board (frontmatter: kanban-board, columns, card-folder). Leave empty to auto-detect.")
-      .addText((t) =>
-        t
-          .setPlaceholder("Kanban Board.md")
-          .setValue(s.boardPath)
-          .onChange((v) => void this.plugin.updateSettings({ boardPath: v.trim() })),
-      );
 
     new Setting(containerEl)
       .setName("Card details — presentation")

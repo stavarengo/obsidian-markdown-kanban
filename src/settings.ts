@@ -1,7 +1,6 @@
 import type { HistoryScope } from "./model/types";
 
 export interface KanbanSettings {
-  boardPath: string;
   detailPresentation: "side" | "modal";
   sidePanelMode: "split" | "float";
   detailWidth: number;
@@ -17,7 +16,6 @@ export interface KanbanSettings {
 }
 
 export const DEFAULT_SETTINGS: KanbanSettings = {
-  boardPath: "",
   detailPresentation: "side",
   sidePanelMode: "split",
   detailWidth: 380,
