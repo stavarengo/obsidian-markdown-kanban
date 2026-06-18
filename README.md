@@ -76,7 +76,7 @@ Parentage has a single source of truth: a card is a subcard of P **iff** P's `##
 - **Live reload** when files change outside the board, with a self-write echo guard.
 - **Accessible & themed** — keyboard-navigable, ARIA roles and focus management throughout; styled with Obsidian's own CSS variables (light + dark) for a clean, shadcn-grade look.
 
-![The card detail panel shown as a centred modal over the board](images/card-detail.png)
+![The card detail panel (left) beside the same card's plain Markdown file (right)](images/card-detail.png)
 
 ## Set up a board
 
