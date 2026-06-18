@@ -18,6 +18,7 @@
     "audit:raw-values": "node scripts/audit-raw-values.mjs",
     "waivers:check": "node scripts/check-waivers.mjs",
     "ds:check": "pnpm tokens:check && pnpm audit:raw-values && pnpm waivers:check",
+    "lint:a11y": "eslint src",
     "prepare": "lefthook install"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
@@ -39,11 +41,15 @@
     "@types/react-dom": "^18.3.0",
     "builtin-modules": "^4.0.0",
     "esbuild": "^0.23.1",
+    "eslint": "^10.5.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "globals": "^17.6.0",
     "jsdom": "^25.0.1",
     "lefthook": "^2.1.9",
     "obsidian": "^1.7.2",
     "release-it": "19.2.2",
     "typescript": "^5.6.2",
+    "typescript-eslint": "^8.61.1",
     "vitest": "^2.1.1"
   }
 }
