@@ -66,6 +66,7 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
   };
 
   return createPortal(
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog surface: onKeyDown drives Escape on a role=dialog + focus-managed menu
     <div
       className="folia-menu"
       ref={ref}

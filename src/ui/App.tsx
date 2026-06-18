@@ -398,7 +398,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   // each reload, defeating App's deliberate frontmatter-reference memo optimization.
   const contextsValue = board?.contexts ?? EMPTY_CONTEXTS;
   const contextsKey = JSON.stringify(contextsValue);
-  const stableContexts = useMemo(() => contextsValue, [contextsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stableContexts = useMemo(() => contextsValue, [contextsKey]);
 
   // Parse the query once per change; Board/Column filter with this same parsed §1 Filter.
   const filter = useMemo(() => parseFilter(query), [query]);
@@ -516,7 +516,6 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
               </div>
               {detailMode === "modal" && panelShown && rootRef.current &&
                 createPortal(
-                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
                   <div
                     className="folia-detail-modal-backdrop"
                     onPointerDown={(e) => { if (e.target === e.currentTarget) closeDetail(); }}

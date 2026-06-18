@@ -145,7 +145,6 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     setConfirmDelete(false);
     setEditingDesc(false); // navigating cards starts the new card in view mode
     void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, isCreate]);
 
   // Dialog focus management: focus in on open, return focus to the opener on close. The create form
@@ -154,7 +153,6 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
     openerRef.current = document.activeElement as HTMLElement | null;
     if (!isCreate) panelRef.current?.focus();
     return () => openerRef.current?.focus?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // A freshly-created card (inline-edit / detail flows) lands the user in the description editor.
@@ -164,7 +162,6 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
   // create branch and remounts a fresh card panel; inline-edit re-keys the same instance on the new path.
   useEffect(() => {
     if (focusNew && !isCreate) setEditingDesc(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusNew, path]);
 
   // Focus the raw description textarea whenever the editor opens (fresh card, pencil, click-to-edit).
@@ -209,7 +206,6 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
   // letting the user type the title there (the input's Enter handler calls repo.addSubcard).
   useEffect(() => {
     if (focusAddSubcard && !isCreate) subcardRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusAddSubcard, path]);
 
   // Side modes: a pointerdown outside the panel closes it — but not when it lands on another
@@ -284,6 +280,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
       })();
     };
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog surface: onKeyDown drives Escape/keyboard on a role=dialog + aria-modal + focus-managed panel
       <aside
         className={"folia-detail" + modeClass}
         data-testid="card-detail"
@@ -296,7 +293,6 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
         style={panelStyle}
       >
         {isSide && (
-          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
           <div className="folia-detail-resize" role="separator" aria-orientation="vertical" aria-label="Resize panel" onPointerDown={onResizeStart} />
         )}
         <header className="folia-detail-header">
@@ -335,6 +331,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
 
   if (!card) {
     return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog surface: onKeyDown drives Escape on a role=dialog + aria-modal + focus-managed panel
       <aside className={"folia-detail" + modeClass} role="dialog" aria-modal={mode === "modal"} aria-label="Card not found" ref={panelRef} tabIndex={-1} onKeyDown={onKeyDown} style={panelStyle}>
         <header className="folia-detail-header">
           <span>Card not found</span>
@@ -351,6 +348,7 @@ export function CardDetail({ path, board, mode, onClose, onNavigate, onChanged, 
   );
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog surface: onKeyDown drives Escape/keyboard on a role=dialog + aria-modal + focus-managed panel
     <aside
       className={"folia-detail" + modeClass}
       data-testid="card-detail"

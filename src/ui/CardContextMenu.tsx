@@ -104,6 +104,7 @@ export function CardContextMenu({ target, path, priority, isDone, canMoveUp, can
       className="folia-menu folia-card-context"
       ref={ref}
       role="menu"
+      tabIndex={-1}
       aria-label={target.kind === "todo" ? "Todo actions" : "Card actions"}
       onKeyDown={onKeyDown}
       style={pos ? { top: pos.top, left: pos.left } : { visibility: "hidden" }}
