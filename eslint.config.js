@@ -57,7 +57,10 @@ export default [
       "@typescript-eslint/no-non-null-assertion": "error",
       "@typescript-eslint/no-unnecessary-type-assertion": "error",
       "@typescript-eslint/consistent-type-imports": "error",
-      "@typescript-eslint/switch-exhaustiveness-check": "error",
+      "@typescript-eslint/switch-exhaustiveness-check": [
+        "error",
+        { considerDefaultExhaustiveForUnions: true },
+      ],
       "@typescript-eslint/ban-ts-comment": [
         "error",
         { "ts-ignore": true, "ts-nocheck": true, "ts-expect-error": "allow-with-description" },

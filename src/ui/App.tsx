@@ -33,7 +33,9 @@ function mapOpenMode(openMode: KanbanSettings["addCardOpenMode"]): DetailMode | 
       return "float";
     case "side-split":
       return "split";
-    case "default":
+    // Any other value (incl. the "default" setting or a stale/corrupt persisted value)
+    // means "use the global default" — no presentation override.
+    default:
       return null;
   }
 }
