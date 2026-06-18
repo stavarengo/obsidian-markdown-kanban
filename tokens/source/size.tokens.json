@@ -1,0 +1,16 @@
+{
+  "$description": "Layout/hit-target sizes. Both live --folia-* tokens; values byte-match the .folia-root block in src/styles.css.",
+  "size": {
+    "$type": "dimension",
+    "col-w": {
+      "$description": "Single source for column width + drag-overlay width.",
+      "$value": "300px",
+      "$extensions": { "folia": { "cssVar": "--folia-col-w", "live": true } }
+    },
+    "detail-w": {
+      "$description": "Side-panel width; overridden inline from settings.detailWidth.",
+      "$value": "380px",
+      "$extensions": { "folia": { "cssVar": "--folia-detail-w", "live": true } }
+    }
+  }
+}

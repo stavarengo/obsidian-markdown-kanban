@@ -9,6 +9,7 @@ import { ColumnEditModal } from "./ColumnEditModal";
 import { Icon } from "./icons";
 import { useBoardActions, useSettings } from "./context";
 import { groupAndSortCards, isEmptyFilter, matchCard, parseFilter, type Filter } from "./cardView";
+import { COLUMN_COLORS } from "./columnColors";
 
 // Render a card's subtree of genuinely-nested children as a bordered group. Recursive: each child
 // renders a nested (non-sortable) CardItem and then, if it has its own children, its own group.
@@ -46,11 +47,10 @@ function SubcardGroup({
 
 // Stable per-column accent when the board hasn't assigned a color, so even a plain
 // `columns: [todo, doing, done]` board reads as colour-coded (easier to scan at a glance).
-const COLUMN_PALETTE = ["#4c9aff", "#8fd14f", "#ffab00", "#9c8cff", "#ff5c5c", "#57d9a3", "#f78fb3", "#9aa0a6"];
 function autoColor(id: string): string {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return COLUMN_PALETTE[h % COLUMN_PALETTE.length];
+  return COLUMN_COLORS[h % COLUMN_COLORS.length];
 }
 
 interface Props {

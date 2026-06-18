@@ -1,0 +1,21 @@
+{
+  "$description": "NEW category. Captures the font-size and font-weight raw values currently in use in src/styles.css as a named typographic scale, so a source of truth exists. No --folia-* typography vars are defined yet (CSS adoption pending); these tokens are the new home, not a byte-match of the .folia-root block. Font-size names follow the usage ladder (xs..xl); weights named by role.",
+  "font-size": {
+    "$type": "dimension",
+    "$description": "Distinct font-size literals in styles.css: 10, 10.5, 11, 12, 12.5, 13, 13.5, 15, 16 px.",
+    "xxs": { "$value": "10px", "$extensions": { "folia": { "live": false } } },
+    "xxs-plus": { "$value": "10.5px", "$extensions": { "folia": { "live": false } } },
+    "xs": { "$value": "11px", "$extensions": { "folia": { "live": false } } },
+    "sm": { "$value": "12px", "$extensions": { "folia": { "live": false } } },
+    "sm-plus": { "$value": "12.5px", "$extensions": { "folia": { "live": false } } },
+    "md": { "$value": "13px", "$extensions": { "folia": { "live": false } } },
+    "md-plus": { "$value": "13.5px", "$extensions": { "folia": { "live": false } } },
+    "lg": { "$value": "15px", "$extensions": { "folia": { "live": false } } },
+    "xl": { "$value": "16px", "$extensions": { "folia": { "live": false } } }
+  },
+  "font-weight": {
+    "$type": "fontWeight",
+    "medium": { "$value": "500", "$extensions": { "folia": { "live": false } } },
+    "semibold": { "$value": "600", "$extensions": { "folia": { "live": false } } }
+  }
+}

@@ -3,3 +3,5 @@ pre-commit:
     typecheck:
       glob: "*.{ts,tsx}"
       run: pnpm typecheck
+    ds-check:
+      run: pnpm ds:check

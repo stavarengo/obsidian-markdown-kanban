@@ -1,0 +1,10 @@
+{
+  "$description": "NEW category. Captures the standalone UI opacity literals currently raw in src/styles.css (0.7, 0.6, 0.5, 0.4) as named tokens by intended usage. Keyframe endpoints (0/1) are animation states, not design tokens, and are intentionally excluded. No --folia-* opacity vars exist yet (CSS adoption pending); these tokens are the new home, not a byte-match of the .folia-root block.",
+  "opacity": {
+    "$type": "number",
+    "muted": { "$value": "0.7", "$extensions": { "folia": { "live": false } } },
+    "subtle": { "$value": "0.6", "$extensions": { "folia": { "live": false } } },
+    "faint": { "$value": "0.5", "$extensions": { "folia": { "live": false } } },
+    "disabled": { "$value": "0.4", "$extensions": { "folia": { "live": false } } }
+  }
+}

@@ -14,6 +14,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "tokens:check": "node scripts/check-tokens.mjs",
+    "audit:raw-values": "node scripts/audit-raw-values.mjs",
+    "waivers:check": "node scripts/check-waivers.mjs",
+    "ds:check": "pnpm tokens:check && pnpm audit:raw-values && pnpm waivers:check",
     "prepare": "lefthook install"
   },
   "dependencies": {

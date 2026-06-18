@@ -3,10 +3,9 @@ import { createPortal } from "react-dom";
 import type { ColumnDef } from "../model/types";
 import { useBoardActions } from "./context";
 import { Icon } from "./icons";
+import { COLUMN_COLORS } from "./columnColors";
 
 const MENU_W = 224;
-
-const COLORS = ["#4c9aff", "#8fd14f", "#ffab00", "#9c8cff", "#ff5c5c", "#57d9a3", "#f78fb3", "#9aa0a6"];
 
 interface Props {
   column: ColumnDef;
@@ -95,7 +94,7 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
       <div className="folia-menu-field">
         <span className="folia-menu-label">Color</span>
         <div className="folia-swatches">
-          {COLORS.map((c) => (
+          {COLUMN_COLORS.map((c) => (
             <button
               key={c}
               className={"folia-swatch" + (column.color?.toLowerCase() === c.toLowerCase() ? " is-active" : "")}

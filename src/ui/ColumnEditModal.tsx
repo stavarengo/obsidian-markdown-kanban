@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import type { ColumnDef, ColumnGroup, ColumnSort } from "../model/types";
 import { useBoardActions } from "./context";
 import { Icon } from "./icons";
-
-const COLORS = ["#4c9aff", "#8fd14f", "#ffab00", "#9c8cff", "#ff5c5c", "#57d9a3", "#f78fb3", "#9aa0a6"];
+import { COLUMN_COLORS } from "./columnColors";
 
 interface Props {
   column: ColumnDef;
@@ -127,7 +126,7 @@ export function ColumnEditModal({ column, onClose }: Props) {
           <div className="folia-field">
             <span className="folia-field-label">Color</span>
             <div className="folia-swatches">
-              {COLORS.map((c) => (
+              {COLUMN_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"

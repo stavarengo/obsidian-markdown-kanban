@@ -1,0 +1,249 @@
+{
+  "_comment": "Baseline of tolerated raw design values (ratchet). New raw values fail the check; existing ones are grandfathered here. Pay this debt down via tracking/waivers/ — open a waiver, remove entries as you tokenize. Regenerate with: node scripts/audit-raw-values.mjs --update",
+  "findings": [
+    {
+      "file": "src/styles.css",
+      "snippet": "#fff"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "10px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "11px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "12px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "13px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "14px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "15px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "16px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "18px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "200px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "20px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "220px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "224px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "22px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "24px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "26px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "280px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "30px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "320px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "440px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "48px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "640px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "72px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "86px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "90px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "92px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "999px"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: 0 0 0 1px var(--folia-accent), var(--folia-shadow-card);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 25%, transparent);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--folia-accent);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--text-normal);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: none;"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: var(--folia-shadow-card-hover);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: var(--folia-shadow-card);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: var(--folia-shadow-overlay);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: var(--folia-shadow-pop);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "font-family: var(--font-monospace, monospace);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "rgba(0, 0, 0, 0.18)"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "rgba(0, 0, 0, 0.28)"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "rgba(0, 0, 0, 0.45)"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 1"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 2"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 30"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 50"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 55"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 60"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 70"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 80"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "z-index: 90"
+    },
+    {
+      "file": "src/ui/CardDetail.tsx",
+      "snippet": "24px"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#4c9aff"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#57d9a3"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#8fd14f"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#9aa0a6"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#9c8cff"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#f78fb3"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#ff5c5c"
+    },
+    {
+      "file": "src/ui/columnColors.ts",
+      "snippet": "#ffab00"
+    }
+  ]
+}
