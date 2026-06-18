@@ -2,8 +2,10 @@
 status: doing
 order: 1
 priority: A
-due: 2026-06-10
-tags: [bug, a11y]
+due: 2026-06-29
+tags:
+  - bug
+  - a11y
 blocked: true
 ---
 
@@ -15,3 +17,6 @@ Focus is lost after dropping with the keyboard. Repro: pick up with **Space**, m
 - [x] Reproduce reliably
 - [ ] Restore focus to the moved card
 - [ ] Add a regression test
+
+## History
+- [2026-06-18 01:38] Due → 2026-06-19

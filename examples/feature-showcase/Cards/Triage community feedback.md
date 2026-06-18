@@ -2,7 +2,7 @@
 status: todo
 order: 2
 priority: B
-due: 2026-06-17
+due: 2026-07-01
 tags: support
 area: work
 ---
@@ -15,3 +15,6 @@ Sort the latest issues into bugs vs. feature requests, then label and respond.
 - [ ] Label new issues
 - [ ] Reply to the drag-and-drop thread
 - [ ] Close duplicates
+
+## History
+- [2026-06-18 01:38] Due → 0002-01-07

@@ -2,7 +2,7 @@
 type: task
 status: doing
 priority: A
-due: 2026-02-01
+due: ""
 created: 2026-01-12
 ---
 

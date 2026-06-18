@@ -1,7 +1,6 @@
 ---
 status: review
 priority: A
-due: 2026-06-17
 tags: review
 ---
 
