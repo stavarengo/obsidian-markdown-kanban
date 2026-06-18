@@ -222,10 +222,12 @@ export function Column({
       const c = board.cards[p];
       return c ? [c] : [];
     }),
-    column.group ?? "none",
-    column.sort ?? "manual",
-    today,
-    doneColumnId,
+    {
+      group: column.group ?? "none",
+      sort: column.sort ?? "manual",
+      today,
+      doneColumnId,
+    },
   );
 
   // Flat list of rendered top-level cards' sortable ids in display order — the SortableContext item

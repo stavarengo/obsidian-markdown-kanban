@@ -237,7 +237,12 @@ describe("groupAndSortCards (#6 in-column grouping + sort)", () => {
 
   it("defaults (none/manual) reproduce the flat input order in one unlabeled group", () => {
     const cards = [card({}, "A"), card({}, "B"), card({}, "C")];
-    const out = groupAndSortCards(cards, "none", "manual", today, done);
+    const out = groupAndSortCards(cards, {
+      group: "none",
+      sort: "manual",
+      today,
+      doneColumnId: done,
+    });
     expect(out).toHaveLength(1);
     if (!out[0]) throw new Error("expected group at index 0");
     expect(out[0]).toMatchObject({ key: "", label: "" });
@@ -252,7 +257,12 @@ describe("groupAndSortCards (#6 in-column grouping + sort)", () => {
       card({ priority: "low" }, "Low2"),
       card({ priority: "medium" }, "Med"),
     ];
-    const out = groupAndSortCards(cards, "none", "priority", today, done);
+    const out = groupAndSortCards(cards, {
+      group: "none",
+      sort: "priority",
+      today,
+      doneColumnId: done,
+    });
     if (!out[0]) throw new Error("expected group at index 0");
     expect(names(out[0])).toEqual(["Urg", "Med", "Low1", "Low2", "None"]);
   });
@@ -264,7 +274,7 @@ describe("groupAndSortCards (#6 in-column grouping + sort)", () => {
       card({}, "NoDue"),
       card({ due: "2026-06-16" }, "Today"),
     ];
-    const out = groupAndSortCards(cards, "none", "due", today, done);
+    const out = groupAndSortCards(cards, { group: "none", sort: "due", today, doneColumnId: done });
     // overdue > today > future; NoDue ties with Future (both rank "future") and keeps board order.
     if (!out[0]) throw new Error("expected group at index 0");
     expect(names(out[0])).toEqual(["Overdue", "Today", "Future", "NoDue"]);
@@ -277,7 +287,12 @@ describe("groupAndSortCards (#6 in-column grouping + sort)", () => {
       card({}, "NoDue1"),
       card({ due: "2026-06-16" }, "Today1"),
     ];
-    const out = groupAndSortCards(cards, "due", "manual", today, done);
+    const out = groupAndSortCards(cards, {
+      group: "due",
+      sort: "manual",
+      today,
+      doneColumnId: done,
+    });
     expect(out.map((g) => g.key)).toEqual(["overdue", "today", "future", "none"]);
     expect(out.map((g) => g.label)).toEqual(["Overdue", "Today", "Later", "No due date"]);
     if (!out[0]) throw new Error("expected group at index 0");
@@ -291,7 +306,12 @@ describe("groupAndSortCards (#6 in-column grouping + sort)", () => {
       card({ due: "2026-06-10", priority: "low" }, "OverLow"),
       card({ due: "2026-06-10", priority: "urgent" }, "OverUrg"),
     ];
-    const out = groupAndSortCards(cards, "due", "priority", today, done);
+    const out = groupAndSortCards(cards, {
+      group: "due",
+      sort: "priority",
+      today,
+      doneColumnId: done,
+    });
     expect(out).toHaveLength(1);
     if (!out[0]) throw new Error("expected group at index 0");
     expect(names(out[0])).toEqual(["OverUrg", "OverLow"]);
@@ -299,7 +319,12 @@ describe("groupAndSortCards (#6 in-column grouping + sort)", () => {
 
   it("a done card never lands in the overdue bucket (delegates to dueInfo)", () => {
     const cards = [card({ due: "2026-06-10", status: "done" }, "Finished")];
-    const out = groupAndSortCards(cards, "due", "manual", today, done);
+    const out = groupAndSortCards(cards, {
+      group: "due",
+      sort: "manual",
+      today,
+      doneColumnId: done,
+    });
     expect(out.map((g) => g.key)).toEqual(["done"]);
   });
 });

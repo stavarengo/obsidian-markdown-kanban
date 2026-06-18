@@ -456,11 +456,9 @@ function sortCards(
  */
 export function groupAndSortCards(
   cards: Card[],
-  group: ColumnGroup,
-  sort: ColumnSort,
-  today: string,
-  doneColumnId: string | null,
+  opts: { group: ColumnGroup; sort: ColumnSort; today: string; doneColumnId: string | null },
 ): CardGroup[] {
+  const { group, sort, today, doneColumnId } = opts;
   if (group !== "due") {
     return [{ key: "", label: "", cards: sortCards(cards, sort, today, doneColumnId) }];
   }
