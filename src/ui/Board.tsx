@@ -264,7 +264,7 @@ export function Board({ board, today, selectedPath, wipLimits, filter, doneColum
           easing: "cubic-bezier(0.16, 1, 0.3, 1)",
           // Briefly dim the overlay as it settles into the placeholder, so the lift visibly "lands"
           // rather than blinking out.
-          sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.5" } } }),
+          sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "var(--folia-opacity-faint)" } } }),
         }}
       >
         {activeColumn ? (

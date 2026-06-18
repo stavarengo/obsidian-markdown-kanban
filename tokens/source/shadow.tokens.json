@@ -21,12 +21,12 @@
     "ring": {
       "$description": "Focus ring. NEW home for the box-shadow repeated 8x outside the block (the 30% variant; the lone 25% at styles.css:716 is a one-off, not this token). CSS adoption pending.",
       "$value": "0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent)",
-      "$extensions": { "folia": { "cssVar": "--folia-ring", "live": false } }
+      "$extensions": { "folia": { "cssVar": "--folia-ring", "live": true } }
     },
     "panel": {
       "$description": "Unique side-panel shadow (styles.css:1046). NEW home; CSS adoption pending.",
       "$value": "-8px 0 24px rgba(0, 0, 0, 0.18)",
-      "$extensions": { "folia": { "cssVar": "--folia-shadow-panel", "live": false } }
+      "$extensions": { "folia": { "cssVar": "--folia-shadow-panel", "live": true } }
     }
   }
 }

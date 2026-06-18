@@ -1,9 +1,14 @@
 {
   "_comment": "Baseline of tolerated raw design values (ratchet). New raw values fail the check; existing ones are grandfathered here. Pay this debt down via tracking/waivers/ — open a waiver, remove entries as you tokenize. Regenerate with: node scripts/audit-raw-values.mjs --update",
+  "note": "Every entry below is an INTENTIONAL RESIDUAL — a grandfathered one-off layout constant or trivial value with no semantic token home, deliberately left raw. There is no remaining migration debt: the radius-pill (999px), scrim, shadow-panel, shadow-pop and accent focus-ring were all moved to var(--folia-*) and are live (sourced from tokens/source/, verified by scripts/check-tokens.mjs), as were typography size/weight, z-index and opacity earlier. What stays here: one-off component-dimension px lengths (e.g. 200/220/224/280/320/440/640px panel/column widths and assorted 10–92px paddings/sizes), ad-hoc padding shorthands, the 25%-accent focus-ring one-off, the #fff toast color, the 1.5px hairline border, the font-family monospace fallback, the 24px JS layout offset in src/ui/CardDetail.tsx, and the 8 column hexes in src/ui/columnColors.ts (the single-source palette, mirrored into tokens/source/). The box-shadow entries that reference var(--folia-*) are matched literals on consuming lines, not raw values; they remain allowlisted because the detector flags the whole declaration. Keyframe opacity endpoints (0/1) and var(...) opacity are exempt by the detector, not listed here.",
   "findings": [
     {
       "file": "src/styles.css",
       "snippet": "#fff"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "1.5px"
     },
     {
       "file": "src/styles.css",
@@ -24,10 +29,6 @@
     {
       "file": "src/styles.css",
       "snippet": "14px"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "15px"
     },
     {
       "file": "src/styles.css",
@@ -107,23 +108,11 @@
     },
     {
       "file": "src/styles.css",
-      "snippet": "999px"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);"
-    },
-    {
-      "file": "src/styles.css",
       "snippet": "box-shadow: 0 0 0 1px var(--folia-accent), var(--folia-shadow-card);"
     },
     {
       "file": "src/styles.css",
       "snippet": "box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 25%, transparent);"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "box-shadow: 0 0 0 2px color-mix(in srgb, var(--folia-accent) 30%, transparent);"
     },
     {
       "file": "src/styles.css",
@@ -135,15 +124,11 @@
     },
     {
       "file": "src/styles.css",
-      "snippet": "box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);"
-    },
-    {
-      "file": "src/styles.css",
       "snippet": "box-shadow: none;"
     },
     {
       "file": "src/styles.css",
-      "snippet": "box-shadow: var(--folia-shadow-card-hover);"
+      "snippet": "box-shadow: var(--folia-ring);"
     },
     {
       "file": "src/styles.css",
@@ -151,7 +136,15 @@
     },
     {
       "file": "src/styles.css",
+      "snippet": "box-shadow: var(--folia-shadow-card-hover);"
+    },
+    {
+      "file": "src/styles.css",
       "snippet": "box-shadow: var(--folia-shadow-overlay);"
+    },
+    {
+      "file": "src/styles.css",
+      "snippet": "box-shadow: var(--folia-shadow-panel);"
     },
     {
       "file": "src/styles.css",
@@ -160,54 +153,6 @@
     {
       "file": "src/styles.css",
       "snippet": "font-family: var(--font-monospace, monospace);"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "rgba(0, 0, 0, 0.18)"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "rgba(0, 0, 0, 0.28)"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "rgba(0, 0, 0, 0.45)"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 1"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 2"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 30"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 50"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 55"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 60"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 70"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 80"
-    },
-    {
-      "file": "src/styles.css",
-      "snippet": "z-index: 90"
     },
     {
       "file": "src/ui/CardDetail.tsx",

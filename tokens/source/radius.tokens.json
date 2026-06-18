@@ -21,7 +21,7 @@
     "pill": {
       "$description": "Fully-rounded pill radius. NEW home — raw 999px outside the block (CSS adoption pending).",
       "$value": "999px",
-      "$extensions": { "folia": { "cssVar": "--folia-r-pill", "live": false } }
+      "$extensions": { "folia": { "cssVar": "--folia-r-pill", "live": true } }
     }
   }
 }

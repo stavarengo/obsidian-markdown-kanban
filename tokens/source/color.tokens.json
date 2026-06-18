@@ -53,7 +53,7 @@
       "$description": "Modal/side-panel backdrop. NEW token home — appears raw at styles.css:1071 and :1487; no --folia-* var defined yet (CSS adoption pending).",
       "$value": "rgba(0, 0, 0, 0.45)",
       "$type": "color",
-      "$extensions": { "folia": { "cssVar": "--folia-scrim", "live": false } }
+      "$extensions": { "folia": { "cssVar": "--folia-scrim", "live": true } }
     },
     "priority": {
       "$description": "Priority ramp urgent->trivial, tinted off the theme's accent palette. Live --folia-prio-* tokens.",
