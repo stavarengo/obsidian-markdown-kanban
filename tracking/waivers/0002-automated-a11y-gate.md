@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | **Rule violated** | The **DS-A11Y-\*** Accessibility Baseline family (`spec.md` §5), enforced via the **Accessibility checks** conformance category (`DS-PROCESS-CONFORMANCE-1` #4). Specifically the gaps map to DS-A11Y-TARGET-10 (24–26px targets), DS-A11Y-DISCOVERABLE-4 (hover-only reveal), DS-A11Y-STATUS-8 (no busy/announce on async writes), DS-A11Y-MODAL-6 (`aria-modal` without focus trap / inert background), and DS-A11Y-LANDMARK-12 (no `<main>`/`<h1>`/named regions). |
-| **Status** | `active` |
+| **Status** | `retired` |
 | **Owner** | @stavarengo |
 | **Created date** | 2026-06-18 |
 | **Expiry date** | 2026-09-30 |
@@ -11,18 +11,23 @@
 
 ## Reason
 
-The a11y *contracts* are real and documented — the per-component / per-pattern Accessibility sections capture the intended behavior, and a genuine baseline exists in code (keyboard DnD, focus management, roles/names, `:focus-visible`), so DoD item 11 is honestly MET. What is missing is (a) an automated enforcement toolchain and (b) remediation of the 32 gaps. Standing up an eslint + axe toolchain and burning down 32 fixes by severity is **product engineering work** that goes beyond the goal of this effort, which was to establish the design-system source of truth. Deferring it is a scope boundary, not convenience.
+The a11y *contracts* were always real and documented — the per-component / per-pattern Accessibility sections capture the intended behavior, and a genuine baseline exists in code (keyboard DnD, focus management, roles/names, `:focus-visible`), so DoD item 11 was honestly MET. What was missing — (a) an automated enforcement toolchain and (b) remediation of the documented gaps — has now been delivered, so this waiver is retired.
 
 ## Risk
 
-**Medium.** The baseline is documented but unenforced, so a future change could silently regress an a11y contract (no gate catches it), and the high-severity gaps degrade real AT/keyboard users today: Gap 28 (no landmarks/`<h1>`), Gap 4 (combobox missing `aria-activedescendant`), Gaps 16/21 (false `aria-modal` — focus escapes the dialog into the board). The dead `jsx-a11y` disables mark known-but-live violations that suppress nothing.
+**Resolved.** The baseline is now enforced by an automated gate, so a change that regresses an a11y contract is caught rather than landing silently. The high-severity gaps are closed: landmarks and `<h1>`/named regions are in place (board `role=region`, toolbar `role=search`, column-count badge `role=img`), and the dialogs use `div role=dialog` panels — fixing the prior false `aria-modal`, region, `aria-prohibited-attr`, `aria-allowed-role`, and banner-landmark findings. The dead `jsx-a11y` disables were removed; the few remaining disables are justified (dnd-spread / dialog-keyboard false positives).
 
-## Exit plan
+## Resolution
 
-1. Wire an automated a11y check proportionate to a solo repo — `eslint` + `eslint-plugin-jsx-a11y` (which also reactivates the existing dead `eslint-disable` directives), optionally `jest-axe` over the vitest UI suite — and run it under `ds:check` / the CI gate (`DS-PROCESS-CONFORMANCE-3`).
-2. Burn down the 32 gaps **by severity**: High (28, 4, 16/21) first, then Medium, then Low/polish.
-Retire the waiver when the gate is live and the High + Medium gaps are closed (Low/polish may roll into a follow-up). Trigger: the expiry date or the next a11y-focused work block.
+The automated a11y gate is installed and enforced. It is **two-layered**:
+
+- **Static** — `eslint` + `eslint-plugin-jsx-a11y`, exposed as the `lint:a11y` script.
+- **Runtime** — `vitest-axe` over the UI suite, exposed as the `test:a11y` script.
+
+Both layers run under `ds:check` and the `lefthook` pre-commit/pre-push hooks, so the gate blocks regressions locally and in CI. The historical gaps are resolved: axe reports **0 serious/critical** violations; the 8 jsx-a11y interaction violations were fixed (1 real focus fix + justified disables for the dnd-spread / dialog-keyboard false positives); landmarks and dialog roles were added; and the dead `eslint-disable` directives were removed.
+
+**Single residual (not a blocker):** `color-contrast`. jsdom cannot compute rendered colors, so axe cannot evaluate this rule in the unit-test environment. It is deferred to a future real-browser / Lighthouse audit. This is a measurement-environment limitation, not an unenforced contract — every rule jsdom *can* evaluate passes clean.
 
 ## Replacement
 
-The per-component and per-pattern **Accessibility contracts** in `docs/design-system/components/` and `docs/design-system/patterns/` become the enforced source of truth, with the automated a11y check as the conformance mechanism for `DS-PROCESS-CONFORMANCE-1` #4.
+The per-component and per-pattern **Accessibility contracts** in `docs/design-system/components/` and `docs/design-system/patterns/` are the enforced source of truth, with the two-layer automated a11y gate (`lint:a11y` + `test:a11y`, run under `ds:check` / `lefthook`) as the conformance mechanism for `DS-PROCESS-CONFORMANCE-1` #4.
