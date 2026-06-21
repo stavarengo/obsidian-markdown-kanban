@@ -1,3 +1,9 @@
 allowBuilds:
   esbuild: true
   lefthook: false
+# Security overrides — force the patched version past parents that hard-pin a vulnerable one.
+overrides:
+  js-yaml: ^4.2.0 # CVE-2026-53550 - merge-key DoS, deduped and dismissed
+  markdown-it: ^14.2.0 # CVE-2026-48988 - smartquotes went quadratic; we didn't
+  undici: ^6.27.0 # CVE-2026-1525 (+9) - request smuggling, shown the door
+  vite: ^6.4.3 # GHSA-fx2h-pf6j-xcff (+2) - 5.x never got patched, so we moved to 6.4.3
