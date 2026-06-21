@@ -7,29 +7,17 @@
     "requireCommits": true,
     "addUntrackedFiles": false,
     "commit": true,
-    "commitMessage": "chore(release): v${version} :rocket:",
+    "commitMessage": "chore(release): ${version} :rocket:",
     "tag": true,
-    "tagName": "v${version}",
-    "tagAnnotation": "Release v${version}",
+    "tagName": "${version}",
+    "tagAnnotation": "Release ${version}",
     "push": true
   },
   "hooks": {
-    "after:bump": "pnpm release:bump-plugin-version ${version}"
+    "after:bump": "pnpm release:bump-plugin-version ${tagName}"
   },
   "github": {
-    "release": true,
-    "releaseName": "v${version}",
-    "autoGenerate": false,
-    "preRelease": false,
-    "draft": false,
-    "tokenRef": "FOLIA_KANBAN_RELEASE_IT_GITHUB_TOKEN",
-    "skipChecks": false,
-    "web": false,
-    "comments": {
-      "submit": true,
-      "issue": ":rocket: _This issue has been resolved in v${version}. See [${releaseName}](${releaseUrl}) for release notes._",
-      "pr": ":rocket: _This pull request is included in v${version}. See [${releaseName}](${releaseUrl}) for release notes._"
-    }
+    "release": false
   },
   "npm": {
     "publish": false,
