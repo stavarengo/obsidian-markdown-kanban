@@ -4,17 +4,6 @@ on:
   push:
     tags:
       - "*.*.*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to create release for (e.g., 1.2.3)"
-        required: true
-        type: string
-      deploy_only:
-        description: "Upload assets to an existing release without creating it"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -36,19 +25,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-
-          if ! git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "Error: Tag $TAG does not exist."
-            echo ""
-            echo "Available tags:"
-            git tag -l | tail -10
-            exit 1
-          fi
+          TAG="${GITHUB_REF#refs/tags/}"
 
           if [[ "$TAG" == *"+"* ]]; then
             echo "Error: Tag '$TAG' contains '+', which is not valid in Docker image tags."
@@ -60,8 +37,7 @@ jobs:
             exit 1
           fi
 
-          SEMVER="${TAG#v}"
-          if [[ "$SEMVER" == *"-"* ]]; then
+          if [[ "$TAG" == *"-"* ]]; then
             PRERELEASE="true"
           else
             PRERELEASE="false"
@@ -69,9 +45,6 @@ jobs:
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout tag
-        run: git checkout --detach "${{ steps.version.outputs.tag }}"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -104,7 +77,7 @@ jobs:
           fi
 
       - name: Create GitHub release
-        if: steps.release.outputs.exists == 'false' && inputs.deploy_only != true
+        if: steps.release.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -119,12 +92,6 @@ jobs:
           fi
 
           gh release create "${args[@]}"
-
-      - name: Require existing release for deploy only
-        if: steps.release.outputs.exists == 'false' && inputs.deploy_only == true
-        run: |
-          echo "Release ${{ steps.version.outputs.tag }} does not exist and deploy_only=true prevents creating it." >&2
-          exit 1
 
       - name: Upload Obsidian plugin assets
         env:
