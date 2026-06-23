@@ -27,7 +27,7 @@ export default class FoliaKanbanPlugin extends Plugin {
     this.addRibbonIcon("layout-grid", "Open Folia Kanban board", () => void this.activateView());
     this.addCommand({
       id: "folia-open-kanban-board",
-      name: "Open Folia Kanban board",
+      name: "Open board",
       callback: () => void this.activateView(),
     });
 
@@ -136,6 +136,10 @@ class KanbanSettingTab extends PluginSettingTab {
   }
 
   override display(): void {
+    this.render();
+  }
+
+  private render(): void {
     const { containerEl } = this;
     const s = this.plugin.settings;
     containerEl.empty();
@@ -152,7 +156,7 @@ class KanbanSettingTab extends PluginSettingTab {
             // Re-render the tab so the side-panel layout row enables/disables to match.
             void this.plugin
               .updateSettings({ detailPresentation: v as KanbanSettings["detailPresentation"] })
-              .then(() => this.display());
+              .then(() => this.render());
           }),
       );
 
@@ -181,7 +185,6 @@ class KanbanSettingTab extends PluginSettingTab {
         sl
           .setLimits(DETAIL_WIDTH_MIN, DETAIL_WIDTH_MAX, 10)
           .setValue(s.detailWidth)
-          .setDynamicTooltip()
           .onChange((v) => void this.plugin.updateSettings({ detailWidth: v })),
       );
 
@@ -200,7 +203,7 @@ class KanbanSettingTab extends PluginSettingTab {
             // Re-render so the "open new card's details as" row enables/disables to match.
             void this.plugin
               .updateSettings({ addCardFlow: v as KanbanSettings["addCardFlow"] })
-              .then(() => this.display());
+              .then(() => this.render());
           }),
       );
 
@@ -231,7 +234,6 @@ class KanbanSettingTab extends PluginSettingTab {
         sl
           .setLimits(0, 5, 1)
           .setValue(s.cardNextTodos)
-          .setDynamicTooltip()
           .onChange((v) => void this.plugin.updateSettings({ cardNextTodos: v })),
       );
 
