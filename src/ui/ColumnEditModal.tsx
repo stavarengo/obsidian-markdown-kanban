@@ -273,6 +273,6 @@ export function ColumnEditModal({ column, onClose }: Props) {
         </footer>
       </div>
     </div>,
-    document.body,
+    activeDocument.body,
   );
 }

@@ -141,7 +141,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
   // root is mounted (the first render shows a loading div, so the ref isn't ready until board loads).
   useEffect(() => {
     if (!board || !rootRef.current) return;
-    const h = document.querySelector(".status-bar")?.getBoundingClientRect().height ?? 0;
+    const h = activeDocument.querySelector(".status-bar")?.getBoundingClientRect().height ?? 0;
     rootRef.current.style.setProperty("--folia-statusbar-clearance", `${h > 0 ? h + 6 : 32}px`);
   }, [board]);
 
@@ -350,7 +350,8 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         void setColumnsAndReload(
           b.config.columns.map((c) => {
             if (c.id !== id) return c;
-            const { color: _old, ...rest } = c;
+            const rest = { ...c };
+            delete rest.color;
             return color != null ? { ...rest, color } : rest;
           }),
         );
@@ -362,7 +363,8 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
         void setColumnsAndReload(
           b.config.columns.map((c) => {
             if (c.id !== id) return c;
-            const { limit: _old, ...rest } = c;
+            const rest = { ...c };
+            delete rest.limit;
             return lim !== undefined ? { ...rest, limit: lim } : rest;
           }),
         );
@@ -495,7 +497,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
     const root = rootRef.current;
     if (!root) return;
     const doc = root.ownerDocument;
-    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
       // Skip when this Folia Kanban tab is hidden/backgrounded (display:none → no client rects), so a
       // foregrounded note doesn't have its "/" stolen by an off-screen board.
@@ -542,7 +544,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
       focusAddSubcard={focusAddSubcard}
       onClose={closeDetail}
       onNavigate={openCard}
-      onChanged={load}
+      onChanged={() => void load()}
     />
   ) : createMode ? (
     <CardDetail
@@ -551,7 +553,7 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
       mode={detailMode}
       createColumn={createColumn}
       onClose={closeDetail}
-      onChanged={load}
+      onChanged={() => void load()}
       onCreated={(newPath) => {
         void (async () => {
           setCreateColumn(null);
@@ -584,8 +586,8 @@ export function App({ repo, settings, onUpdateSettings, today }: Props) {
                   wipLimits={wipLimits}
                   filter={filter}
                   doneColumnId={doneColumnId}
-                  onMove={onMove}
-                  onAddCard={onAddCard}
+                  onMove={(activeId, overId) => void onMove(activeId, overId)}
+                  onAddCard={(columnId, title) => void onAddCard(columnId, title)}
                 />
                 {/* Side modes (split/float) render the panel as a sibling; split shrinks the board,
                     float overlays it. Modal renders via a portal into the root, over a backdrop. */}

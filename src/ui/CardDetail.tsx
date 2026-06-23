@@ -5,7 +5,7 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
-  type PointerEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { Board, CardBody } from "../model/types";
 import { DETAIL_WIDTH_MAX, DETAIL_WIDTH_MIN } from "../settings";
@@ -227,7 +227,7 @@ export function CardDetail({
   // Dialog focus management: focus in on open, return focus to the opener on close. The create form
   // autofocuses its title input (a synchronous commit-phase focus), so don't steal it back here.
   useEffect(() => {
-    openerRef.current = document.activeElement as HTMLElement | null;
+    openerRef.current = activeDocument.activeElement as HTMLElement | null;
     if (!isCreate) panelRef.current?.focus();
     return () => openerRef.current?.focus?.();
   }, []);
@@ -290,12 +290,12 @@ export function CardDetail({
   // Modal mode closes via its backdrop instead (handled by App).
   useEffect(() => {
     if (!isSide) return;
-    const onPointerDown = (e: globalThis.PointerEvent) => {
+    const onPointerDown = (e: PointerEvent) => {
       const t = e.target as HTMLElement | null;
       if (t?.closest?.(".folia-detail, .folia-card, .folia-menu, .folia-card-context")) return;
       // Commit any in-progress edit before closing: blurring fires the focused field's onBlur,
       // which initiates its repo write synchronously — so clicking away saves instead of discarding.
-      const ae = document.activeElement as HTMLElement | null;
+      const ae = activeDocument.activeElement as HTMLElement | null;
       if (
         ae &&
         panelRef.current?.contains(ae) &&
@@ -304,29 +304,29 @@ export function CardDetail({
         ae.blur();
       onClose();
     };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    activeDocument.addEventListener("pointerdown", onPointerDown);
+    return () => activeDocument.removeEventListener("pointerdown", onPointerDown);
   }, [isSide, onClose]);
 
   // Drag the panel's left border to resize (side modes). Width is derived from the panel's own
   // right edge so it works whether the panel is a flex sibling (split) or right-docked (float).
-  const onResizeStart = (e: PointerEvent) => {
+  const onResizeStart = (e: ReactPointerEvent) => {
     e.preventDefault();
     const right = panelRef.current?.getBoundingClientRect().right ?? window.innerWidth;
     (e.target as Element).setPointerCapture(e.pointerId);
     let latest = clampWidth(right - e.clientX);
-    const onMove = (ev: globalThis.PointerEvent) => {
+    const onMove = (ev: PointerEvent) => {
       latest = clampWidth(right - ev.clientX);
       setDragWidth(latest);
     };
     const onUp = () => {
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerup", onUp);
+      activeDocument.removeEventListener("pointermove", onMove);
+      activeDocument.removeEventListener("pointerup", onUp);
       setDragWidth(null);
       updateSettings({ detailWidth: latest });
     };
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onUp);
+    activeDocument.addEventListener("pointermove", onMove);
+    activeDocument.addEventListener("pointerup", onUp);
   };
 
   const mutate = async (fn: () => Promise<unknown>) => {

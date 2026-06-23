@@ -49,8 +49,8 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
       // race its onClick and immediately reopen the menu.
       if (ref.current && !ref.current.contains(t) && !triggerRef.current?.contains(t)) onClose();
     };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    activeDocument.addEventListener("mousedown", onDoc);
+    return () => activeDocument.removeEventListener("mousedown", onDoc);
   }, [onClose, triggerRef]);
 
   // Return focus to the trigger when the menu closes (keyboard users aren't dropped to <body>).
@@ -202,6 +202,6 @@ export function ColumnMenu({ column, isFirst, isLast, triggerRef, onClose, onEdi
         </div>
       )}
     </div>,
-    document.body,
+    activeDocument.body,
   );
 }

@@ -61,7 +61,7 @@ export function CardContextMenu({
   // user who opens then Escapes the menu keeps their place on the board (mirrors CardDetail's opener
   // capture/restore).
   useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
+    const opener = activeDocument.activeElement as HTMLElement | null;
     ref.current?.querySelector<HTMLButtonElement>(".folia-menu-item:not(:disabled)")?.focus();
     return () => {
       if (!actioned.current) opener?.focus?.();
@@ -72,8 +72,8 @@ export function CardContextMenu({
     const onDoc = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
+    activeDocument.addEventListener("pointerdown", onDoc);
+    return () => activeDocument.removeEventListener("pointerdown", onDoc);
   }, [onClose]);
 
   // Arrow-key navigation between enabled items, matching the keyboard reach of the rest of the UI.
@@ -89,7 +89,7 @@ export function CardContextMenu({
       ref.current?.querySelectorAll<HTMLButtonElement>(".folia-menu-item:not(:disabled)") ?? [],
     );
     if (items.length === 0) return;
-    const cur = items.indexOf(document.activeElement as HTMLButtonElement);
+    const cur = items.indexOf(activeDocument.activeElement as HTMLButtonElement);
     const dir = e.key === "ArrowDown" ? 1 : -1;
     const next = (cur + dir + items.length) % items.length;
     items[next]?.focus();
@@ -204,6 +204,6 @@ export function CardContextMenu({
         </>
       )}
     </div>,
-    document.body,
+    activeDocument.body,
   );
 }

@@ -107,7 +107,7 @@ export const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
     onChange(next);
     setHighlight(0);
     // Restore focus + caret after React commits the new value.
-    requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       if (!el) return;
       el.focus();
       el.setSelectionRange(nextCaret, nextCaret);
