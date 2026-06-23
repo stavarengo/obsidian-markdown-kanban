@@ -1402,7 +1402,7 @@
   cursor: help;
 }
 .folia-done {
-  text-decoration: line-through;
+  text-decoration-line: line-through;
   color: var(--text-muted);
 }
 .folia-comments li,
@@ -1500,8 +1500,8 @@
 .folia-column.is-faded {
   opacity: var(--folia-col-opacity, 1);
 }
-.folia-column.is-faded:hover,
-.folia-column.is-faded:focus-within {
+.folia-column.is-faded:hover:not(.is-dragging),
+.folia-column.is-faded:focus-within:not(.is-dragging) {
   opacity: var(--folia-col-hover-opacity, 1);
 }
 /* #10 — parked: shove the column to the far right with a large left margin so a rabbit-hole
@@ -1634,7 +1634,7 @@
   .folia-modal,
   .folia-modal-backdrop,
   .folia-toast {
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.01ms;
   }
   /* No positional slide/scale for motion-sensitive users — these surfaces just appear. */
   .folia-detail,
@@ -1642,13 +1642,13 @@
   .folia-modal,
   .folia-modal-backdrop,
   .folia-toast {
-    animation: none !important;
+    animation: none;
   }
   /* The drag overlays still lift (their shadow/outline mark the grab), but without the scale/tilt tween. */
   .folia-card-overlay,
   .folia-column-overlay {
-    animation: none !important;
-    transform: none !important;
+    animation: none;
+    transform: none;
   }
 }
 
@@ -1690,10 +1690,11 @@
 }
 /* The column being dragged: dim + lift it out of the row so the gap reads as the drop slot.
    A faded column (#10 `--folia-col-opacity` < 1, e.g. parked) must still read as "dragging", so
-   force a visible opacity here and let this rule win — a parked+faded column never goes invisible
-   mid-drag. */
+   this rule sets a visible opacity. The faded-hover rule above is scoped `:not(.is-dragging)`, so
+   mid-drag only `.is-faded` and `.is-dragging` match (equal specificity) and this later rule wins —
+   a parked+faded column never goes invisible mid-drag. */
 .folia-column.is-dragging {
-  opacity: var(--folia-opacity-subtle) !important;
+  opacity: var(--folia-opacity-subtle);
   cursor: grabbing;
   z-index: var(--folia-z-index-raised);
 }
