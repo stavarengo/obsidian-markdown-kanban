@@ -3,18 +3,21 @@ import tseslint from "typescript-eslint";
 import vitest from "@vitest/eslint-plugin";
 import globals from "globals";
 
+const jsxA11yTyped =
+  /** @type {{ flatConfigs: Record<string, import("eslint").Linter.Config> }} */ (jsxA11y);
+
 export default [
   {
     ignores: ["dist/", "examples/", "node_modules/", "scripts/", "coverage/", ".pnpm-store/"],
   },
   {
     files: ["src/**/*.{ts,tsx}"],
-    ...jsxA11y.flatConfigs.recommended,
+    ...jsxA11yTyped.flatConfigs.recommended,
     // This block keeps the a11y gate. The 5 orphaned `react-hooks/*` inline directives
     // reference a plugin we intentionally don't load here, so don't fail on them.
     linterOptions: { reportUnusedDisableDirectives: "off" },
     rules: {
-      ...jsxA11y.flatConfigs.recommended.rules,
+      ...jsxA11yTyped.flatConfigs.recommended.rules,
       // autofocus is deliberate focus management for modals/inline-edit (good a11y here).
       "jsx-a11y/no-autofocus": "off",
     },
