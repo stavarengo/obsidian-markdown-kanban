@@ -3,8 +3,18 @@
 pre-commit:
   parallel: true
   commands:
-    lint-staged:
-      run: pnpm lint-staged
+    lint-and-format:
+      glob: "*.{ts,tsx}"
+      run: pnpm eslint {staged_files} && pnpm prettier --write {staged_files}
+      stage_fixed: true
+    format-data:
+      glob: "*.{json,mjs,cjs,yml,yaml}"
+      run: pnpm prettier --write {staged_files}
+      stage_fixed: true
+    lint-docs:
+      glob: "*.md"
+      run: pnpm markdownlint-cli2 {staged_files}
+      stage_fixed: true
 
 pre-push:
   commands:

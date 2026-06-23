@@ -9,7 +9,7 @@
 // All functions take and return the FULL file text so callers can pipe them through
 // vault.process(file, text => ...).
 
-import yaml from "js-yaml";
+import { parse as parseYaml } from "yaml";
 import type { CardBody, CardStats, SubItem } from "./types";
 import { DataCorruptionError, FrontmatterSchema, decode } from "./schemas";
 
@@ -41,7 +41,7 @@ export function parseFrontmatter(text: string): Record<string, unknown> {
   const inner = fmText.replace(/^---\r?\n/, "").replace(/\r?\n---\r?\n?$/, "");
   let data: unknown;
   try {
-    data = yaml.load(inner);
+    data = parseYaml(inner);
   } catch (e) {
     // §17: malformed YAML is corruption, not "no frontmatter" — surface it, don't hide it
     // behind an empty object (which would silently drop the card's status/order/etc.).
