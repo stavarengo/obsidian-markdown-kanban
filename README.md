@@ -7,11 +7,6 @@
 [![Downloads](https://img.shields.io/github/downloads/stavarengo/folia-kanban/total?label=downloads&color=22c55e)](https://github.com/stavarengo/folia-kanban/releases)
 [![License: AGPL-3.0](https://img.shields.io/github/license/stavarengo/folia-kanban?color=64748b)](LICENSE)
 
-<!--
-Once the plugin is accepted into the Obsidian community store, you can also add the official install-count badge:
-[![Community installs](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22folia-kanban%22%5D.downloads&label=community%20installs&color=22c55e)](https://obsidian.md/plugins?id=folia-kanban)
--->
-
 > An interactive Kanban board for [Obsidian](https://obsidian.md) where **every card is a plain Markdown file** — drag-and-drop, nested subcards, comments, and history, with no database and no lock-in.
 
 ![Dragging a card across columns on the Folia Kanban board](images/board-demo.gif)
@@ -160,11 +155,6 @@ The pure model (`src/model`), board graph + drag reducer, and UI logic are unit-
 ## Support
 
 If Folia Kanban makes your week a little easier, a ⭐ on [GitHub](https://github.com/stavarengo/folia-kanban) genuinely helps other people find it.
-
-<!-- Add sponsor links here if/when you set them up, e.g.:
-[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/stavarengo)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/yourhandle)
--->
 
 ## Feedback & issues
 
