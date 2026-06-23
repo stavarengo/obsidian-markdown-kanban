@@ -61,6 +61,8 @@ export default class FoliaKanbanPlugin extends Plugin {
 
   /** Every note flagged `folia-board: true` in its frontmatter. */
   findBoards(): TFile[] {
+    // Boards can live anywhere in the vault (any note with `folia-board: true` frontmatter), so
+    // discovery scans every note. The full-vault enumeration is intentional and limited to markdown.
     return this.app.vault.getMarkdownFiles().filter((f) => this.isBoard(f));
   }
 
