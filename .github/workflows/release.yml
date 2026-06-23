@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -69,6 +71,13 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/main.js
+            dist/styles.css
+
       - name: Check GitHub release
         id: release
         shell: bash
@@ -101,4 +110,4 @@ jobs:
       - name: Upload Obsidian plugin assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ steps.version.outputs.tag }}" dist/main.js dist/manifest.json dist/styles.css versions.json --clobber
+        run: gh release upload "${{ steps.version.outputs.tag }}" dist/main.js dist/manifest.json dist/styles.css --clobber
