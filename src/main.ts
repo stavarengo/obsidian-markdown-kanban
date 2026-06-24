@@ -272,5 +272,8 @@ class KanbanSettingTab extends PluginSettingTab {
             (v) => void this.plugin.updateSettings({ boardPan: v as KanbanSettings["boardPan"] }),
           ),
       );
+
+    // Read from the manifest so it always reflects the installed build, never a hardcoded value.
+    new Setting(containerEl).setName("Version").setDesc(this.plugin.manifest.version);
   }
 }
