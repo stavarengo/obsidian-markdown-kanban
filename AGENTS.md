@@ -32,7 +32,7 @@
    3.1. If not our `examples/` vault and this is the devcontainer, then use the `$HOST_REPO_ROOT_REAL_PATH` environment variable and open it via `evaluate_script` — `require('electron').shell.openExternal('obsidian://open?path=' + encodeURIComponent('$HOST_REPO_ROOT_REAL_PATH/examples'))` — then `list_pages` → `select_page`.
    3.2. If the host path is unknown or this is not the devcontainer, ask your human to open it.
    3.3. If this is the host system, you can easily open the vault using instructions from 3.1. using the current repo root path instead of `$HOST_REPO_ROOT_REAL_PATH`.
-4. Update the `examples/` vault plugin: `pnpm run build:updateExamplesVault`.
+4. Watch and rebuild the plugin into the `examples/` vault on every change: `pnpm run dev:examplesVault` (watch mode — keeps running).
 5. `take_snapshot` hides the file tree — pass `verbose: true` for folder/file nodes.
 6. Breadcrumb and explorer both show the folder name, but the breadcrumb only selects — click the explorer node to open.
 7. Open a board yourself (a board = note with `folia-board: true`). Don't rely on the `folia-kanban:open-kanban-board` command: Obsidian 1.12 defers background leaves, so an off-screen board stays empty until focused. Via `evaluate_script`: `leaf.setViewState({ type: 'folia-kanban-view', state: { boardPath: '<vault path>' }, active: true })`, then `setActiveLeaf(leaf, { focus: true })`, `revealLeaf(leaf)`, wait a tick, `take_screenshot`.
