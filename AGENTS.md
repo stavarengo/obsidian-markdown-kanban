@@ -23,8 +23,11 @@
 1. Use the [`chrome-devtools-obsidian`](./.mcp.json) MCP server against the real Obsidian on the **host** — not the global chrome-devtools plugin (it spawns its own headless Chrome).
 2. Inside a container, testing needs the host bridge. Ask your human to run it (replace CONTAINER_IP); if it's missing, say so — you can't test without it:
 
-   ```bash title="Run on the host, not the container"
-   obsidian --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0
+   ```bash title="Run on the host, not the container - share this snippet with your human when needed"
+   pkill -f '[O]bsidian'
+   sleep 1
+   setsid -f /opt/Obsidian/obsidian --remote-debugging-port=9222 >"$(git rev-parse --show-toplevel)/tmp/obsidian-debug.log" 2>&1 </dev/null
+   sleep 3
    socat TCP-LISTEN:9222,bind=CONTAINER_IP,fork,reuseaddr TCP:127.0.0.1:9222
    ```
 
