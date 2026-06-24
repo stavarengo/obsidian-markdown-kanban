@@ -2,6 +2,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import tseslint from "typescript-eslint";
 import vitest from "@vitest/eslint-plugin";
 import globals from "globals";
+import obsidianmd from "eslint-plugin-obsidianmd";
 
 const jsxA11yTyped =
   /** @type {{ flatConfigs: Record<string, import("eslint").Linter.Config> }} */ (jsxA11y);
@@ -148,6 +149,42 @@ export default [
     rules: {
       "vitest/no-disabled-tests": "error",
       "vitest/no-focused-tests": "error",
+    },
+  },
+  // Scope the obsidianmd recommended preset to src only — test files must get ZERO obsidianmd
+  // rules. The preset ships file-less blocks (global rules/plugins/languageOptions) that would
+  // otherwise apply everywhere; force `files: ["src/**/*.{ts,tsx}"]` on every block except:
+  //  - a pure global-ignores block (ignores-only, no files/rules/plugins/languageOptions), and
+  //  - the package.json block, which sets `language: "json/json"`; re-globbing it onto our
+  //    TS/TSX sources would parse them as JSON and fatally error. It targets package.json (not
+  //    under src/), so it cannot leak obsidianmd findings onto test files — leave it untouched.
+  // This keeps plugin registration and rule blocks glob-aligned so the obsidianmd namespace
+  // resolves for src files.
+  ...obsidianmd.configs.recommended.map((c) =>
+    (c.ignores && !c.files && !c.rules && !c.plugins && !c.languageOptions) || c.language
+      ? c
+      : { ...c, files: ["src/**/*.{ts,tsx}"] },
+  ),
+  {
+    // no-undef is redundant with the TS type-checker, and `activeWindow`/`activeDocument` are
+    // valid Obsidian ambient globals. Disable it for the TS sources the preset enables it on.
+    files: ["src/**/*.{ts,tsx}"],
+    rules: { "no-undef": "off" },
+  },
+  {
+    // The obsidianmd recommended preset turns on type-aware @typescript-eslint rules but only
+    // sets the parser, not parserServices. Provide the project service for every linted ts/tsx
+    // file (tsconfig includes both src and test) so those rules can resolve type info instead of
+    // crashing fatally on files outside the existing src-only type-aware block above. Placed
+    // after the spread so these parserOptions win the languageOptions merge.
+    files: ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+        ecmaFeatures: { jsx: true },
+      },
     },
   },
 ];
