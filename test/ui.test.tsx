@@ -700,6 +700,36 @@ describe("board pan-scroll", () => {
   });
 });
 
+describe("drag overlay portal", () => {
+  // The lifted ghost (DragOverlay) is `position: fixed`, so it must resolve against the viewport. In
+  // Obsidian a `.workspace-leaf` ancestor of our React root carries a CSS transform (tab/slide
+  // animations) which would become the overlay's containing block and offset the ghost ~one column
+  // off the cursor while the drop placeholder stays put. The fix portals the overlay OUT of the
+  // `.folia-root` subtree into the board's `ownerDocument.body`, escaping any transformed ancestor.
+  // jsdom has no PointerEvent, but the keyboard sensor (Space to pick up) drives a real drag here.
+  it("renders the lifted card ghost into the document body, outside the .folia-root subtree", async () => {
+    const user = userEvent.setup();
+    render_(makeRepo());
+    const main = (await screen.findByText("Alpha")).closest(".folia-card-main") as HTMLElement;
+    main.focus();
+    await user.keyboard("{ }"); // Space → pick up the focused card
+
+    const overlay = document.querySelector(".folia-card-overlay") as HTMLElement;
+    expect(overlay).not.toBeNull(); // the ghost mounted during the active drag
+
+    const root = document.querySelector(".folia-root") as HTMLElement;
+    // The bug: the overlay nests inside `.folia-root` (→ under Obsidian's transformed leaf). The fix
+    // hoists it clear of that subtree so `fixed` is viewport-relative again.
+    expect(root.contains(overlay)).toBe(false);
+    // It lands in the board element's OWN document body (dnd-kit wraps the content in one positioned
+    // div, so the body is the wrapper's parent). ownerDocument keeps this correct in a pop-out window.
+    expect(overlay.ownerDocument.body.contains(overlay)).toBe(true);
+    expect(overlay.parentElement?.parentElement).toBe(overlay.ownerDocument.body);
+
+    await user.keyboard("{Escape}"); // drop the drag so the test leaves no active overlay
+  });
+});
+
 describe("card context menu", () => {
   // Two ordered top-level cards in Todo so Move up/down has room; Alpha keeps its next-todos.
   const ctxRepo = () =>
