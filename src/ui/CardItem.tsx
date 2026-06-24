@@ -2,7 +2,6 @@ import { memo, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card, CardStats } from "../model/types";
-import { makeCardDragId } from "../model/board";
 import { cardChips, cardUrgency, priorityTone } from "./cardView";
 import { CardContextMenu, type ContextTarget } from "./CardContextMenu";
 import { useBoardActions, useContexts, useSettings } from "./context";
@@ -10,10 +9,12 @@ import { Icon } from "./icons";
 
 interface Props {
   card: Card;
-  /** The column this card is rendered in. The sortable id is namespaced `${columnId}::${card.path}`
-   *  so a card mirrored into a cross-board lane (#1) and its status column don't collide on one id.
-   *  Omitted for nested subcards (which are non-draggable). */
-  columnId?: string;
+  /** The sortable id to register for this top-level card, computed by Column. Normally namespaced
+   *  `${columnId}::${card.path}` (so a card mirrored into a cross-board lane (#1) and its status
+   *  column don't collide on one id), but the ORIGINAL id while this card is the target of a live
+   *  cross-column relocation (see Column). Column owns it so its SortableContext item set and this
+   *  sortable can't diverge. Omitted for nested subcards (which are non-draggable). */
+  dragId?: string;
   today: string;
   selected: boolean;
   /** A nested subcard rendered inside its parent's `.folia-subcard-group`: not drag-reorderable,
@@ -21,7 +22,7 @@ interface Props {
   nested?: boolean;
 }
 
-function CardItemInner({ card, columnId, today, selected, nested = false }: Props) {
+function CardItemInner({ card, dragId, today, selected, nested = false }: Props) {
   const actions = useBoardActions();
   const contexts = useContexts();
   const { cardNextTodos } = useSettings();
@@ -32,10 +33,11 @@ function CardItemInner({ card, columnId, today, selected, nested = false }: Prop
   const titleInputRef = useRef<HTMLInputElement>(null);
   // Hooks can't be conditional, so always call useSortable — but disable it for nested children so
   // they aren't draggable and aren't registered as drop targets in the parent's SortableContext.
-  // Top-level cards use a column-namespaced id (`col::path`) matching the column's SortableContext
-  // items, so the same card appearing in a lane + its status column registers two distinct sortables.
+  // Top-level cards use the `dragId` Column computed (`col::path`, or the original id while this card
+  // is mid cross-column relocation) so the sortable identity matches the column's SortableContext
+  // item set — and so the same card in a lane + its status column registers two distinct sortables.
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: nested || columnId == null ? card.path : makeCardDragId(columnId, card.path),
+    id: nested || dragId == null ? card.path : dragId,
     disabled: nested,
   });
   const style: React.CSSProperties = {
@@ -348,7 +350,7 @@ export const CardItem = memo(
   (a, b) =>
     a.selected === b.selected &&
     a.nested === b.nested &&
-    a.columnId === b.columnId &&
+    a.dragId === b.dragId &&
     a.today === b.today &&
     a.card.path === b.card.path &&
     a.card.basename === b.card.basename &&

@@ -188,6 +188,82 @@ export function splitCardDragId(id: string): { columnId: string; path: string } 
   return { columnId: id.slice(0, i), path: id.slice(i + CARD_DRAG_SEP.length) };
 }
 
+/**
+ * A live cross-column relocation in progress: the active card (`activeId` is its ORIGINAL namespaced
+ * sortable id, kept stable through the drop so dnd-kit never loses the rect) is being shown moved
+ * from `fromColumn` into `toColumn`, inserted before `beforePath` (or appended when null).
+ */
+export interface DragReloc {
+  activeId: string;
+  fromColumn: string;
+  toColumn: string;
+  beforePath: string | null;
+}
+
+/**
+ * Apply a live cross-column relocation to a columns map, yielding the EFFECTIVE per-column card
+ * paths to render while the drag is open. Pure + idempotent: the active path is removed from EVERY
+ * column first (so a stale reloc applied to a board where the card already landed can't duplicate
+ * it), then inserted into `toColumn` before `beforePath` — or appended when `beforePath` is null or
+ * not found. The input map is left untouched. Only the two affected columns get new arrays; the rest
+ * are returned by reference. Returns the input itself when there's no reloc.
+ */
+export function applyReloc(
+  columns: Record<string, string[]>,
+  reloc: DragReloc | null,
+): Record<string, string[]> {
+  if (!reloc) return columns;
+  // `fromColumn` needs no special handling: removing the active path from EVERY column below already
+  // empties the source (and makes the reducer idempotent against a board where the card has landed).
+  const { toColumn, beforePath } = reloc;
+  const { path } = splitCardDragId(reloc.activeId);
+  const out: Record<string, string[]> = {};
+  for (const [colId, paths] of Object.entries(columns)) {
+    out[colId] = paths.includes(path) ? paths.filter((p) => p !== path) : paths;
+  }
+  const target = (out[toColumn] ?? []).slice();
+  const at = beforePath != null ? target.indexOf(beforePath) : -1;
+  if (at >= 0) target.splice(at, 0, path);
+  else target.push(path);
+  out[toColumn] = target;
+  return out;
+}
+
+/**
+ * Decide the live cross-column relocation a drag's current `over` target implies — the make-room
+ * counterpart to {@link planDrop}, kept pure so the gap rules are unit-testable. Returns `null` when
+ * no gap should open: a column drag (bare column active id), no target, or a SAME-column hover (the
+ * native sortable owns that reorder — its tween is already correct, so we never override it).
+ *
+ * `rawOverId` may be a column id (dropped on / hovering the column body → `beforePath: null`, append)
+ * or a namespaced card id (`col::path` → insert before that path). Callers must short-circuit a hover
+ * over the dragged card's OWN placeholder (`rawOverId === rawActiveId`) BEFORE calling this — once the
+ * card is relocated it carries its source-column id, so its own `over` would parse back to `fromColumn`
+ * and falsely read as same-column, collapsing the gap.
+ */
+export function resolveDragReloc(
+  rawActiveId: string,
+  rawOverId: string | null,
+  columnIds: string[],
+): DragReloc | null {
+  if (columnIds.includes(rawActiveId)) return null; // a column reorder, not a card move
+  if (rawOverId == null) return null;
+  const fromColumn = splitCardDragId(rawActiveId).columnId;
+  let toColumn: string;
+  let beforePath: string | null;
+  if (columnIds.includes(rawOverId)) {
+    toColumn = rawOverId; // over the column body → append
+    beforePath = null;
+  } else {
+    const split = splitCardDragId(rawOverId);
+    if (!split.columnId) return null; // un-namespaced / unrecognised over id
+    toColumn = split.columnId;
+    beforePath = split.path; // over a card → insert before it
+  }
+  if (toColumn === fromColumn) return null; // same-column: native sortable owns it
+  return { activeId: rawActiveId, fromColumn, toColumn, beforePath };
+}
+
 function between(prev: number | null, next: number | null): number {
   if (prev !== null && next !== null) return (prev + next) / 2;
   if (prev !== null) return prev + 1;

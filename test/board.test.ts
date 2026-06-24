@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  applyReloc,
   buildBoard,
   columnEffectiveOrders,
   computeDropOrder,
@@ -9,6 +10,8 @@ import {
   moveCard,
   moveColumn,
   planDrop,
+  resolveDragReloc,
+  resolveDrop,
   splitCardDragId,
 } from "../src/model/board";
 import type { BoardConfig, Card, ColumnDef } from "../src/model/types";
@@ -371,6 +374,183 @@ describe("planDrop (drag routing — #2 namespacing + #3 computed-order guard)",
       path: "Tasks/A.md",
       overId: "Tasks/B.md",
     });
+  });
+});
+
+describe("applyReloc (live cross-column make-room reducer)", () => {
+  // A bare columns map keyed by column id → ordered card paths (what buildBoard produces).
+  const cols = (): Record<string, string[]> => ({
+    todo: ["Tasks/A.md", "Tasks/B.md"],
+    doing: ["Tasks/C.md", "Tasks/D.md"],
+    done: [],
+  });
+
+  it("removes the active path from its source and inserts it BEFORE beforePath in the target", () => {
+    const out = applyReloc(cols(), {
+      activeId: "todo::Tasks/A.md",
+      fromColumn: "todo",
+      toColumn: "doing",
+      beforePath: "Tasks/D.md",
+    });
+    expect(out["todo"]).toEqual(["Tasks/B.md"]); // A removed from source
+    expect(out["doing"]).toEqual(["Tasks/C.md", "Tasks/A.md", "Tasks/D.md"]); // A inserted before D
+  });
+
+  it("appends to the target when beforePath is null (dropped on the column body)", () => {
+    const out = applyReloc(cols(), {
+      activeId: "todo::Tasks/A.md",
+      fromColumn: "todo",
+      toColumn: "doing",
+      beforePath: null,
+    });
+    expect(out["doing"]).toEqual(["Tasks/C.md", "Tasks/D.md", "Tasks/A.md"]);
+  });
+
+  it("appends when beforePath is not present in the target (defensive)", () => {
+    const out = applyReloc(cols(), {
+      activeId: "todo::Tasks/A.md",
+      fromColumn: "todo",
+      toColumn: "doing",
+      beforePath: "Tasks/ghost.md",
+    });
+    expect(out["doing"]).toEqual(["Tasks/C.md", "Tasks/D.md", "Tasks/A.md"]);
+  });
+
+  it("empties the source column when its last card moves out", () => {
+    const out = applyReloc(
+      { todo: ["Tasks/A.md"], doing: [] },
+      {
+        activeId: "todo::Tasks/A.md",
+        fromColumn: "todo",
+        toColumn: "doing",
+        beforePath: null,
+      },
+    );
+    expect(out["todo"]).toEqual([]);
+    expect(out["doing"]).toEqual(["Tasks/A.md"]);
+  });
+
+  it("is idempotent against a board where the card has ALREADY landed (no duplicate)", () => {
+    // The clearing effect fires only after the reloaded board renders, so there's a frame of
+    // landed-board + stale reloc. Re-removing from every column first keeps that frame duplicate-free.
+    const landed = { todo: ["Tasks/B.md"], doing: ["Tasks/C.md", "Tasks/A.md", "Tasks/D.md"] };
+    const out = applyReloc(landed, {
+      activeId: "todo::Tasks/A.md",
+      fromColumn: "todo",
+      toColumn: "doing",
+      beforePath: "Tasks/D.md",
+    });
+    expect(out["todo"]).toEqual(["Tasks/B.md"]);
+    expect(out["doing"]).toEqual(["Tasks/C.md", "Tasks/A.md", "Tasks/D.md"]); // A appears exactly once
+  });
+
+  it("returns the input untouched when there is no reloc", () => {
+    const input = cols();
+    expect(applyReloc(input, null)).toBe(input);
+  });
+
+  // Rule B (headless): the optimistic gap position (applyReloc's insertion index) must equal the
+  // persisted landing index (resolveDrop's index) for the SAME `over`, or the card hops a slot on
+  // reload. We derive both from the same beforePath/toColumn the drag drew the gap with.
+  describe("Rule B — gap position == landed position", () => {
+    const indexOfActiveAfterReloc = (
+      columns: Record<string, string[]>,
+      activeId: string,
+      fromColumn: string,
+      toColumn: string,
+      beforePath: string | null,
+    ) => {
+      const out = applyReloc(columns, { activeId, fromColumn, toColumn, beforePath });
+      const { path } = splitCardDragId(activeId);
+      return (out[toColumn] ?? []).indexOf(path);
+    };
+
+    it("insert-before: applyReloc index === resolveDrop index", () => {
+      const b = buildBoard(config, [
+        card("A", { status: "todo", order: 1 }),
+        card("C", { status: "doing", order: 1 }),
+        card("D", { status: "doing", order: 2 }),
+      ]);
+      const gap = indexOfActiveAfterReloc(
+        b.columns,
+        "todo::Tasks/A.md",
+        "todo",
+        "doing",
+        "Tasks/D.md",
+      );
+      const landed = resolveDrop(b, "Tasks/A.md", "Tasks/D.md");
+      expect(landed).not.toBeNull();
+      expect(gap).toBe(landed!.index);
+    });
+
+    it("append (over = column body): applyReloc index === resolveDrop index", () => {
+      const b = buildBoard(config, [
+        card("A", { status: "todo", order: 1 }),
+        card("C", { status: "doing", order: 1 }),
+        card("D", { status: "doing", order: 2 }),
+      ]);
+      const gap = indexOfActiveAfterReloc(b.columns, "todo::Tasks/A.md", "todo", "doing", null);
+      const landed = resolveDrop(b, "Tasks/A.md", "doing");
+      expect(gap).toBe(landed!.index);
+    });
+
+    it("empty target: applyReloc index === resolveDrop index (0)", () => {
+      const b = buildBoard(config, [card("A", { status: "todo", order: 1 })]);
+      const gap = indexOfActiveAfterReloc(b.columns, "todo::Tasks/A.md", "todo", "done", null);
+      const landed = resolveDrop(b, "Tasks/A.md", "done");
+      expect(gap).toBe(0);
+      expect(landed!.index).toBe(0);
+    });
+  });
+
+  it("cross-column INTO a computed-order column persists (planDrop is NOT a no-op there)", () => {
+    const cfg = {
+      ...config,
+      columns: [
+        { id: "todo", title: "Todo" },
+        { id: "doing", title: "Doing", sort: "priority" as const },
+      ],
+    };
+    const b = buildBoard(cfg, [card("A", { status: "todo" }), card("B", { status: "doing" })]);
+    // A dragged from todo INTO the computed-order `doing` is a real move (only SAME-column reorder
+    // no-ops on a computed column), so the status gets set even though the order is don't-care.
+    const plan = planDrop(b, "todo::Tasks/A.md", "doing", ["todo", "doing"]);
+    expect(plan).toEqual({ kind: "moveCard", path: "Tasks/A.md", overId: "doing" });
+  });
+});
+
+describe("resolveDragReloc (live make-room gap decision)", () => {
+  const colIds = ["todo", "doing", "done"];
+
+  it("over a card in another column → insert before that card's path", () => {
+    expect(resolveDragReloc("todo::Tasks/A.md", "doing::Tasks/B.md", colIds)).toEqual({
+      activeId: "todo::Tasks/A.md",
+      fromColumn: "todo",
+      toColumn: "doing",
+      beforePath: "Tasks/B.md",
+    });
+  });
+
+  it("over another column's body → append (beforePath null)", () => {
+    expect(resolveDragReloc("todo::Tasks/A.md", "doing", colIds)).toEqual({
+      activeId: "todo::Tasks/A.md",
+      fromColumn: "todo",
+      toColumn: "doing",
+      beforePath: null,
+    });
+  });
+
+  it("same-column hover → null (native sortable owns the reorder, never overridden)", () => {
+    expect(resolveDragReloc("todo::Tasks/A.md", "todo::Tasks/B.md", colIds)).toBeNull();
+    expect(resolveDragReloc("todo::Tasks/A.md", "todo", colIds)).toBeNull();
+  });
+
+  it("a column-drag active id → null (column reorder, not a card move)", () => {
+    expect(resolveDragReloc("doing", "todo", colIds)).toBeNull();
+  });
+
+  it("no target → null", () => {
+    expect(resolveDragReloc("todo::Tasks/A.md", null, colIds)).toBeNull();
   });
 });
 

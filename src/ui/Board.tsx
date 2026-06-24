@@ -4,6 +4,7 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   closestCorners,
   defaultDropAnimationSideEffects,
@@ -20,7 +21,13 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import type { Board as BoardModel } from "../model/types";
-import { planDrop, splitCardDragId } from "../model/board";
+import {
+  applyReloc,
+  planDrop,
+  resolveDragReloc,
+  splitCardDragId,
+  type DragReloc,
+} from "../model/board";
 import { Column } from "./Column";
 import { AddColumn } from "./AddColumn";
 import { useBoardActions, useSettings } from "./context";
@@ -92,15 +99,12 @@ export function Board({
     }),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  // Cards only move between columns in `onDragEnd` (no `onDragOver` live cross-container move), so a
-  // card dragged to ANOTHER column keeps its sortable placeholder in the source column until the drop
-  // commits. dnd-kit's default drop animation tweens the overlay to that stale source rect — making the
-  // ghost fly back to the origin column while the real card pops into the target (the "broken drop").
-  // Track when the current drag is heading to a different column and skip the drop tween for it (the
-  // overlay just vanishes at the cursor, in the target column, where the card lands). Reset on
-  // start/cancel — NOT in `onDragEnd`: the drop-animation render fires from `onDragEnd`, so the flag
-  // must still be set then. A cancel keeps the tween (returning to the source IS correct on cancel).
-  const [crossColumnDrop, setCrossColumnDrop] = useState(false);
+  // A live cross-column relocation (the "premium" make-room): while dragging a card OVER a different
+  // column, we open a real gap there by rendering the card moved into that column (in the EFFECTIVE
+  // columns derived below). The dragged card keeps its ORIGINAL sortable id throughout so dnd-kit
+  // never loses its rect — the make-room/drop tween stays smooth. `null` whenever the drag is same-
+  // column (native sortable owns that — its tween is already correct) or not over any column.
+  const [dragReloc, setDragReloc] = useState<DragReloc | null>(null);
   // Card sortables are namespaced `${columnId}::${card.path}` so a card mirrored into a cross-board
   // lane (#1) and its status column don't collide on one id. A column drag's active id is the bare
   // column id. Resolve the active card by parsing the path back out (column ids have no `::`).
@@ -110,6 +114,28 @@ export function Board({
     : null;
   const activeCard =
     activeId && !activeColumnDrag ? board.cards[splitCardDragId(activeId).path] : null;
+
+  // A committed cross-column move KEEPS `dragReloc` through the drop tween + the async persist window
+  // (clearing it synchronously in onDragEnd would snap the card back to its source column before
+  // onMove resolves — the old fly-back). The reloaded board lands the card at the same slot the gap
+  // held, so clearing it WHEN THE NEW BOARD ARRIVES causes no jump.
+  //
+  // Deps are `[board]` ONLY — never `activeId`. If `activeId` were a dep, this would fire on the
+  // `activeId → null` transition inside onDragEnd (before onMove's async load lands the new board),
+  // snapping the card back to its source while the overlay is still tweening — the very fly-back this
+  // feature kills. Reading `activeId` through a ref keeps that out of the dep set: a background reload
+  // that arrives MID-DRAG (activeRef != null) leaves the gap open; only a post-drop reload clears it.
+  const activeRef = useRef(activeId);
+  activeRef.current = activeId;
+  useEffect(() => {
+    if (activeRef.current == null) setDragReloc(null);
+  }, [board]);
+
+  // The cards each plain status column should render WHILE a cross-column drag is open: the active
+  // card shown moved into its target (gap opened). Lanes (filter columns) deliberately bypass this —
+  // they derive from `board.columns` directly in Column, so their mirrors stay uncorrupted. The
+  // override only flows through the plain status bucket each column is passed below.
+  const effectiveColumns = applyReloc(board.columns, dragReloc);
 
   // Columns and cards share one DndContext, so both are registered droppables. When a COLUMN is
   // being dragged, restrict collision to column droppables only — otherwise closestCorners can
@@ -274,41 +300,61 @@ export function Board({
       sensors={sensors}
       accessibility={{ announcements, screenReaderInstructions }}
       collisionDetection={collisionDetection}
+      // Re-measure droppables continuously so the gap opened by `dragReloc` (a real layout shift in
+      // the target column) is reflected mid-drag — otherwise dnd-kit keeps stale rects and the make-
+      // room tween computes against the pre-gap layout.
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragStart={(e: DragStartEvent) => {
         setActiveId(String(e.active.id));
-        setCrossColumnDrop(false);
+        setDragReloc(null);
       }}
       onDragOver={(e: DragOverEvent) => {
-        // Pure observation — does NOT move cards (that stays in `onDragEnd`). Only flags whether the
-        // drag's current target column differs from its source, to drive the conditional drop tween.
+        // Open (or close) the live make-room gap. Cards still PERSIST in onDragEnd; this only drives
+        // the on-screen relocation. `resolveDragReloc` (pure, tested) decides the gap from the SAME
+        // `over` the drop reads — so the gap position and landed position agree (no one-slot hop).
         const id = String(e.active.id);
-        if (columnIds.includes(id)) return; // a column reorder, not a card move
-        const fromColumn = splitCardDragId(id).columnId;
         const overId = e.over ? String(e.over.id) : null;
-        const toColumn =
-          overId == null
-            ? null
-            : columnIds.includes(overId)
-              ? overId
-              : splitCardDragId(overId).columnId || null;
-        const cross = toColumn != null && toColumn !== fromColumn;
-        setCrossColumnDrop((prev) => (prev === cross ? prev : cross));
+        // Once relocated, the card carries its SOURCE-column id, so hovering its OWN placeholder makes
+        // `over === id`. That would parse back to fromColumn and read as same-column → collapse the
+        // gap → re-measure → re-open: an oscillation loop under continuous measuring. Hold the gap.
+        if (overId !== null && overId === id) return;
+        const next = resolveDragReloc(id, overId, columnIds);
+        setDragReloc((prev) =>
+          prev &&
+          next &&
+          prev.activeId === next.activeId &&
+          prev.toColumn === next.toColumn &&
+          prev.beforePath === next.beforePath
+            ? prev // unchanged target — keep the same object so the override doesn't re-render
+            : next,
+        );
       }}
       onDragEnd={(e: DragEndEvent) => {
         setActiveId(null);
-        if (!e.over) return;
-        // planDrop unwraps the namespaced card ids (#2), routes column reorders (#2 header drag), and
-        // drops a same-column reorder onto a computed-order column (#3). All the rules live in the
-        // pure model so they're unit-testable; here we just dispatch the plan.
+        const reloc = dragReloc;
+        if (!e.over) {
+          // No drop target → revert to source. No board update is coming, so clear the gap NOW.
+          setDragReloc(null);
+          return;
+        }
+        if (reloc) {
+          // A committed cross-column move. Persist using the SAME target the gap was drawn from
+          // (bare path / column id — never the namespaced active id, which would mis-route through
+          // planDrop's split). KEEP `dragReloc` through the drop tween + persist; the board-effect
+          // clears it once the reloaded board lands the card at this exact slot (no jump).
+          onMove(splitCardDragId(reloc.activeId).path, reloc.beforePath ?? reloc.toColumn);
+          return;
+        }
+        // Same-column reorder or column header drag: the native sortable placeholder already sits at
+        // the destination, so planDrop + onMove keep the verified tween. No gap to clear.
         const plan = planDrop(board, String(e.active.id), String(e.over.id), columnIds);
         if (plan.kind === "reorderColumns") actions.reorderColumns(plan.activeId, plan.overId);
         else if (plan.kind === "moveCard") onMove(plan.path, plan.overId);
       }}
       onDragCancel={() => {
         setActiveId(null);
-        // A cancel returns the card to its source, so the default tween (overlay → source) is correct;
-        // clear the cross-column flag so the return is animated rather than skipped.
-        setCrossColumnDrop(false);
+        // A cancel returns the card to its source — clear the gap immediately (no board update coming).
+        setDragReloc(null);
       }}
     >
       <div className="folia-board" data-pan={boardPan} ref={boardRef}>
@@ -317,7 +363,7 @@ export function Board({
             <Column
               key={col.id}
               column={col}
-              cardPaths={board.columns[col.id] ?? []}
+              cardPaths={effectiveColumns[col.id] ?? []}
               board={board}
               today={today}
               selectedPath={selectedPath}
@@ -326,6 +372,7 @@ export function Board({
               doneColumnId={doneColumnId}
               isFirst={i === 0}
               isLast={i === board.config.columns.length - 1}
+              {...(dragReloc ? { dragReloc } : {})}
               onAddCard={onAddCard}
             />
           ))}
@@ -344,23 +391,18 @@ export function Board({
       {boardRef.current &&
         createPortal(
           <DragOverlay
-            // Same-column drop: the live-reordered placeholder already sits at the destination, so the
-            // overlay tweens cleanly from the cursor into its slot. Cross-column drop: the placeholder is
-            // still in the source column, so the default tween would fly the ghost back to the origin —
-            // skip it (null) and let the card appear in the target where the cursor released it.
-            dropAnimation={
-              crossColumnDrop
-                ? null
-                : {
-                    duration: 200,
-                    easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-                    // Briefly dim the overlay as it settles into the placeholder, so the lift visibly
-                    // "lands" rather than blinking out.
-                    sideEffects: defaultDropAnimationSideEffects({
-                      styles: { active: { opacity: "var(--folia-opacity-faint)" } },
-                    }),
-                  }
-            }
+            // The live make-room gap (`dragReloc`) keeps the dragged card's placeholder at its
+            // destination slot for BOTH same- and cross-column drops, so the overlay always tweens
+            // cleanly from the cursor into that slot — one unconditional settle animation.
+            dropAnimation={{
+              duration: 200,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              // Briefly dim the overlay as it settles into the placeholder, so the lift visibly
+              // "lands" rather than blinking out.
+              sideEffects: defaultDropAnimationSideEffects({
+                styles: { active: { opacity: "var(--folia-opacity-faint)" } },
+              }),
+            }}
           >
             {activeColumn ? (
               // #1 (fix) — a dragged COLUMN gets a real lifted ghost too (col-header gave columns a

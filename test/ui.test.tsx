@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { render, screen, within, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../src/ui/App";
@@ -1323,5 +1323,140 @@ describe("inline column-title edit (#7)", () => {
     // The menu opens (its own Title field appears) and the header title stays a span, not an input.
     expect(screen.getByLabelText("Rename column")).toBeInTheDocument(); // ColumnMenu's field
     expect(screen.queryByLabelText("Rename column Todo")).toBeNull(); // inline editor not armed
+  });
+});
+
+describe("cross-column make-room (live relocation gap)", () => {
+  // jsdom returns all-zero rects, so dnd-kit's keyboard sensor (which navigates spatially) can't move
+  // a card between columns. Mock getBoundingClientRect so each column/card has a deterministic rect:
+  // columns sit at distinct x (todo=0, doing=400), cards stack vertically. The values are derived
+  // PURELY from the element's own `data-*` attributes (no DOM queries), so it's cheap + stable under
+  // MeasuringStrategy.Always — no re-query-per-measure loop. Restored after this block so it can't
+  // leak mocked rects into the rest of the suite. Alpha is positioned squarely over Echo (doing), not
+  // between two cards, to avoid closestCorners boundary flicker.
+  const COL_X: Record<string, number> = { todo: 0, doing: 400, done: 800 };
+  const cardY: Record<string, number> = {};
+  let original: PropertyDescriptor | undefined;
+
+  beforeAll(() => {
+    original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "getBoundingClientRect");
+    Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", {
+      configurable: true,
+      value(this: HTMLElement): DOMRect {
+        const colEl = this.matches?.("[data-column]")
+          ? this
+          : (this.closest?.("[data-column]") ?? null);
+        const colId = colEl?.getAttribute("data-column") ?? "todo";
+        const baseX = COL_X[colId] ?? 0;
+        let x = baseX;
+        let y = 0;
+        let w = 300;
+        let h = 600;
+        const path = this.getAttribute?.("data-path");
+        if (path && !this.matches?.("[data-column]")) {
+          x = baseX + 10;
+          y = cardY[path] ?? 40;
+          w = 280;
+          h = 60;
+        }
+        return {
+          x,
+          y,
+          left: x,
+          top: y,
+          right: x + w,
+          bottom: y + h,
+          width: w,
+          height: h,
+          toJSON() {},
+        } as DOMRect;
+      },
+    });
+  });
+  afterAll(() => {
+    if (original) Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", original);
+    else
+      delete (HTMLElement.prototype as { getBoundingClientRect?: unknown }).getBoundingClientRect;
+  });
+
+  const crossRepo = () =>
+    new FakeRepo(config, {
+      "Tasks/Alpha.md": { fm: { type: "task", status: "todo", order: 1 }, body: "\n# Alpha\n" },
+      "Tasks/Delta.md": { fm: { type: "task", status: "doing", order: 1 }, body: "\n# Delta\n" },
+      "Tasks/Echo.md": { fm: { type: "task", status: "doing", order: 2 }, body: "\n# Echo\n" },
+    });
+
+  // Fix card vertical positions so the keyboard sensor lands Alpha over a specific doing card.
+  const placeCards = () => {
+    cardY["Tasks/Alpha.md"] = 40;
+    cardY["Tasks/Delta.md"] = 40;
+    cardY["Tasks/Echo.md"] = 110;
+  };
+
+  const cardsIn = (title: string) => {
+    const col = screen.getByText(title).closest("section") as HTMLElement;
+    return within(col)
+      .queryAllByTestId("card")
+      .map((c) => c.getAttribute("data-path"));
+  };
+
+  // The keyboard sensor computes each move from the PREVIOUS keypress's settled `over`, so the two
+  // ArrowRights must be dispatched separately (each flushed in its own act) — a combined keystroke
+  // batches before dnd-kit re-measures and never crosses out of the source column. From the source
+  // card: the first ArrowRight settles on the source column, the second crosses into doing.
+  const crossIntoDoing = async (user: ReturnType<typeof userEvent.setup>) => {
+    // Separate keypresses (userEvent flushes effects between awaits) so the sensor re-measures and the
+    // second move sees the settled `over` from the first — a combined keystroke never crosses columns.
+    await user.keyboard("{ArrowRight}");
+    await user.keyboard("{ArrowRight}");
+  };
+
+  it("opens a make-room gap in the target column BEFORE the drop (Alpha shows under doing)", async () => {
+    placeCards();
+    const user = userEvent.setup();
+    render_(crossRepo());
+    const main = (await screen.findByText("Alpha")).closest(".folia-card-main") as HTMLElement;
+    main.focus();
+    await user.keyboard("{ }"); // pick up Alpha (still in todo)
+    expect(cardsIn("Todo")).toContain("Tasks/Alpha.md");
+
+    await crossIntoDoing(user); // navigate into the doing column → opens the gap
+    // The make-room gap: Alpha is now RENDERED in the doing column (moved out of todo) BEFORE any drop.
+    await waitFor(() => expect(cardsIn("Doing")).toContain("Tasks/Alpha.md"));
+    expect(cardsIn("Todo")).not.toContain("Tasks/Alpha.md");
+
+    await user.keyboard("{Escape}"); // clean up the active drag
+  });
+
+  it("persists the cross-column move on drop (Alpha's status becomes doing)", async () => {
+    placeCards();
+    const user = userEvent.setup();
+    const repo = crossRepo();
+    render_(repo);
+    const main = (await screen.findByText("Alpha")).closest(".folia-card-main") as HTMLElement;
+    main.focus();
+    await user.keyboard("{ }");
+    await crossIntoDoing(user);
+    await waitFor(() => expect(cardsIn("Doing")).toContain("Tasks/Alpha.md"));
+    await user.keyboard("{ }"); // drop
+    // The move persisted through the repo: Alpha's status frontmatter is now "doing".
+    await waitFor(() => expect(repo.files.get("Tasks/Alpha.md")!.fm.status).toBe("doing"));
+  });
+
+  it("Escape mid cross-column drag reverts: the gap clears and the board is unchanged", async () => {
+    placeCards();
+    const user = userEvent.setup();
+    const repo = crossRepo();
+    render_(repo);
+    const main = (await screen.findByText("Alpha")).closest(".folia-card-main") as HTMLElement;
+    main.focus();
+    await user.keyboard("{ }");
+    await crossIntoDoing(user);
+    await waitFor(() => expect(cardsIn("Doing")).toContain("Tasks/Alpha.md")); // gap open
+    await user.keyboard("{Escape}"); // cancel
+    // The gap is cleared: Alpha is back in Todo, gone from Doing, and nothing was persisted.
+    await waitFor(() => expect(cardsIn("Todo")).toContain("Tasks/Alpha.md"));
+    expect(cardsIn("Doing")).not.toContain("Tasks/Alpha.md");
+    expect(repo.files.get("Tasks/Alpha.md")!.fm.status).toBe("todo");
   });
 });

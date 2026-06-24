@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Board, ColumnDef } from "../model/types";
-import { makeCardDragId } from "../model/board";
+import { makeCardDragId, splitCardDragId, type DragReloc } from "../model/board";
 import { CardItem } from "./CardItem";
 import { ColumnMenu } from "./ColumnMenu";
 import { ColumnEditModal } from "./ColumnEditModal";
@@ -76,6 +76,11 @@ interface Props {
   doneColumnId: string | null;
   isFirst: boolean;
   isLast: boolean;
+  /** A live cross-column relocation in progress (set on every column while a card is dragged across).
+   *  When this column is the relocation's target, the relocated card must keep its ORIGINAL sortable
+   *  id (`dragReloc.activeId`) instead of this column's namespaced id, or dnd-kit unmounts the active
+   *  sortable mid-drag and the make-room/drop tween breaks. */
+  dragReloc?: DragReloc;
   onAddCard: (columnId: string, title: string) => void;
 }
 
@@ -90,6 +95,7 @@ export function Column({
   doneColumnId,
   isFirst,
   isLast,
+  dragReloc,
   onAddCard,
 }: Props) {
   // The column is itself a sortable item (header drag-reorder, #2). Its sortable id IS column.id,
@@ -230,13 +236,23 @@ export function Column({
     },
   );
 
+  // The sortable id for a card rendered in THIS column. Normally namespaced `col::path` (so a card
+  // mirrored into a cross-board lane (#1) and its status column register two distinct, non-colliding
+  // sortables). EXCEPTION: while a cross-column drag is open and lands the active card here (this is
+  // its target), that one card keeps its ORIGINAL id (`dragReloc.activeId`, i.e. its SOURCE-column
+  // namespacing) — so dnd-kit sees the same sortable identity before and after the relocation and
+  // never unmounts the active item mid-drag (which would break the make-room/drop tween). A lane
+  // mirror of that same path is unaffected: lanes derive from `board.columns`, not the override, so
+  // the relocated card never reaches them. Computed ONCE here and threaded to both `orderedDragIds`
+  // (the SortableContext item set) and CardItem (the sortable itself) so the two can't diverge.
+  const relocActivePath =
+    dragReloc && dragReloc.toColumn === column.id ? splitCardDragId(dragReloc.activeId).path : null;
+  const dragIdFor = (path: string) =>
+    path === relocActivePath && dragReloc ? dragReloc.activeId : makeCardDragId(column.id, path);
+
   // Flat list of rendered top-level cards' sortable ids in display order — the SortableContext item
-  // set (so dnd sortable identity matches what the user sees, even when grouped/sorted). Each id is
-  // namespaced by THIS column (`col::path`) so a card mirrored into a cross-board lane (#1) and its
-  // status column register two distinct, non-colliding sortables. CardItem builds the matching id.
-  const orderedDragIds = groups.flatMap((g) =>
-    g.cards.map((c) => makeCardDragId(column.id, c.path)),
-  );
+  // set (so dnd sortable identity matches what the user sees, even when grouped/sorted).
+  const orderedDragIds = groups.flatMap((g) => g.cards.map((c) => dragIdFor(c.path)));
 
   const count = countPaths.length;
   const overLimit = wipLimit != null && count > wipLimit;
@@ -392,7 +408,7 @@ export function Column({
                 <div key={c.path} className="folia-card-tree">
                   <CardItem
                     card={c}
-                    columnId={column.id}
+                    dragId={dragIdFor(c.path)}
                     today={today}
                     selected={c.path === selectedPath}
                   />
