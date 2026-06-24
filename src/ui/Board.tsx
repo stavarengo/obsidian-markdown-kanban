@@ -11,6 +11,7 @@ import {
   useSensors,
   type CollisionDetection,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import {
@@ -91,6 +92,15 @@ export function Board({
     }),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+  // Cards only move between columns in `onDragEnd` (no `onDragOver` live cross-container move), so a
+  // card dragged to ANOTHER column keeps its sortable placeholder in the source column until the drop
+  // commits. dnd-kit's default drop animation tweens the overlay to that stale source rect — making the
+  // ghost fly back to the origin column while the real card pops into the target (the "broken drop").
+  // Track when the current drag is heading to a different column and skip the drop tween for it (the
+  // overlay just vanishes at the cursor, in the target column, where the card lands). Reset on
+  // start/cancel — NOT in `onDragEnd`: the drop-animation render fires from `onDragEnd`, so the flag
+  // must still be set then. A cancel keeps the tween (returning to the source IS correct on cancel).
+  const [crossColumnDrop, setCrossColumnDrop] = useState(false);
   // Card sortables are namespaced `${columnId}::${card.path}` so a card mirrored into a cross-board
   // lane (#1) and its status column don't collide on one id. A column drag's active id is the bare
   // column id. Resolve the active card by parsing the path back out (column ids have no `::`).
@@ -264,7 +274,26 @@ export function Board({
       sensors={sensors}
       accessibility={{ announcements, screenReaderInstructions }}
       collisionDetection={collisionDetection}
-      onDragStart={(e: DragStartEvent) => setActiveId(String(e.active.id))}
+      onDragStart={(e: DragStartEvent) => {
+        setActiveId(String(e.active.id));
+        setCrossColumnDrop(false);
+      }}
+      onDragOver={(e: DragOverEvent) => {
+        // Pure observation — does NOT move cards (that stays in `onDragEnd`). Only flags whether the
+        // drag's current target column differs from its source, to drive the conditional drop tween.
+        const id = String(e.active.id);
+        if (columnIds.includes(id)) return; // a column reorder, not a card move
+        const fromColumn = splitCardDragId(id).columnId;
+        const overId = e.over ? String(e.over.id) : null;
+        const toColumn =
+          overId == null
+            ? null
+            : columnIds.includes(overId)
+              ? overId
+              : splitCardDragId(overId).columnId || null;
+        const cross = toColumn != null && toColumn !== fromColumn;
+        setCrossColumnDrop((prev) => (prev === cross ? prev : cross));
+      }}
       onDragEnd={(e: DragEndEvent) => {
         setActiveId(null);
         if (!e.over) return;
@@ -275,7 +304,12 @@ export function Board({
         if (plan.kind === "reorderColumns") actions.reorderColumns(plan.activeId, plan.overId);
         else if (plan.kind === "moveCard") onMove(plan.path, plan.overId);
       }}
-      onDragCancel={() => setActiveId(null)}
+      onDragCancel={() => {
+        setActiveId(null);
+        // A cancel returns the card to its source, so the default tween (overlay → source) is correct;
+        // clear the cross-column flag so the return is animated rather than skipped.
+        setCrossColumnDrop(false);
+      }}
     >
       <div className="folia-board" data-pan={boardPan} ref={boardRef}>
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
@@ -310,15 +344,23 @@ export function Board({
       {boardRef.current &&
         createPortal(
           <DragOverlay
-            dropAnimation={{
-              duration: 200,
-              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-              // Briefly dim the overlay as it settles into the placeholder, so the lift visibly "lands"
-              // rather than blinking out.
-              sideEffects: defaultDropAnimationSideEffects({
-                styles: { active: { opacity: "var(--folia-opacity-faint)" } },
-              }),
-            }}
+            // Same-column drop: the live-reordered placeholder already sits at the destination, so the
+            // overlay tweens cleanly from the cursor into its slot. Cross-column drop: the placeholder is
+            // still in the source column, so the default tween would fly the ghost back to the origin —
+            // skip it (null) and let the card appear in the target where the cursor released it.
+            dropAnimation={
+              crossColumnDrop
+                ? null
+                : {
+                    duration: 200,
+                    easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+                    // Briefly dim the overlay as it settles into the placeholder, so the lift visibly
+                    // "lands" rather than blinking out.
+                    sideEffects: defaultDropAnimationSideEffects({
+                      styles: { active: { opacity: "var(--folia-opacity-faint)" } },
+                    }),
+                  }
+            }
           >
             {activeColumn ? (
               // #1 (fix) — a dragged COLUMN gets a real lifted ghost too (col-header gave columns a
